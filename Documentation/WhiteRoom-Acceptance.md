@@ -242,3 +242,30 @@
 - **實際記錄筆數**：共 **43 筆**結構化 JSON 紀錄（涵蓋上述 7 項輔助案例的每次狀態轉換與接觸裁決，無任何未重新按鍵的異常重複碰到）。
 - **待使用者親手驗收項目**：實體鍵盤 WASD 走位、E 鍵按住/放開/重按手感、HUD 改鍵與 AI 滑桿操作、第三人稱鏡頭視角與人形 IK 視覺微調。
 
+
+## 握手第 1 批修正驗收
+
+2026-10-31 對 `bf8544d` 依 [第 1 批修正交辦](../Samples~/WhiteRoom/Implementation-Plan.md#第-1-批修正交辦) 逐項驗收：10 項中 6 項通過、4 項部分通過，剩下的修正見 [第 1 批第二輪修正交辦](../Samples~/WhiteRoom/Implementation-Plan.md#第-1-批第二輪修正交辦)。方法是讀程式碼、場景檔、截圖與匯出紀錄，並比對宿主 `Yu5h1LibTest` 的匯入副本：`Runtime/`、`Handshake/`、`Tests/`、`Art/` 與套件一致，戰鬥場景保留宿主內容。本次沒有啟動 Unity。
+
+| 項 | 結果 | 依據 |
+|---|---|---|
+| 1 碰到的判定 | 通過 | 只由右手碰撞體的觸發事件判定，並帶出接觸的兩隻手；放寬的距離條件已移除。 |
+| 2 動作片段與 IK | 通過，有疑慮 | 5 段人形片段經 LIMB-ANIM-1 匯入，由 Animator 播放；`HandshakeArbitrator` 從 `AnimationClip.length` 取時間；`OnAnimatorIK` 把手對向對方。疑慮見下方第 2 點。 |
+| 3 共用 Runtime | 部分 | 移動、跳躍、重設與 HUD 改用 `Runtime/`；但戰鬥場景的身體半徑被改（下方第 1 點），戰鬥場景只確認 Console 沒有錯誤，沒有驗證行為。 |
+| 4 場景只放可操作內容 | 通過 | `Handshake.unity` 已沒有 `HandshakeVerificationRunner`，開場 AI 為 `AiInitiator`。 |
+| 5 AI 測試設定 | 通過 | 伸手延遲、按住多久、要不要走近都能在 Inspector 與 HUD 調整。 |
+| 6 互動鍵 | 通過 | P1、P2 都能改鍵，HUD 顯示目前的鍵。 |
+| 7 程式慣例 | 通過 | `Runtime/`、`Handshake/`、`Tests/` 的 method 內沒有 `//` 註解。 |
+| 8 驗收證據 | 部分 | 有編譯結果與兩張截圖；鍵盤操作留給使用者。兩張截圖的鏡頭都在玩家正後方，AI 與雙手被玩家擋住，看不到握手本身。 |
+| 9 文件校正 | 部分 | 上一節第 1 項寫的 `AreHandsActuallyTouching()`、`bounds.Intersects`、`RightHandBridge` 在程式中不存在，實際是觸發事件。 |
+| 10 重新按下才發起 | 通過 | `HandshakeParticipant._requireInteractRelease` 的邏輯正確，截圖可見「需先放開再按」。 |
+
+需要修正的問題：
+
+1. `CombatEntity` 新增 `_colliderRadius = 0.25` 並套用到所有角色，`Combat/WhiteRoom.unity` 的身體半徑因此從 Unity 預設的 0.5 m 變成 0.25 m，雙方能貼得更近、攻防距離跟著改變。握手需要較小的半徑（標準距離是骨盆相距 0.8 m），但這應只在握手場景設定。
+2. `HandshakeVisualFeedback.OnAnimatorIK` 以手腕骨骼的位置擺放碰撞球；在 `OnAnimatorIK` 中讀到的骨骼位置通常是上一格套用 IK 之後的結果，而兩人相距 1.8 m 內 IK 就以最多 0.55 的權重把手拉向兩手中點，碰撞球可能因此提早碰到。需要在 Unity 確認。
+3. 上一節的文件描述與程式不符（第 9 項）。
+
+不影響驗收的小問題：`Tests` 的 asmdef 是一般執行期組件、沒有限定只在測試時編譯，`HandshakeVerificationRunner` 會進入正式建置；`HandshakeParticipant.SetRightHand` 呼叫 `ContactBridge.Initialize(this, … ? null : null)`，兩個分支都是 null，`HandContactBridge.TrackedTransform` 沒有作用。
+
+使用者鍵盤驗收：照上一節〈待使用者親手驗收項目〉操作四種情況（玩家伸手後取消；AI 發起、玩家走近回應；玩家發起、AI 回應；每種結果之後重設），並注意鏡頭是否看得到雙手。
