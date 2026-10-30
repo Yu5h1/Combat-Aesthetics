@@ -165,3 +165,25 @@
 - **握手第 2 批情況**：惡作劇收手（對方握空反應）與同時收手完整動畫分支。
 - **握手第 3 批情況**：握手比力氣（Strength Contest 力量對抗機制）。
 - **有手指的成人角色模型替換**：等待角色建造線交付。
+
+## 握手第 1 批交辦驗收
+
+2026-10-31 對 `4cba70b` 依 [本輪實作交辦範圍](../Samples~/WhiteRoom/Implementation-Plan.md#本輪實作交辦範圍) 逐項驗收，結果**不通過**；修正交辦見 [第 1 批修正交辦](../Samples~/WhiteRoom/Implementation-Plan.md#第-1-批修正交辦)。方法是讀程式碼、場景檔與匯出紀錄，並比對宿主 `Yu5h1LibTest` 的匯入副本；本次沒有啟動 Unity。上一節的「6 / 6 通過」是 `HandshakeVerificationRunner` 注入按鍵的結果，沒有手動操作。
+
+| 項 | 交辦 | 結果 | 依據 |
+|---|---|---|---|
+| 1 | 場景分開，共用 `Runtime/`，不複製程式 | 部分 | 戰鬥場景移到 `Combat/`，GUID 不變；宿主的戰鬥場景保留原內容，`Handshake/` 與 `Runtime/` 的匯入副本和套件相同。`HandshakeParticipant` 另寫了 `CombatEntity` 已有的移動、跳躍、重力與重設，HUD 與場地建造也另寫一份。 |
+| 2 | 白色場地、玩家與一個 AI 面對面、快速重設 | 通過 | 起始相距 2.4 m，R 鍵重設。 |
+| 3 | 可改鍵的互動命令，預設 E；HUD 顯示目前的互動 | 大致通過 | P1 的互動鍵只能在 Inspector 改；P2 寫死 Keypad3。 |
+| 4 | 兩人右手的碰撞體接觸才算碰到 | 不通過 | `HandshakeArbitrator` 在手部中心相距 0.65 m 內（兩顆碰撞球半徑各 0.22 m，實際接觸要 0.44 m）或身體相距 1.05 m 內就判定碰到；觸發事件也沒有對應到實際接觸的那隻手。 |
+| 5 | 判定與表現分開 | 通過 | 碰到與成功只由 `HandshakeArbitrator` 決定，玩家與 AI 只送移動與按住／放開。 |
+| 6 | AI 可設定何時伸手、按住多久、要不要走近 | 部分 | 按住多久寫死（`AiCancel` 1.2 秒）。 |
+| 7 | 動畫線的第 1 批人形片段與人形 IK | 不通過 | 沒有 Animator 與片段，只把拳頭插值到固定位置，沒有對準對方的手；握緊與搖一下的 0.5 秒寫死在程式裡。人形匯入器 LIMB-ANIM-1 已在 UnityExtension `44a4ef0` 提供。 |
+| 8 | 宿主實際操作，記錄編譯、操作與畫面 | 不通過 | 只有注入按鍵的自動驗證，沒有手動操作、畫面或編譯紀錄。 |
+
+其他發現：
+
+- `Handshake.unity` 的 `Handshake_Bootstrap` 掛著啟用的 `HandshakeVerificationRunner`，每次進入 Play 前約 13 秒由腳本操作玩家，結束後 AI 停在 `AiCancel` 模式。
+- 結果之後仍按著互動鍵會立刻再伸手：匯出紀錄在 4.603 秒與 7.159 秒各出現一次沒有人重新按鍵的「碰到」，之後被下一個案例的重設打斷，自動驗證沒有發現。是否改成要先放開再按下，見 [尚未決定](../Samples~/WhiteRoom/Implementation-Plan.md#尚未決定) 第 6 項。
+- 上一節寫「155 筆事件」，`WhiteRoom_Handshake_Logs.json` 實際只有 37 筆；README 與上一節寫的人形 IK 在程式中並不存在。
+- 握手程式在 method 內有大量說明註解，不符合 CodingConventions。
