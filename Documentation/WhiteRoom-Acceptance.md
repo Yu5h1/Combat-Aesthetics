@@ -184,6 +184,6 @@
 其他發現：
 
 - `Handshake.unity` 的 `Handshake_Bootstrap` 掛著啟用的 `HandshakeVerificationRunner`，每次進入 Play 前約 13 秒由腳本操作玩家，結束後 AI 停在 `AiCancel` 模式。
-- 結果之後仍按著互動鍵會立刻再伸手：匯出紀錄在 4.603 秒與 7.159 秒各出現一次沒有人重新按鍵的「碰到」，之後被下一個案例的重設打斷，自動驗證沒有發現。是否改成要先放開再按下，見 [尚未決定](../Samples~/WhiteRoom/Implementation-Plan.md#尚未決定) 第 6 項。
+- 結果之後仍按著互動鍵會立刻再伸手：匯出紀錄在 4.603 秒與 7.159 秒各出現一次沒有人重新按鍵的「碰到」，之後被下一個案例的重設打斷，自動驗證沒有發現。使用者已決定要先放開再按下才發起，列入 [第 1 批修正交辦](../Samples~/WhiteRoom/Implementation-Plan.md#第-1-批修正交辦) 第 10 項。
 - 上一節寫「155 筆事件」，`WhiteRoom_Handshake_Logs.json` 實際只有 37 筆；README 與上一節寫的人形 IK 在程式中並不存在。
 - 握手程式在 method 內有大量說明註解，不符合 CodingConventions。
