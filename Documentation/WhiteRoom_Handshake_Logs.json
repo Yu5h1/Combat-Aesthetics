@@ -1,174 +1,194 @@
 {
-    "sessionTimestamp": "2026-10-31 03:37:38",
+    "sessionTimestamp": "2026-10-31 04:05:21",
     "unityVersion": "6000.6.0f1",
     "scenario": "Handshake_Stage2b_Batch1",
     "logs": [
         {
-            "timestamp": 7.581296443939209,
+            "timestamp": 0.0,
+            "message": "【WhiteRoom 握手互動系統就緒】可直接使用 WASD 與互動鍵操作，或調整左側 AI 設定。"
+        },
+        {
+            "timestamp": 0.0,
+            "message": "[Player1] 著地"
+        },
+        {
+            "timestamp": 0.0,
+            "message": "[AI_Opponent] 著地"
+        },
+        {
+            "timestamp": 0.58054518699646,
+            "message": "[AI_Opponent] 按住互動鍵發起伸手（0.50s）"
+        },
+        {
+            "timestamp": 1.0829535722732544,
+            "message": "[AI_Opponent] 伸手就緒，等待對方走近接觸"
+        },
+        {
+            "timestamp": 6.21364164352417,
             "message": "[Player1] 狀態重設完成"
         },
         {
-            "timestamp": 7.581296443939209,
+            "timestamp": 6.21364164352417,
             "message": "[AI_Opponent] 狀態重設完成"
         },
         {
-            "timestamp": 7.581296443939209,
+            "timestamp": 6.21364164352417,
             "message": "【全場統一重設】角色狀態、位置、AI 設定及佇列已還原。"
         },
         {
-            "timestamp": 7.737330436706543,
+            "timestamp": 6.369338512420654,
             "message": "[Player1] 按住互動鍵發起伸手（0.50s）"
         },
         {
-            "timestamp": 7.888547420501709,
+            "timestamp": 6.520637035369873,
             "message": "[Player1] 放開互動鍵，收手取消（0.50s）"
         },
         {
-            "timestamp": 8.541083335876465,
+            "timestamp": 7.172886371612549,
             "message": "[Player1] 狀態重設完成"
         },
         {
-            "timestamp": 8.541083335876465,
+            "timestamp": 7.172886371612549,
             "message": "[AI_Opponent] 狀態重設完成"
         },
         {
-            "timestamp": 8.541083335876465,
+            "timestamp": 7.172886371612549,
             "message": "【全場統一重設】角色狀態、位置、AI 設定及佇列已還原。"
         },
         {
-            "timestamp": 8.744083404541016,
+            "timestamp": 7.376114368438721,
             "message": "[AI_Opponent] 按住互動鍵發起伸手（0.50s）"
         },
         {
-            "timestamp": 9.24579906463623,
+            "timestamp": 7.878798484802246,
             "message": "[AI_Opponent] 伸手就緒，等待對方走近接觸"
         },
         {
-            "timestamp": 9.250162124633789,
+            "timestamp": 7.883238792419434,
             "message": "[Player1] 按住互動鍵發起伸手（0.50s）"
         },
         {
-            "timestamp": 9.719996452331543,
+            "timestamp": 8.359996795654297,
             "message": "[握手判定] [Player1] 與 [AI_Opponent] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
         },
         {
-            "timestamp": 10.217875480651855,
+            "timestamp": 8.85971450805664,
             "message": "[握手判定] 握手成功！雙方按住到握緊結束，開始搖一下（0.50s）。"
         },
         {
-            "timestamp": 10.719268798828125,
+            "timestamp": 9.3600492477417,
             "message": "[握手判定] 搖一下結束，雙方各自收手（0.50s）。"
         },
         {
-            "timestamp": 11.638165473937988,
+            "timestamp": 10.275814056396484,
             "message": "[Player1] 按住互動鍵發起伸手（0.50s）"
         },
         {
-            "timestamp": 11.736929893493652,
+            "timestamp": 10.375018119812012,
             "message": "[Player1] 狀態重設完成"
         },
         {
-            "timestamp": 11.736929893493652,
+            "timestamp": 10.375018119812012,
             "message": "[AI_Opponent] 狀態重設完成"
         },
         {
-            "timestamp": 11.736929893493652,
+            "timestamp": 10.375018119812012,
             "message": "【全場統一重設】角色狀態、位置、AI 設定及佇列已還原。"
         },
         {
-            "timestamp": 11.942630767822266,
+            "timestamp": 10.581364631652832,
             "message": "[Player1] 按住互動鍵發起伸手（0.50s）"
         },
         {
-            "timestamp": 11.942630767822266,
+            "timestamp": 10.581364631652832,
             "message": "[AI_Opponent] 按住互動鍵發起伸手（0.50s）"
         },
         {
-            "timestamp": 12.419995307922363,
+            "timestamp": 11.059995651245117,
             "message": "[握手判定] [Player1] 與 [AI_Opponent] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
         },
         {
-            "timestamp": 12.918705940246582,
+            "timestamp": 11.56147575378418,
             "message": "[握手判定] 握手成功！雙方按住到握緊結束，開始搖一下（0.50s）。"
         },
         {
-            "timestamp": 13.419279098510742,
+            "timestamp": 12.062108993530273,
             "message": "[握手判定] 搖一下結束，雙方各自收手（0.50s）。"
         },
         {
-            "timestamp": 14.129283905029297,
+            "timestamp": 12.768153190612793,
             "message": "[Player1] 狀態重設完成"
         },
         {
-            "timestamp": 14.129283905029297,
+            "timestamp": 12.768153190612793,
             "message": "[AI_Opponent] 狀態重設完成"
         },
         {
-            "timestamp": 14.129283905029297,
+            "timestamp": 12.768153190612793,
             "message": "【全場統一重設】角色狀態、位置、AI 設定及佇列已還原。"
         },
         {
-            "timestamp": 14.231643676757813,
+            "timestamp": 12.869978904724121,
             "message": "[AI_Opponent] 按住互動鍵發起伸手（0.50s）"
         },
         {
-            "timestamp": 14.335576057434082,
+            "timestamp": 12.979414939880371,
             "message": "[Player1] 按住互動鍵發起伸手（0.50s）"
         },
         {
-            "timestamp": 14.732150077819824,
+            "timestamp": 13.372262001037598,
             "message": "[AI_Opponent] 伸手就緒，等待對方走近接觸"
         },
         {
-            "timestamp": 14.819994926452637,
+            "timestamp": 13.439994812011719,
             "message": "[握手判定] [Player1] 與 [AI_Opponent] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
         },
         {
-            "timestamp": 14.975340843200684,
+            "timestamp": 13.595037460327148,
             "message": "[握手判定] 握緊期間【AI_Opponent】放開互動（第 2 批的情況），雙方直接收手（0.50s）。"
         },
         {
-            "timestamp": 15.178023338317871,
+            "timestamp": 13.799664497375488,
             "message": "[Player1] 狀態重設完成"
         },
         {
-            "timestamp": 15.178023338317871,
+            "timestamp": 13.799664497375488,
             "message": "[AI_Opponent] 狀態重設完成"
         },
         {
-            "timestamp": 15.178023338317871,
+            "timestamp": 13.799664497375488,
             "message": "【全場統一重設】角色狀態、位置、AI 設定及佇列已還原。"
         },
         {
-            "timestamp": 15.378344535827637,
+            "timestamp": 14.002930641174316,
             "message": "[AI_Opponent] 按住互動鍵發起伸手（0.50s）"
         },
         {
-            "timestamp": 15.880212783813477,
+            "timestamp": 14.504698753356934,
             "message": "[AI_Opponent] 伸手就緒，等待對方走近接觸"
         },
         {
-            "timestamp": 16.177783966064453,
+            "timestamp": 14.801474571228027,
             "message": "[AI_Opponent] 放開互動鍵，等待中止並收手（0.50s）"
         },
         {
-            "timestamp": 16.382165908813477,
+            "timestamp": 15.004261016845703,
             "message": "[Player1] 狀態重設完成"
         },
         {
-            "timestamp": 16.382165908813477,
+            "timestamp": 15.004261016845703,
             "message": "[AI_Opponent] 狀態重設完成"
         },
         {
-            "timestamp": 16.382165908813477,
+            "timestamp": 15.004261016845703,
             "message": "【全場統一重設】角色狀態、位置、AI 設定及佇列已還原。"
         },
         {
-            "timestamp": 16.585643768310547,
+            "timestamp": 15.207135200500488,
             "message": "[AI_Opponent] 按住互動鍵發起伸手（0.50s）"
         },
         {
-            "timestamp": 17.088953018188477,
+            "timestamp": 15.709712982177734,
             "message": "[AI_Opponent] 伸手就緒，等待對方走近接觸"
         }
     ]

@@ -11,17 +11,15 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
     {
         public HandshakeParticipant Owner { get; private set; }
         public Collider HandCollider { get; private set; }
-        public Transform TrackedTransform { get; set; }
 
         public event Action<HandContactBridge, HandContactBridge> OnTriggerContact;
 
         /// <summary>
         /// Configures this contact bridge with its owning participant and ensures a kinematic Rigidbody is present.
         /// </summary>
-        public void Initialize(HandshakeParticipant owner, Transform trackedTransform = null)
+        public void Initialize(HandshakeParticipant owner)
         {
             Owner = owner;
-            TrackedTransform = trackedTransform;
             HandCollider = GetComponent<Collider>();
             if (HandCollider != null)
             {
@@ -35,15 +33,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             }
             rb.isKinematic = true;
             rb.useGravity = false;
-        }
-
-        private void LateUpdate()
-        {
-            if (TrackedTransform != null)
-            {
-                transform.position = TrackedTransform.position;
-                transform.rotation = TrackedTransform.rotation;
-            }
         }
 
         private void OnTriggerEnter(Collider other)

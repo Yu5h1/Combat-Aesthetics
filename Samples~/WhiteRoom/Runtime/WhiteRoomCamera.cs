@@ -14,6 +14,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
         [Header("Target Settings")]
         [SerializeField] private Transform _target;
         [SerializeField] private Vector3 _targetOffset = new Vector3(0, 1.4f, 0);
+        [SerializeField] private Vector3 _shoulderOffset = Vector3.zero;
 
         [Header("Orbit Settings")]
         [SerializeField] private float _distance = 4.0f;
@@ -26,6 +27,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
 
         private float _yaw = 0f;
         private float _pitch = 15f;
+        private bool _hasExplicitOrbit = false;
 
         public Transform Target
         {
@@ -33,11 +35,36 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             set => _target = value;
         }
 
+        /// <summary>
+        /// Explicitly sets the orbit angles and distance (e.g. for initial camera framing in specific scenes).
+        /// </summary>
+        public void SetOrbit(float yaw, float pitch, float distance = -1f)
+        {
+            _yaw = yaw;
+            _pitch = Mathf.Clamp(pitch, _minPitch, _maxPitch);
+            if (distance > 0f)
+            {
+                _distance = Mathf.Clamp(distance, _minDistance, _maxDistance);
+            }
+            _hasExplicitOrbit = true;
+        }
+
+        /// <summary>
+        /// Sets a lateral or vertical shoulder offset relative to the camera orbit orientation.
+        /// </summary>
+        public void SetShoulderOffset(Vector3 offset)
+        {
+            _shoulderOffset = offset;
+        }
+
         private void Start()
         {
-            Vector3 angles = transform.eulerAngles;
-            _yaw = angles.y;
-            _pitch = angles.x;
+            if (!_hasExplicitOrbit)
+            {
+                Vector3 angles = transform.eulerAngles;
+                _yaw = angles.y;
+                _pitch = angles.x;
+            }
 
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
@@ -94,8 +121,8 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
         {
             if (_target == null) return;
 
-            Vector3 pivot = _target.position + _targetOffset;
             Quaternion rotation = Quaternion.Euler(_pitch, _yaw, 0f);
+            Vector3 pivot = _target.position + _targetOffset + (rotation * _shoulderOffset);
             Vector3 desiredPosition = pivot - (rotation * Vector3.forward * _distance);
 
             if (Physics.Raycast(pivot, desiredPosition - pivot, out RaycastHit hit, _distance))
@@ -107,7 +134,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             }
 
             transform.position = Vector3.Lerp(transform.position, desiredPosition, _smoothSpeed * Time.deltaTime);
-            transform.LookAt(pivot);
+            transform.rotation = rotation;
         }
     }
 }

@@ -159,11 +159,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
             if (_opponent != null && _opponent.RightHandTransform != null)
             {
-                bool selfActive = (state == HandshakeState.Reaching || state == HandshakeState.Waiting ||
-                                   state == HandshakeState.Grip || state == HandshakeState.Shaking);
-                bool oppActive = (_opponent.State == HandshakeState.Reaching || _opponent.State == HandshakeState.Waiting ||
-                                  _opponent.State == HandshakeState.Grip || _opponent.State == HandshakeState.Shaking);
-
                 if (state == HandshakeState.Grip || state == HandshakeState.Shaking)
                 {
                     targetWeight = 0.85f;
@@ -171,20 +166,9 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                     Vector3 oppHand = _opponent.RightHandTransform.position;
                     _currentIkTarget = Vector3.Lerp(myHand, oppHand, 0.5f);
                 }
-                else if (selfActive && oppActive)
-                {
-                    float dist = Vector3.Distance(_participant.transform.position, _opponent.transform.position);
-                    if (dist <= 1.8f)
-                    {
-                        targetWeight = Mathf.Clamp01((1.8f - dist) / 1.0f) * 0.55f;
-                        Vector3 myHand = _preIkWristTransform != null ? _preIkWristTransform.position : _participant.RightHandTransform.position;
-                        Vector3 oppHand = _opponent.RightHandTransform.position;
-                        _currentIkTarget = Vector3.Lerp(myHand, oppHand, 0.5f);
-                    }
-                }
             }
 
-            _currentIkWeight = Mathf.MoveTowards(_currentIkWeight, targetWeight, 4.0f * Time.deltaTime);
+            _currentIkWeight = Mathf.MoveTowards(_currentIkWeight, targetWeight, 8.0f * Time.deltaTime);
 
             _animator.SetIKPositionWeight(AvatarIKGoal.RightHand, _currentIkWeight);
             if (_currentIkWeight > 0.001f)

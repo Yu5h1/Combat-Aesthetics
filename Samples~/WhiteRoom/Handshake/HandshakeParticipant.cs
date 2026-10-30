@@ -42,6 +42,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             if (_entity != null)
             {
                 _entity.EnableCombatActions = false;
+                _entity.SetColliderRadius(0.25f);
                 _entity.OnIntentStepped += HandleIntentStepped;
                 _entity.OnEntityReset += HandleEntityReset;
             }
@@ -66,6 +67,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             {
                 _entity.InitializeSettings(id, team, 100f);
                 _entity.EnableCombatActions = false;
+                _entity.SetColliderRadius(0.25f);
             }
         }
 
@@ -91,7 +93,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 {
                     ContactBridge = host.gameObject.AddComponent<HandContactBridge>();
                 }
-                ContactBridge.Initialize(this, colliderHostTransform != null ? null : null);
+                ContactBridge.Initialize(this);
             }
         }
 

@@ -109,7 +109,12 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
             if (_player != null)
             {
-                WhiteRoomSceneBuilder.EnsureCamera(_player.transform);
+                var cam = WhiteRoomSceneBuilder.EnsureCamera(_player.transform);
+                if (cam != null)
+                {
+                    cam.SetOrbit(0f, 12f, 3.6f);
+                    cam.SetShoulderOffset(new Vector3(-0.45f, 0f, 0f));
+                }
             }
 
             var arb = HandshakeArbitrator.Instance;

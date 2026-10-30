@@ -145,8 +145,8 @@ Samples~/WhiteRoom/
 | **輔助案例 5：握緊期間提前放開收手** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。`Grip` 期間 AI 於 `0.18s` 提前放開，裁定 `EarlyReleaseDuringGrip`（第 2 批情況），雙方立即收手。 |
 | **輔助案例 6：AI 發起後依設定時長取消** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。AI 伸手後依可設定之 `_cancelHoldDuration`（測試設為 `0.60s`）放開取消，經 `Withdrawing` 返回 `None`。 |
 | **輔助案例 7：全場統一快速重設** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。呼叫 `CombatEntity.ResetAllArenaEntities()`，雙方回到 `(0, 0, -1.2)` 與 `(0, 0, 1.2)`、狀態 `None`、判定會話無殘留。 |
-| **結構化日誌匯出** | `WhiteRoomHUD.ExportStructuredLogs()` | **通過**。匯出 `Documentation/WhiteRoom_Handshake_Logs.json`，共 **43 筆**結構化紀錄，涵蓋全部 7 項輔助案例之狀態與裁決轉換。 |
-| **戰鬥場景相容性檢查** | 開啟 `Combat/WhiteRoom.unity` 進入 Play Mode | **通過**。共用 `Runtime/` 修改後，戰鬥場景正常生成玩家與 AI（`OnePlayerVsOneAI`），無編譯或執行期錯誤。 |
+| **結構化日誌匯出** | `WhiteRoomHUD.ExportStructuredLogs()` | **通過**。匯出 `Documentation/WhiteRoom_Handshake_Logs.json`，共 **47 筆**結構化紀錄，涵蓋全部 7 項輔助案例之狀態與裁決轉換。 |
+| **戰鬥場景相容性檢查** | 開啟 `Combat/WhiteRoom.unity` 進入 Play Mode | **通過**。戰鬥角色半徑維持原本 0.5m，正常生成玩家與 AI（`OnePlayerVsOneAI`），走位、出招與受擊驗證無退化。 |
 | **待使用者本人親手驗收項目** | 實體鍵盤 WASD + E / R 與 HUD 操作 | **待使用者驗收**（包含實體按鍵手感、改鍵操作、攝影機視角與畫面微調感受）。 |
 
 ---

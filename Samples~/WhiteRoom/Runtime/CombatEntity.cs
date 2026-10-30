@@ -52,7 +52,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
         [Header("Crouch Collider Settings")]
         [SerializeField] private float _standingHeight = 2.0f;
         [SerializeField] private float _crouchingHeight = 1.0f;
-        [SerializeField] private float _colliderRadius = 0.25f;
+        [SerializeField] private float _colliderRadius = 0.5f;
         [SerializeField] private Vector3 _standingCenter = new Vector3(0, 1.0f, 0);
         [SerializeField] private Vector3 _crouchingCenter = new Vector3(0, 0.5f, 0);
 
@@ -140,6 +140,18 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
         public void EmitLog(string message)
         {
             OnCombatLog?.Invoke(message);
+        }
+
+        /// <summary>
+        /// Configures the CharacterController radius for specific scenario requirements such as close interaction.
+        /// </summary>
+        public void SetColliderRadius(float radius)
+        {
+            _colliderRadius = radius;
+            if (_controller != null)
+            {
+                _controller.radius = radius;
+            }
         }
 
         /// <summary>

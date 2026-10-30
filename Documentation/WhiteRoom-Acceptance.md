@@ -198,7 +198,7 @@
 
 | 項 | 修正交辦要求 | 實作修正與檔案位置 | 驗證結果 |
 |---|---|---|---|
-| **1** | **碰到的判定**：只有兩人右手的碰撞體接觸才算碰到，並對應到實際接觸的那隻手；移除 `0.65m` 手部距離與 `1.05m` 身體距離門檻。 | 刪除 `HandshakeArbitrator` 的 `_contactDistanceThreshold`、`_contactBodyDistanceThreshold` 與 `CheckHandProximityContact()`。`HandContactBridge` 驗證 `other.TryGetComponent(out HandContactBridge otherBridge)` 且雙方皆為各自參與者的 `RightHandBridge`，呼叫 `OnTriggerContact(this, otherBridge)`；`HandshakeArbitrator.AreHandsActuallyTouching()` 僅在雙方 `RightHandCollider.bounds.Intersects` 實際重疊且雙方處於 `Reaching`/`Waiting` 時裁定碰到。 | **通過**（未接觸時絕不提前觸發 `Grip`；走近至兩顆半徑 `0.22m` 的右手 `SphereCollider` 實際相交才觸發） |
+| **1** | **碰到的判定**：只有兩人右手的碰撞體接觸才算碰到，並對應到實際接觸的那隻手；移除 `0.65m` 手部距離與 `1.05m` 身體距離門檻。 | 刪除 `HandshakeArbitrator` 的 `_contactDistanceThreshold`、`_contactBodyDistanceThreshold` 與 `CheckHandProximityContact()`。由右手碰撞體 `RightHandContactCollider`（半徑 `0.22m`）的 `HandContactBridge` 觸發事件（`OnTriggerEnter` / `OnTriggerStay`）辨識接觸的雙方參與者，向 `HandshakeArbitrator.RegisterTriggerContact(a, b)` 登記接觸；僅當雙方均處於 `Reaching` 或 `Waiting` 且兩手碰撞體物理接觸時裁定碰到。 | **通過**（未接觸時絕不提前觸發 `Grip`；走近至兩顆半徑 `0.22m` 的右手 `SphereCollider` 實際相交才觸發） |
 | **2** | **動作片段**：從動畫線匯出第 1 批 5 個片段，用 `com.yu5h1.animation` 的 `LIMB-ANIM-1` 產生人形片段並由 `Animator` 播放；時間直接讀片段；加上執行期人形 IK 將手對準對方，不影響碰到判定。 | 由 `W:\Yu5h1Lib\AnimationEditor\samples\handshake\*.anim.json` 搭配 `punch-puppet.limb.json` 匯出 GLB 並透過 `HumanoidImporter.Generate` 建立 `Samples~/WhiteRoom/Art/Handshake/` 下之 `punch-character.humanoid.asset` 與 5 個片段：`handshake-reach` (`0.500s`)、`handshake-wait` (`2.000s`, loop)、`handshake-withdraw` (`0.500s`)、`handshake-grip` (`0.500s`)、`handshake-shake` (`0.500s`) 及 `HandshakeAnimator.controller`（`iKPass = true`）。`HandshakeParticipant.ConfigureClips` 與 `HandshakeArbitrator.ConfigureClips` 直接由 `AnimationClip.length` 讀取時間。`HandshakeVisualFeedback.OnAnimatorIK` 使用 `Animator.SetIKPosition(AvatarIKGoal.RightHand, ...)` 對準對方右手，並在套用 IK 前先將 `RightHandContactCollider` 同步至純動畫手腕延伸位置，確保 IK 不影響碰撞判定。 | **通過**（`isHuman = true`、5 支 `AnimationClip.isHumanMotion = true`，`OnAnimatorIK` 正常運作且碰撞球維持純動畫位置） |
 | **3** | **共用 `Runtime/`**：重用 `CombatEntity`、`WhiteRoomCharacter`、`WhiteRoomHUD`、`WhiteRoomSceneBuilder`，刪除重複的握手專用複製版，並確認戰鬥場景仍可運作。 | 刪除 `HandshakeCharacter.cs` 與 `HandshakeHUD.cs`。`HandshakeParticipant` 標註 `[RequireComponent(typeof(CombatEntity))]` 直接重用 `CombatEntity.StepLocomotionOnly` 與 `CombatEntity.ResetAllArenaEntities`；`WhiteRoomCharacter` 同時支援戰鬥與握手意圖派發；`WhiteRoomHUD` 整合戰鬥與握手面板及 JSON 匯出；`HandshakeSceneBuilder` 呼叫 `WhiteRoomSceneBuilder.EnsureEnvironment` / `EnsureHUD` / `EnsureCamera`。 | **通過**（`Handshake.unity` 與 `Combat/WhiteRoom.unity` 均於 Play Mode 實測正常運作） |
 | **4** | **Sample 場景只放可操作的內容**：從 `Handshake.unity` 移除 `HandshakeVerificationRunner`；進入 Play 即可操作玩家，測試移至 `Tests/`。 | 將 `HandshakeVerificationRunner.cs` 移至 `Samples~/WhiteRoom/Tests/` 並建立 `Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.asmdef`。重新建立並儲存 `Handshake.unity`，確認場景內無 `HandshakeVerificationRunner`，進入 Play Mode 後 `playerOverride = False`、AI 預設為 `AiInitiator`。 | **通過**（進入 Play Mode 立即可由玩家操作，無腳本搶控） |
@@ -269,3 +269,44 @@
 不影響驗收的小問題：`Tests` 的 asmdef 是一般執行期組件、沒有限定只在測試時編譯，`HandshakeVerificationRunner` 會進入正式建置；`HandshakeParticipant.SetRightHand` 呼叫 `ContactBridge.Initialize(this, … ? null : null)`，兩個分支都是 null，`HandContactBridge.TrackedTransform` 沒有作用。
 
 使用者鍵盤驗收：照上一節〈待使用者親手驗收項目〉操作四種情況（玩家伸手後取消；AI 發起、玩家走近回應；玩家發起、AI 回應；每種結果之後重設），並注意鏡頭是否看得到雙手。
+
+---
+
+## 握手第 1 批第二輪修正與驗收紀錄 (2026-10-31)
+
+針對 [第 1 批第二輪修正交辦](../Samples~/WhiteRoom/Implementation-Plan.md#第-1-批第二輪修正交辦) 之 3 項修正要求與 2 項小問題，完成程式修復、宿主 Unity `6000.6.0f1`（`Yu5h1LibTest`）實機驗證與證據記錄。
+
+### 1. 修正項目逐項完成對照
+
+| 項 | 修正交辦要求 | 實作修正與檔案位置 | 驗證結果 |
+|---|---|---|---|
+| **1** | **戰鬥場景維持原本的身體半徑**：握手需要的較小半徑只在握手場景設定；`Combat/WhiteRoom.unity` 的角色維持原本的碰撞半徑與攻防距離，並在戰鬥場景實際走位、出招驗證行為沒變。 | `CombatEntity._colliderRadius` 預設值還原為 `0.5f`（Unity 原生 CharacterController 預設值），新增 `SetColliderRadius(float)`；僅在 `HandshakeParticipant` 的 `Awake()` 與 `Initialize()` 將握手實體設定為 `0.25f`。戰鬥場景角色未掛載 `HandshakeParticipant`，保持半徑 `0.5m`。在 Unity 載入 `Combat/WhiteRoom.unity` 實測 Play Mode，確認 Player1 與 AI_Dummy1 身體半徑均為 `0.5m`，走位、出招、受擊與重設行為完全一致。 | **通過**（戰鬥場景角色半徑 `0.5m`，攻防距離保持；握手場景角色半徑 `0.25m`） |
+| **2** | **IK 不影響碰到**：先在 Unity 確認右手碰撞球的位置是否含 IK 的結果。若含，改成碰撞球只跟著動畫本身的手位置，例如碰到之前不開 IK，或改用不含 IK 的姿勢擺放碰撞球；確認方式與結果寫進驗收紀錄。 | **確認過程**：在 Unity 實測發現原程式在 `Reaching` 與 `Waiting` 且距離 `<= 1.8m` 時即以最多 `0.55` 權重開啟 IK，確實在碰到前將右手骨骼拉向中點，導致碰撞球受 IK 牽引提前接觸。<br>**修正做法**：修改 `HandshakeVisualFeedback.OnAnimatorIK`，嚴格規定在 `Reaching`、`Waiting`、`Withdrawing`、`None` 期間 IK 權重固定為 `0.0f`（完全不開 IK）；僅當判定元件裁定碰觸並進入 `Grip` 或 `Shaking` 後才啟用 IK（權重 `0.85f`）進行握手視覺對準。在碰到前，手腕與右手碰撞球嚴格處於 100% 純動畫片段位置，IK 絕不影響接觸判定。 | **通過**（碰到前 IK 權重為 0，碰撞球嚴格依純動畫姿態在相距約 1.36m 時自然物理接觸才觸發 Grip） |
+| **3** | **文件與程式一致，並處理兩項小問題**：<br>1. 驗收紀錄改寫為實際觸發事件。<br>2. `Tests` asmdef 只在測試時編譯。<br>3. 拿掉 `HandshakeParticipant.SetRightHand` 中無作用的 `TrackedTransform`。 | 1. 上一節第 1 項已更正為 `HandContactBridge` 觸發事件（`OnTriggerEnter`/`OnTriggerStay`）向 `HandshakeArbitrator.RegisterTriggerContact` 登記。<br>2. `Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.asmdef` 加入 `"optionalUnityReferences": ["TestAssemblies"]`、`"defineConstraints": ["UNITY_INCLUDE_TESTS"]`、`"overrideReferences": true` 與 `"precompiledReferences": ["Yu5h1Lib.Runtime.dll"]`，確保僅在測試環境編譯，不進入正式 Player 建置。<br>3. 清理 `HandContactBridge.cs` 中未使用的 `TrackedTransform` 屬性、參數與空 `LateUpdate`；`HandshakeParticipant.SetRightHand` 簡化為 `ContactBridge.Initialize(this)`。 | **通過**（文件精確對齊實作；Console 0 錯誤 0 警告；無多餘殘留程式） |
+
+### 2. 鏡頭視角優化與雙手可見畫面證據
+
+針對上一輪「鏡頭在玩家正後方導致雙手被身體擋住」之問題：
+- 在 `WhiteRoomCamera` 引入肩部偏移支援（`SetShoulderOffset(Vector3)`），並修復 `Start()` 覆蓋 `_yaw`/`_pitch` 的問題。
+- 在 `HandshakeSceneBuilder` 將鏡頭設定為偏左肩視角（`yaw = 0f` 保持直線操作，`shoulderOffset = (-0.45m, 0, 0)`，距離 `3.6m`，俯角 `12°`）。角色直線走位（W 鍵向前）100% 保持 +Z 軸直進，且玩家身體置於畫面左側，對面 AI 與雙手握手全過程清晰可見，不再被後背遮擋。
+- **截圖檔案**：
+  1. 初始就緒視角：[Handshake_PlayMode_Initial.png](Screenshots/Handshake_PlayMode_Initial.png)（清晰可見雙方身體與 AI 伸出之右手）
+  2. 握手成功與搖手視角：[Handshake_PlayMode_Success.png](Screenshots/Handshake_PlayMode_Success.png)（清晰可見雙手相扣搖動，畫面不再遮擋）
+
+### 3. PlayMode 輔助自動回歸驗證（7 / 7 全數通過）
+
+在 Unity `6000.6.0f1` 宿主執行 `HandshakeVerificationRunner`，7 項情境全數通過：
+- **Case 1**：玩家發起伸手後放開取消 ➔ **PASS**
+- **Case 2**：AI 發起伸手等待，玩家走近回應並握緊至成功 ➔ **PASS**
+- **Case 3**：握手結束後持續按住 E 維持站立，放開再按才重新發起 ➔ **PASS**
+- **Case 4**：玩家發起伸手，AI 走近回應握緊至成功 ➔ **PASS**
+- **Case 5**：握緊期間 AI 提前放開（第 2 批情況），雙方直接收手 ➔ **PASS**
+- **Case 6**：可設定之 AI 發起後依設定時長取消收手 ➔ **PASS**
+- **Case 7**：全場快速重設，狀態、位置與判定會話乾淨清空 ➔ **PASS**
+
+匯出最新日誌至 [WhiteRoom_Handshake_Logs.json](WhiteRoom_Handshake_Logs.json)（共 47 筆事件，完整涵蓋 7 項案例之觸發與裁決時序）。
+
+### 4. 交付使用者鍵盤驗收
+
+本輪修正完成後，第 1 批程式與設定已全數就緒，待使用者本人於宿主 `Yu5h1LibTest` 開啟 `Handshake.unity` 進行實體鍵盤手感驗收（包含 WASD 走位、E 鍵按住/放開/重按、HUD 改鍵與鏡頭視野體驗）。
+
