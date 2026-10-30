@@ -3,8 +3,7 @@ using UnityEngine;
 namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
 {
     /// <summary>
-    /// WhiteRoom 訓練假人 / AI 傀儡：
-    /// 與本機玩家、遠端玩家共用相同的 CombatEntity 戰鬥判定與操作合法性規則。
+    /// AI combat opponent that drives a <see cref="CombatEntity"/> using the same intent and state rules as players.
     /// </summary>
     [RequireComponent(typeof(CombatEntity))]
     public class WhiteRoomDummy : MonoBehaviour, ICombatInputSource
@@ -17,10 +16,10 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
         [Header("AI Defense Settings")]
         [SerializeField] private bool _enableDefense = true;
         [Range(0f, 1f)]
-        [SerializeField] private float _guardProbability = 0.60f; // 目標出招時進行普通格擋的機率
+        [SerializeField] private float _guardProbability = 0.60f;
         [Range(0f, 1f)]
-        [SerializeField] private float _parryProbability = 0.30f; // 目標出招時嘗試精準彈刀的機率
-        [SerializeField] private float _defenseHoldDuration = 0.85f; // 格擋維持時間
+        [SerializeField] private float _parryProbability = 0.30f;
+        [SerializeField] private float _defenseHoldDuration = 0.85f;
 
         private CombatEntity _entity;
         private CombatEntity _targetPlayer;
@@ -68,12 +67,14 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             _entity.StepCombat(intent);
         }
 
+        /// <summary>
+        /// Evaluates AI combat decisions and returns the current frame's <see cref="CombatActionIntent"/>.
+        /// </summary>
         public CombatActionIntent PollIntent(CombatEntity entity)
         {
             CombatActionIntent intent = CombatActionIntent.Empty;
             intent.Timestamp = Time.time;
 
-            // 嚴格遵守角色規則：硬直、暈眩、倒地期間完全喪失自主行動與轉向能力
             if (_entity.State == CombatState.Stunned || _entity.State == CombatState.Flinching || _entity.State == CombatState.Incapacitated)
             {
                 _isAiGuarding = false;
@@ -91,7 +92,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             toTarget.y = 0;
             float distance = toTarget.magnitude;
 
-            // 1. 防禦決策（AI 依據玩家攻擊前搖 Startup 做出反應）
             if (_enableDefense && distance <= _desiredDistance + 0.8f)
             {
                 float facingDot = Vector3.Dot(transform.forward, toTarget.normalized);
@@ -99,7 +99,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
 
                 if (playerIsAttacking && facingDot > 0.3f && !_isAiGuarding && !_isAiParrying)
                 {
-                    // 根據配置機率觸發精準彈刀或普通格擋
                     float roll = UnityEngine.Random.value;
                     if (roll < _parryProbability)
                     {
@@ -116,7 +115,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                 }
             }
 
-            // 延續防禦維持計時
             if (_defenseTimer > 0f)
             {
                 _defenseTimer -= Time.deltaTime;
@@ -131,7 +129,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                 }
             }
 
-            // 2. 移動逼近目標
             if (distance > _desiredDistance)
             {
                 Vector3 moveDir = toTarget.normalized;
@@ -139,7 +136,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             }
             else
             {
-                // 已在出招射程內，停止位移並保持面向玩家（遵守姿態約束）
                 intent.MoveInput = Vector2.zero;
                 if (toTarget.sqrMagnitude > 0.001f && _entity.State != CombatState.Parrying)
                 {
@@ -150,7 +146,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                     );
                 }
 
-                // 3. 週期性出招進攻（經過 Startup 前搖蓄力 -> Active 打擊 -> Recovery 收招）
                 if (!_isAiGuarding && !_isAiParrying)
                 {
                     _actionCooldown -= Time.deltaTime;
@@ -185,6 +180,9 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             _targetPlayer = bestTarget;
         }
 
+        /// <summary>
+        /// Applies hit damage and knockback to this dummy's entity.
+        /// </summary>
         public void TakeHit(float damage, Vector3 knockback)
         {
             if (_entity != null)
@@ -194,6 +192,9 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             }
         }
 
+        /// <summary>
+        /// Interrupts this dummy's attack and stuns it for the specified duration.
+        /// </summary>
         public void ApplyParryStun(float duration)
         {
             if (_entity != null)
@@ -202,6 +203,9 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             }
         }
 
+        /// <summary>
+        /// Resets AI cooldowns, defense timers, and target selection upon arena reset.
+        /// </summary>
         public void ResetDummy()
         {
             if (_entity != null)

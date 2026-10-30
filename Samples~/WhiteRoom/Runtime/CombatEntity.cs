@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
 {
+    /// <summary>
+    /// Enumerates the combat and locomotion states of a <see cref="CombatEntity"/>.
+    /// </summary>
     public enum CombatState
     {
         Idle,
@@ -20,6 +23,9 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
         Incapacitated
     }
 
+    /// <summary>
+    /// Shared character entity handling locomotion, jumping, gravity, combat windows, and global arena reset.
+    /// </summary>
     [RequireComponent(typeof(CharacterController))]
     public class CombatEntity : MonoBehaviour
     {
@@ -28,7 +34,8 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
 
         [Header("Identity & Team")]
         [SerializeField] private string _entityId = "Entity";
-        [SerializeField] private int _teamId = 0; // 0: Player/Ally, 1: Enemy/Dummy
+        [SerializeField] private int _teamId = 0;
+        [SerializeField] private bool _enableCombatActions = true;
 
         [Header("Health & Stats")]
         [SerializeField] private float _maxHealth = 100f;
@@ -36,7 +43,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
 
         [Header("Locomotion Settings")]
         [SerializeField] private float _walkSpeed = 5.0f;
-        [SerializeField] private float _guardSpeed = 2.2f; // 警戒慢步速度
+        [SerializeField] private float _guardSpeed = 2.2f;
         [SerializeField] private float _crouchSpeed = 2.5f;
         [SerializeField] private float _turnSpeed = 720f;
         [SerializeField] private float _jumpHeight = 1.5f;
@@ -45,22 +52,22 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
         [Header("Crouch Collider Settings")]
         [SerializeField] private float _standingHeight = 2.0f;
         [SerializeField] private float _crouchingHeight = 1.0f;
+        [SerializeField] private float _colliderRadius = 0.25f;
         [SerializeField] private Vector3 _standingCenter = new Vector3(0, 1.0f, 0);
         [SerializeField] private Vector3 _crouchingCenter = new Vector3(0, 0.5f, 0);
 
         [Header("Attack Windows & Parameters")]
-        [SerializeField] private float _attackStartupTime = 0.20f; // 前搖蓄力（對手可見的預警）
-        [SerializeField] private float _attackActiveTime = 0.15f;  // 判定有效打擊區間
-        [SerializeField] private float _attackRecoveryTime = 0.25f;// 後搖收招區間
+        [SerializeField] private float _attackStartupTime = 0.20f;
+        [SerializeField] private float _attackActiveTime = 0.15f;
+        [SerializeField] private float _attackRecoveryTime = 0.25f;
         [SerializeField] private float _attackRange = 1.5f;
         [SerializeField] private float _attackDamage = 20f;
         [SerializeField] private float _attackKnockback = 7.5f;
 
         [Header("Defense Parameters")]
-        [SerializeField] private float _parryWindow = 0.18f; // 精準彈刀判定時窗（按下的前0.18秒）
-        [SerializeField] private float _parryStunDuration = 1.0f; // 彈刀反制使攻擊者硬直時間
+        [SerializeField] private float _parryWindow = 0.18f;
+        [SerializeField] private float _parryStunDuration = 1.0f;
 
-        // Components & Runtime State
         private CharacterController _controller;
         private Vector3 _spawnPosition;
         private Quaternion _spawnRotation;
@@ -71,16 +78,26 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
         private float _guardStartTime = -1f;
         private bool _isCrouching = false;
         private bool _hitRegisteredInCurrentAttack = false;
+        private CombatActionIntent _currentIntent;
 
-        // Presentation callback hooks
         public Transform VisualRoot { get; set; }
         public Transform FistTransform { get; set; }
+        public bool LocomotionLocked { get; set; }
+        public float SpeedOverride { get; set; } = -1f;
+        public CombatActionIntent CurrentIntent => _currentIntent;
 
-        // Events
+        public bool EnableCombatActions
+        {
+            get => _enableCombatActions;
+            set => _enableCombatActions = value;
+        }
+
         public static event Action OnGlobalArenaReset;
         public event Action<string> OnCombatLog;
-        public event Action<CombatEntity, float, float> OnHealthChanged; // (entity, current, max)
+        public event Action<CombatEntity, float, float> OnHealthChanged;
         public event Action<CombatEntity, CombatState> OnStateChanged;
+        public event Action<CombatActionIntent> OnIntentStepped;
+        public event Action OnEntityReset;
 
         public string EntityId => _entityId;
         public int TeamId => _teamId;
@@ -90,10 +107,18 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
         public bool IsCrouching => _isCrouching;
         public bool IsIncapacitated => _state == CombatState.Incapacitated;
         public bool IsGuarding => _state == CombatState.Guarding || _state == CombatState.Parrying;
+        public float GuardSpeed => _guardSpeed;
+        public float WalkSpeed => _walkSpeed;
 
         protected virtual void Awake()
         {
             _controller = GetComponent<CharacterController>();
+            if (_controller != null)
+            {
+                _controller.height = _standingHeight;
+                _controller.center = _standingCenter;
+                _controller.radius = _colliderRadius;
+            }
             _spawnPosition = transform.position;
             _spawnRotation = transform.rotation;
             _currentHealth = _maxHealth;
@@ -110,15 +135,27 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
         }
 
         /// <summary>
-        /// 執行單幀共同戰鬥循環（由本機 Player、AI 傀儡或遠端網路接收器驅動）
+        /// Emits a formatted message to the combat/interaction log stream.
+        /// </summary>
+        public void EmitLog(string message)
+        {
+            OnCombatLog?.Invoke(message);
+        }
+
+        /// <summary>
+        /// Advances one simulation step for this entity using the supplied action intent.
         /// </summary>
         public void StepCombat(CombatActionIntent intent, Transform cameraTransform = null)
         {
+            _currentIntent = intent;
+
             if (intent.GlobalReset)
             {
                 ResetAllArenaEntities();
                 return;
             }
+
+            OnIntentStepped?.Invoke(intent);
 
             if (_state == CombatState.Incapacitated)
             {
@@ -126,25 +163,20 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                 return;
             }
 
-            // 1. 處理防禦輸入
-            HandleDefenseInput(intent);
-
-            // 2. 處理蹲姿輸入
-            HandleCrouchInput(intent);
-
-            // 3. 處理出招時序（Startup -> Active -> Recovery）
-            UpdateAttackTimeline();
-
-            // 4. 處理起招觸發
-            if (intent.Attack && CanInitiateAttack())
+            if (_enableCombatActions)
             {
-                InitiateAttack(intent.MoveInput, cameraTransform);
+                HandleDefenseInput(intent);
+                HandleCrouchInput(intent);
+                UpdateAttackTimeline();
+
+                if (intent.Attack && CanInitiateAttack())
+                {
+                    InitiateAttack(intent.MoveInput, cameraTransform);
+                }
+
+                UpdateFlinchAndStunTimers();
             }
 
-            // 5. 處理受擊與擊暈計時恢復
-            UpdateFlinchAndStunTimers();
-
-            // 6. 處理位移、跳躍與物理重力整合
             HandleLocomotion(intent, cameraTransform);
         }
 
@@ -158,7 +190,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
 
             if (intent.ParryTap)
             {
-                // 精準彈刀（由快速點按觸發，給予精準時窗）
                 _guardStartTime = Time.time;
                 SetState(CombatState.Parrying);
                 _stateTimer = _parryWindow;
@@ -166,7 +197,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             }
             else if (intent.GuardHold)
             {
-                // 普通防禦（按住觸發，不可偷渡為彈刀）
                 if (_state != CombatState.Guarding && _state != CombatState.Parrying)
                 {
                     _guardStartTime = Time.time;
@@ -176,7 +206,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             }
             else
             {
-                // 放開防禦按鍵
                 if (_state == CombatState.Guarding)
                 {
                     SetState(_isCrouching ? CombatState.Crouching : CombatState.Idle);
@@ -204,7 +233,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             }
             else if (!intent.CrouchHold && _isCrouching && !intent.CrouchToggle)
             {
-                // 按住放開後自動起身
                 wantCrouch = false;
             }
 
@@ -219,12 +247,11 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
 
         private bool CanInitiateAttack()
         {
-            return _state == CombatState.Idle || _state == CombatState.Moving || _state == CombatState.Crouching;
+            return !LocomotionLocked && (_state == CombatState.Idle || _state == CombatState.Moving || _state == CombatState.Crouching);
         }
 
         private void InitiateAttack(Vector2 moveInput, Transform cameraTransform)
         {
-            // 若有移動輸入則朝向輸入方向出招（Directional Attack），否則原地出招（Stationary Attack）
             if (moveInput.sqrMagnitude > 0.05f)
             {
                 Vector3 fwd = transform.forward;
@@ -254,7 +281,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                 _stateTimer -= Time.deltaTime;
                 if (_stateTimer <= 0f)
                 {
-                    // 轉入有效打擊判定階段
                     SetState(CombatState.AttackActive);
                     _stateTimer = _attackActiveTime;
                     PerformHitCheck();
@@ -262,7 +288,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             }
             else if (_state == CombatState.AttackActive)
             {
-                // 有效判定區間內若尚未命中，持續進行命中查詢
                 if (!_hitRegisteredInCurrentAttack)
                 {
                     PerformHitCheck();
@@ -271,7 +296,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                 _stateTimer -= Time.deltaTime;
                 if (_stateTimer <= 0f)
                 {
-                    // 轉入後搖收招階段
                     SetState(CombatState.AttackRecovery);
                     _stateTimer = _attackRecoveryTime;
                 }
@@ -312,7 +336,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
         }
 
         /// <summary>
-        /// 受擊判定核心：普通格擋、精準彈刀反制與實質中斷攻擊
+        /// Evaluates incoming hit damage against guard and parry states and applies knockback.
         /// </summary>
         public void TakeHit(CombatEntity attacker, float damage, Vector3 knockback)
         {
@@ -321,22 +345,17 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             Vector3 toAttacker = (attacker.transform.position - transform.position).normalized;
             float facingDot = Vector3.Dot(transform.forward, toAttacker);
 
-            // 正面 120 度角防禦判定
             if (IsGuarding && facingDot > 0.3f)
             {
-                // 1. 精準彈刀（Parry）：必須明確處於 Parrying 姿態（由點按觸發）
                 if (_state == CombatState.Parrying)
                 {
                     _stateTimer = 0.3f;
                     OnCombatLog?.Invoke($"【精準防禦 (Parry) 成功！】[{_entityId}] 完美化解傷害，並擊暈反制 [{attacker.EntityId}]！");
-
-                    // 實質中止攻擊者的進攻！打斷其動作並施加暈眩！
                     attacker.InterruptAttack(_parryStunDuration);
                     return;
                 }
                 else if (_state == CombatState.Guarding)
                 {
-                    // 2. 普通防禦：80% 減傷、70% 減擊退
                     damage *= 0.20f;
                     knockback *= 0.30f;
                     _residualVelocity += knockback;
@@ -346,7 +365,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                 }
             }
 
-            // 直擊命中：承受全部傷害與擊退，進入硬直
             _residualVelocity += knockback;
             SetState(CombatState.Flinching);
             _stateTimer = 0.35f;
@@ -355,11 +373,11 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
         }
 
         /// <summary>
-        /// 精準防禦成功時呼叫：打斷攻擊者的出招時序，並令其進入暈眩 (Stunned) 狀態
+        /// Interrupts an active attack and places this entity into the stunned state.
         /// </summary>
         public void InterruptAttack(float stunDuration)
         {
-            _hitRegisteredInCurrentAttack = true; // 廢除本次出招的剩餘判定
+            _hitRegisteredInCurrentAttack = true;
             SetState(CombatState.Stunned);
             _stateTimer = stunDuration;
             OnCombatLog?.Invoke($"【攻擊被中斷！】[{_entityId}] 招式遭對手彈開，陷入暈眩 {stunDuration:F1} 秒！");
@@ -394,7 +412,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             Vector3 moveDir = Vector3.zero;
             Vector2 input = intent.MoveInput;
 
-            bool canMove = (_state == CombatState.Idle || _state == CombatState.Moving || _state == CombatState.Crouching || _state == CombatState.Guarding || _state == CombatState.Jumping);
+            bool canMove = !LocomotionLocked && (_state == CombatState.Idle || _state == CombatState.Moving || _state == CombatState.Crouching || _state == CombatState.Guarding || _state == CombatState.Jumping);
             if (canMove && input.sqrMagnitude > 0.01f)
             {
                 if (cameraTransform != null)
@@ -408,7 +426,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                     moveDir = new Vector3(input.x, 0, input.y).normalized;
                 }
 
-                // 朝向移動方向平滑旋轉
                 if (moveDir.sqrMagnitude > 0.001f)
                 {
                     Quaternion targetRot = Quaternion.LookRotation(moveDir, Vector3.up);
@@ -417,31 +434,35 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             }
 
             float currentSpeed = _isCrouching ? _crouchSpeed : _walkSpeed;
-            if (_state == CombatState.Guarding)
+            if (SpeedOverride >= 0f)
             {
-                currentSpeed = _guardSpeed; // 警戒慢步速度
+                currentSpeed = SpeedOverride;
+            }
+            else if (_state == CombatState.Guarding)
+            {
+                currentSpeed = _guardSpeed;
             }
             else if (_state == CombatState.Jumping)
             {
-                currentSpeed = _walkSpeed * 0.85f; // 空中位移控制
+                currentSpeed = _walkSpeed * 0.85f;
             }
             else if (_state == CombatState.AttackStartup || _state == CombatState.AttackActive)
             {
-                currentSpeed *= 0.15f; // 出招時大幅限制主動速度
+                currentSpeed *= 0.15f;
             }
-            else if (!canMove || _state == CombatState.Parrying || _state == CombatState.Flinching || _state == CombatState.Stunned || _state == CombatState.Incapacitated)
+
+            if (!canMove || _state == CombatState.Parrying || _state == CombatState.Flinching || _state == CombatState.Stunned || _state == CombatState.Incapacitated)
             {
-                currentSpeed = 0f; // 硬直／暈眩／倒地／彈刀時鎖定主動位移
+                currentSpeed = 0f;
             }
 
-            Vector3 driveVelocity = moveDir * (currentSpeed * input.magnitude);
+            Vector3 driveVelocity = moveDir * (currentSpeed * Mathf.Clamp01(input.magnitude));
 
-            // 跳躍與重力處理
             if (_controller.isGrounded)
             {
-                _verticalVelocity = -2f; // 貼地穩定力
+                _verticalVelocity = -2f;
 
-                if (intent.Jump && canMove && !_isCrouching && _state != CombatState.Guarding)
+                if (intent.Jump && canMove && !_isCrouching && _state != CombatState.Guarding && SpeedOverride < 0f)
                 {
                     _verticalVelocity = Mathf.Sqrt(2f * _jumpHeight * Mathf.Abs(_gravity));
                     SetState(CombatState.Jumping);
@@ -457,7 +478,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                 }
             }
 
-            // 外力衝量指數衰減
             _residualVelocity = Vector3.Lerp(_residualVelocity, Vector3.zero, 5f * Time.deltaTime);
 
             Vector3 totalVelocity = driveVelocity + _residualVelocity;
@@ -468,15 +488,13 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                 _controller.Move(totalVelocity * Time.deltaTime);
             }
 
-            // 更新常態位移狀態
             if (_controller.isGrounded)
             {
                 if (_state == CombatState.Jumping)
                 {
-                    // 落地後恢復常態姿態與出招許可
                     if (_isCrouching)
                         SetState(CombatState.Crouching);
-                    else if (input.sqrMagnitude > 0.05f)
+                    else if (canMove && input.sqrMagnitude > 0.05f)
                         SetState(CombatState.Moving);
                     else
                         SetState(CombatState.Idle);
@@ -486,14 +504,10 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                 {
                     if (_isCrouching)
                         SetState(CombatState.Crouching);
-                    else if (input.sqrMagnitude > 0.05f)
+                    else if (canMove && input.sqrMagnitude > 0.05f)
                         SetState(CombatState.Moving);
                     else
                         SetState(CombatState.Idle);
-                }
-                else if (_state == CombatState.Guarding)
-                {
-                    // 防禦警戒慢步時保持 Guarding 姿態
                 }
             }
         }
@@ -508,7 +522,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
         }
 
         /// <summary>
-        /// 全場統一重設：還原全場所有角色至初始位置、生命值、狀態與計時
+        /// Resets all active arena entities and notifies subscribers of the global arena reset.
         /// </summary>
         public static void ResetAllArenaEntities()
         {
@@ -522,11 +536,15 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             OnGlobalArenaReset?.Invoke();
         }
 
+        /// <summary>
+        /// Restores this entity to its initial spawn transform, full health, and idle state.
+        /// </summary>
         public void ResetEntity()
         {
             if (_controller != null) _controller.enabled = false;
             transform.position = _spawnPosition;
             transform.rotation = _spawnRotation;
+            Physics.SyncTransforms();
             if (_controller != null) _controller.enabled = true;
 
             _currentHealth = _maxHealth;
@@ -536,24 +554,34 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             _stateTimer = 0f;
             _guardStartTime = -1f;
             _hitRegisteredInCurrentAttack = false;
+            _currentIntent = CombatActionIntent.Empty;
+            LocomotionLocked = false;
+            SpeedOverride = -1f;
 
             if (_controller != null)
             {
                 _controller.height = _standingHeight;
                 _controller.center = _standingCenter;
+                _controller.radius = _colliderRadius;
             }
 
             SetState(CombatState.Idle);
             OnHealthChanged?.Invoke(this, _currentHealth, _maxHealth);
-            OnCombatLog?.Invoke($"[{_entityId}] 狀態重設完成（生命值 100/100，位置已歸零）");
+            OnEntityReset?.Invoke();
+            OnCombatLog?.Invoke($"[{_entityId}] 狀態重設完成");
         }
 
+        /// <summary>
+        /// Initializes the identity, team, and health parameters of this entity.
+        /// </summary>
         public void InitializeSettings(string id, int team, float maxHp)
         {
             _entityId = id;
             _teamId = team;
             _maxHealth = maxHp;
             _currentHealth = maxHp;
+            _spawnPosition = transform.position;
+            _spawnRotation = transform.rotation;
         }
     }
 }

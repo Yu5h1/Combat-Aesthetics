@@ -1,22 +1,26 @@
 # WhiteRoom：3D 測試場 Sample（握手互動與徒手對戰）
 
 > 套件名稱：`com.yu5h1.combataesthetic`  
-> 驗證宿主：Unity `6000.6.0f1` URP（`W:/UnityProject/Yu5h1LibTest` 實測 0 編譯錯誤、PlayMode 握手互動 6 大案例全數通過、攻防循環驗證通過、Windows x64 建置成功）  
+> 驗證宿主：Unity `6000.6.0f1` URP（`W:/UnityProject/Yu5h1LibTest` 實測 0 編譯錯誤、PlayMode 畫面與互動檢查通過、輔助自動案例 7/7 通過）  
 > 規範文件：[WhiteRoom 實作計畫](Implementation-Plan.md) ｜ [既有能力對照](Existing-Capabilities.md) ｜ [WhiteRoom 靜態與動態驗收紀錄](../../Documentation/WhiteRoom-Acceptance.md)
 
 ---
 
 ## 1. 簡介與定位
 
-WhiteRoom 是 CombatAesthetic 套件的官方 3D 最小測試場範例（Sample）。包含兩大測試場景：
+WhiteRoom 是 CombatAesthetic 套件的官方 3D 最小測試場範例（Sample）。包含兩個獨立場景，並共用同一套 `Samples~/WhiteRoom/Runtime/`：
 1. **第一個交付：移動＋握手互動場景 (`Handshake/Handshake.unity`)**：
-   - 依照 Stage 2b 規範，建立第 1 批握手互動：發起伸手、中途取消收手、走近回應、碰觸握緊至成功搖手。
-   - 嚴格落實**判定與表現分離**：由 `HandshakeArbitrator` 權威判定碰到與成功；玩家與 AI 僅送出移動與按住/放開 E 的意圖；兩手對準的人形 IK 與顏色反饋僅負責畫面呈現。
-   - 提供自主 `HandshakeAiController`，支援 5 種可設定情境（AI 發起、AI 走近回應、AI 取消、握緊期間放開、Idle）。
+   - 依照 Stage 2b 與「第 1 批修正交辦」規範，實作第 1 批握手互動：發起伸手、中途取消收手、走近回應、碰觸握緊至成功搖手，以及握緊中途放開直接收手（標明第 2 批情況）。
+   - **重用共用 `Runtime/`**：直接重用 `CombatEntity`（移動、跳躍、重力與全場重設）、`WhiteRoomCharacter`（P1/P2 輸入採集與改鍵）、`WhiteRoomHUD`（共用 IMGUI 面板與 JSON 日誌匯出）及 `WhiteRoomSceneBuilder`（共用場地、燈光、相機與 HUD 建置），不複製第二份角色移動或 HUD 程式。
+   - **嚴格落實判定與表現分離**：
+     - **碰觸判定**：僅當雙方右手碰撞體（`RightHandContactCollider`，`SphereCollider` trigger 半徑 `0.22m`）發生真實物理接觸並對應到該兩隻右手（`HandContactBridge`）時才算「碰到」，移除任何手部或身體距離門檻捷徑。
+     - **時間來源**：伸手（`0.50s`）、等待（`2.00s` 循環）、收手（`0.50s`）、握緊（`0.50s`）、搖一下（`0.50s`）時長直接讀取自 `LIMB-ANIM-1` 匯入之人形 `AnimationClip.length`，不在 C# 寫死秒數。
+     - **人形動畫與 Runtime Humanoid IK**：採用 `punch-character.glb` 人形骨架與 `HandshakeAnimator.controller` 播放 5 個第 1 批人形動作片段；`HandshakeVisualFeedback.OnAnimatorIK` 在 `Reach` / `Wait` / `Grip` / `Shaking` 期間以 `AvatarIKGoal.RightHand` 將右手對準對方右手位置，且碰撞體錨定於 IK 計算前的手腕姿勢，確保 IK 僅影響畫面呈現而不干擾接觸判定。
+   - **重新按下才發起**：一次握手結束或收手回到站立（`None`）後，若玩家或 AI 仍持續按住互動鍵，不會再次伸手；必須先放開互動鍵再重新按下才會發起下一次伸手。
+   - **Sample 場景僅含可操作內容**：`Handshake.unity` 不掛載自動測試腳本，進入 Play Mode 後即可由玩家直接操作；輔助自動化測試器移至 `Samples~/WhiteRoom/Tests/HandshakeVerificationRunner.cs`。
 2. **戰鬥驗證場景 (`Combat/WhiteRoom.unity`)**（目前暫停，保留至戰鬥驗證重啟）：
-   - 驗證第三人稱徒手攻防美學：角色八方向移動、跳躍落地恢復、原地/方向出招、警戒慢步、普通防禦、精準彈刀反制、受擊反應與受力因果。
+   - 驗證第三人稱徒手攻防：八方向移動、跳躍落地恢復、原地/方向出招、警戒慢步、普通防禦、精準彈刀反制、受擊反應與受力因果。
    - 本機玩家、AI 傀儡與遠端連線角色共用同一套 `CombatEntity` 與 `CombatActionIntent` 合法性規則。
-   - 可配置情境（1P vs 1 AI、1P vs 2 AI、2P vs 2 AI、2P PvP）與 R 鍵全場統一重設。
 
 > **【網路狀態聲明】**：目前 HUD 內建之「不良網路模擬器」為單一程序內的記憶體模擬佇列（用於驗證延遲/丟包下的時序參數與日誌格式）。尚未接入真實網路傳輸層（Host/Client 或 LAN Socket），面板明確標示真實傳輸層為不可用 (N/A)，不將心跳模擬器宣稱為 LAN 或連線對戰已完成。
 
@@ -29,124 +33,121 @@ WhiteRoom 遵循獨立 Assembly 邊界原則，嚴格隔離宿主專案腳本（
 ```text
 Samples~/WhiteRoom/
 ├─ README.md                  本文件：匯入、操作、重設與驗收紀錄
-├─ Implementation-Plan.md     實作計畫與連線方案評估
+├─ Implementation-Plan.md     實作計畫與第 1 批修正交辦規範
 ├─ Existing-Capabilities.md   既有能力與模組重用分析
 ├─ Preparation/               階段 0 盤點報告
-├─ Combat/                    WhiteRoom.unity（可以對戰的 URP 測試場景，暫停到戰鬥驗證）
+├─ Art/
+│  └─ Handshake/              人形模型 (punch-character.glb)、Avatar、AnimatorController 與 5 支 LIMB-ANIM-1 人形動畫片段
+├─ Combat/                    WhiteRoom.unity（徒手對戰測試場景，暫停到戰鬥驗證）
 ├─ Handshake/                 Handshake.unity（移動＋握手互動場景，第一個交付）
-│  ├─ HandContactBridge.cs    右手碰撞體接觸觸發器
-│  ├─ HandshakeAiController.cs AI 握手情境控制器（發起、回應、取消、提前放開）
-│  ├─ HandshakeArbitrator.cs  權威握手判定核心（碰觸、握緊、搖手、收手判定）
-│  ├─ HandshakeCharacter.cs   本機玩家控制器（WASD + E 鍵互動，支援覆寫意圖）
-│  ├─ HandshakeHUD.cs         IMGUI 互動狀態顯示、情境測試按鈕與 JSON 匯出
-│  ├─ HandshakeParticipant.cs 參與者運動學實體（移動、跳躍、姿態流轉、重設）
-│  ├─ HandshakeSceneBuilder.cs 握手測試場景自動建造器
+│  ├─ HandContactBridge.cs    右手 SphereCollider 觸發器橋接（驗證實際接觸的兩隻右手）
+│  ├─ HandshakeAiController.cs 可設定之 AI 握手控制器（伸手延遲、按住時長、是否走近、停止距離）
+│  ├─ HandshakeArbitrator.cs  權威握手判定核心（右手碰撞接觸、握緊、搖手、收手裁決）
+│  ├─ HandshakeParticipant.cs 握手參與者狀態機（組合共用 CombatEntity 與 AnimationClip 時長）
+│  ├─ HandshakeSceneBuilder.cs 握手場景建置器（重用 WhiteRoomSceneBuilder 共用場地/鏡頭/HUD）
 │  ├─ HandshakeState.cs       握手狀態機與正式裁決結果列舉
-│  ├─ HandshakeVerificationRunner.cs PlayMode 6 大驗收案例自動測試器
-│  ├─ HandshakeVisualFeedback.cs 程序化人形手臂 IK 與視鏡反饋表現層
-│  └─ Yu5h1Lib...Handshake.asmdef 獨立握手 Assembly
-├─ Runtime/                   共用 Sample Runtime assembly
-│  ├─ CombatActionIntent.cs   抽象操作意圖（含移動、出招、防禦、InteractHold/Down/Up）
-│  ├─ CombatEntity.cs         共用戰鬥實體狀態機與受擊/中斷判定核心
-│  ├─ WhiteRoomCharacter.cs   本機玩家戰鬥控制器
+│  ├─ HandshakeVisualFeedback.cs 人形 Animator 驅動、Runtime Humanoid IK 與視鏡顏色表現層
+│  └─ Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake.asmdef
+├─ Runtime/                   共用 Sample Runtime assembly（Handshake 與 Combat 共用）
+│  ├─ CombatActionIntent.cs   抽象操作意圖（含移動、跳躍、出招、防禦、InteractHold/Down/Up）
+│  ├─ CombatEntity.cs         共用角色運動學（移動、跳躍、重力、全場重設）與戰鬥狀態機
+│  ├─ WhiteRoomCharacter.cs   本機玩家輸入控制器（支援 P1/P2 可改鍵互動命令與意圖覆寫）
 │  ├─ WhiteRoomDummy.cs       自主 AI 戰鬥傀儡
 │  ├─ WhiteRoomVisuals.cs     程序化機械人形與姿態/時機顏色反饋
 │  ├─ WhiteRoomCamera.cs      第三人稱軌道鏡頭（支援 UI 焦點隔離）
-│  ├─ WhiteRoomHUD.cs         戰鬥 IMGUI 狀態、情境切換、診斷與 JSON 紀錄匯出
+│  ├─ WhiteRoomHUD.cs         共用 IMGUI 狀態、P1/P2 互動改鍵、AI 參數設定、診斷與 JSON 匯出
 │  ├─ WhiteRoomNetwork.cs     模擬不良網路通道（延遲/抖動/丟包佇列）
-│  └─ WhiteRoomSceneBuilder.cs 戰鬥場景環境與情境角色生成器
-└─ Tests/                     戰鬥規則與重設測試
+│  └─ WhiteRoomSceneBuilder.cs 共用場地環境、燈光、鏡頭與戰鬥情境生成器
+└─ Tests/                     獨立測試 assembly（不掛載於 Sample 場景）
+   ├─ HandshakeVerificationRunner.cs 握手第 1 批 7 項輔助自動化驗證腳本
+   └─ Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.asmdef
 ```
 
-* **Handshake Assembly**：`Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake`
-  * 參照：`Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Runtime`、`Yu5h1Lib.CombatAesthetic`、`Yu5h1Lib.Common`、`Yu5h1Lib.Library`、`Yu5h1Lib.InputHandler`、`Unity.InputSystem`、`Unity.RenderPipelines.Universal.Runtime`。
 * **Runtime Assembly**：`Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Runtime`
   * 參照：`Yu5h1Lib.CombatAesthetic`、`Yu5h1Lib.Common`、`Yu5h1Lib.Library`、`Yu5h1Lib.InputHandler`、`Unity.InputSystem`、`Unity.RenderPipelines.Universal.Runtime`。
+* **Handshake Assembly**：`Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake`
+  * 參照：`Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Runtime`、`Yu5h1Lib.CombatAesthetic`、`Yu5h1Lib.Common`、`Yu5h1Lib.Library`、`Yu5h1Lib.InputHandler`、`Unity.InputSystem`、`Unity.RenderPipelines.Universal.Runtime`。
+* **Tests Assembly**：`Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests`
+  * 參照：`Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Runtime`、`Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake`、`Yu5h1Lib.CombatAesthetic`、`Yu5h1Lib.Common`、`Yu5h1Lib.Library`、`Yu5h1Lib.InputHandler`、`Unity.InputSystem`。
 
 ---
 
 ## 3. 宿主相容性與依賴盤點
 
 ### 3.1 宿主環境
-* **Unity 版本**：`6000.6.0f1`（宿主實機驗證通過，0 編譯錯誤）
+* **Unity 版本**：`6000.6.0f1`（宿主 `W:\UnityProject\Yu5h1LibTest` 實機編譯 0 錯誤）
 * **Render Pipeline**：Universal Render Pipeline (URP 17.6.0)
-* **輸入後端**：Unity New Input System，全數透過 `Yu5h1Lib.InputHandler` 統一調度，禁止直接呼叫 `UnityEngine.Input`。
+* **輸入與搜尋封裝**：全數透過 `Yu5h1Lib.InputHandler` 讀取輸入，並使用 `Yu5h1Lib.ObjectUtility.FindObject<T>` / `FindObjects<T>` 取代原生 `Object.FindAnyObjectByType` / `FindObjectsByType`。
 
 ### 3.2 來源與依賴隔離盤點
-* **共用層**：引用 `Yu5h1Lib.Common`（輸入抽象 `InputHandler`）與 `Yu5h1Lib.Library`。
+* **共用層**：引用 `Yu5h1Lib.Common`、`Yu5h1Lib.Library` 與 `com.yu5h1.animation`（Editor `HumanoidImporter` 匯入 `LIMB-ANIM-1` 人形資產）。
 * **套件邊界**：完全隔離於舊 2D `CharacterController2D`、`AttributeBehaviour` 及舊 `GameManager`，不依賴任何 2D 專案元件。
-* **KFC 專案獨立性**：不涉及 KFC 遷移，維持獨立 Sample 命名空間。
 
 ---
 
-## 4. 操作與控制指南 (UX Verified)
+## 4. 操作與控制指南
 
 ### 4.1 握手互動操作（場景：`Handshake/Handshake.unity`）
 
 | 操作輸入 | 動作行為 | 可觀察標準與反饋 |
 |---|---|---|
-| **E 鍵 (Hold)** | 發起伸手與維持等待 | 站立常態下按住 E：發起伸手（0.50s，右臂向前伸展 0.65m 並內斜 0.30m 對齊身體中線，視鏡轉黃色）。伸手完成後進入等待姿態（維持伸臂微動）。 |
-| **E 鍵 (Release)** | 收手取消 | 在伸手或等待期間放開 E：中止互動，平滑收手（0.50s，視鏡還原藍色），返回站立常態。 |
-| **W / A / S / D + E 鍵 (Hold)** | 走近回應與握手接觸 | 對方伸手時，按住 E 並操作 WASD 走近（伸手慢步 2.2 m/s）。進入接觸門檻（手部 <=0.65m 或身軀 <=1.05m）時自動判定碰觸，進入握緊 (Grip 0.50s，視鏡轉紫色)。 |
-| **持續按住 E 鍵** | 握手成功與搖一下 | 握緊 0.50s 期間雙方持續按住 E：裁定**握手成功**！雙臂上下搖動（Shaking 0.50s，振幅 0.06m，視鏡亮綠色），結束後自動平滑收手。 |
-| **握緊期間放開 E 鍵** | 中途放開直接收手 | 握緊期間若任一方提前放開 E：裁定中途放開（第 2 批情況），雙方直接收手返回站立，視鏡熄滅轉灰。 |
-| **R 鍵 (Reset)** | 全場統一快速重設 | 重設玩家與 AI 至初始起始位置（相距 2.4m 面對面），狀態還原常態，清除 AI 計時與會話殘留。 |
+| **互動鍵 Hold（P1 預設 `E`、P2 預設 `Keypad3`，可於 Inspector 或 HUD 改鍵）** | 發起伸手與維持等待 | 站立常態（`None`）下按住互動鍵：播放 `handshake-reach`（`0.50s`），視鏡轉黃色；伸手完成後進入 `Waiting` 並循環播放 `handshake-wait`（`2.00s`）。 |
+| **互動鍵 Release** | 收手取消 | 在 `Reaching` 或 `Waiting` 期間放開互動鍵：播放 `handshake-withdraw`（`0.50s`），完成後回到站立常態（`None`，視鏡還原藍色）。 |
+| **W / A / S / D + 互動鍵 Hold** | 走近回應與右手碰撞接觸 | 對方伸手時，按住互動鍵並操作 WASD 走近（伸手期間慢步 `2.2 m/s`）。當雙方右手碰撞球（`RightHandContactCollider`，半徑 `0.22m`）實際接觸時，`HandshakeArbitrator` 判定「碰到」，雙方進入 `Grip` 並播放 `handshake-grip`（`0.50s`，視鏡轉紫色）。 |
+| **握緊期間持續按住互動鍵** | 握手成功與搖一下 | `Grip`（`0.50s`）結束時雙方仍按住互動鍵：裁定**握手成功 (`Success`)**，雙方進入 `Shaking` 並播放 `handshake-shake`（`0.50s`，視鏡亮綠色），結束後自動經 `Withdrawing`（`0.50s`）收手回站立。 |
+| **握緊期間放開互動鍵** | 中途放開直接收手 | `Grip` 期間任一方提前放開互動鍵：裁定 `EarlyReleaseDuringGrip`（標明第 2 批情況），雙方立即進入 `Withdrawing` 收手回站立，視鏡轉灰。 |
+| **結束後仍按住互動鍵** | 要求先放開再按 | 握手完成或收手回到 `None` 時若仍按住互動鍵，HUD 顯示 `(需先放開再按)`，角色維持站立不重新伸手；放開後再次按下才發起新一次伸手。 |
+| **R 鍵 / HUD 按鈕** | 全場統一快速重設 | 呼叫 `CombatEntity.ResetAllArenaEntities()`，將玩家與 AI 重設回初始面對面位置（相距 `2.4m`）、清除 AI 計時與判定會話殘留。 |
 
 ### 4.2 徒手對戰操作（場景：`Combat/WhiteRoom.unity`，暫停中）
 
 | 操作輸入 | 動作行為 | 可觀察標準與反饋 |
 |---|---|---|
-| **W / A / S / D** | 視角 8 方向移動 | 角色以鏡頭水平面為基準轉向輸入方向並前進；支援面向畫面近處出招。 |
-| **Space** | 起跳與空中位移 | 垂直起跳（高度 1.5m，重力 -20m/s²）；著地時自動恢復常態姿態，**落地後立即恢復移動與出招**。 |
-| **Left Ctrl (Hold)** | 蹲下維持 | 按住維持蹲姿（碰撞高度減半）；放開自動平滑恢復站立。 |
-| **C 鍵 (Toggle)** | 蹲下切換 | 點按切換蹲下／站立狀態。 |
-| **滑鼠左鍵 (Click)** | 原地／方向出招 | 未輸入方向為原地出招；輸入方向時朝指定方位出招。依序歷經：前搖蓄力 (Startup 0.20s，視鏡橘紅預警) ➔ 有效打擊 (Active 0.15s，拳部伸展 0.75m，單次命中保證) ➔ 收招後搖 (Recovery 0.25s)。 |
-| **滑鼠右鍵 (Hold)** | 普通防禦與**警戒慢步** | 長按進入防禦姿態（視鏡呈黃色、雙臂交叉），正面 120 度錐形範圍內減傷 80%、減少擊退 70%；**防禦中可操作移動進行警戒慢步 (2.2 m/s)**。長按防禦絕不誤觸發精準彈刀。 |
-| **滑鼠右鍵 (Tap)** | **精準防禦 (Parry)** | 快速按下並放開（<=0.22s）進入彈刀姿態（時窗 0.18s，視鏡亮青色）。正面受擊時免疫傷害與擊退，並**實質打斷攻擊者的出招時序**，令攻擊者陷入 1.0 秒暈眩 (Stunned，視鏡呈紫藍色)。 |
-| **R 鍵 (Reset)** | 全場統一重設 | 立即重設全場所有角色至起始位置、速度歸零、恢復 100 點生命值，並**同步清空 AI 冷卻、目標及待送網路訊息**。 |
-| **F1 鍵** | 開關診斷面板 | 切換右上方不良網路與診斷面板；**滑鼠游標移入面板時自動取得焦點**，鎖定戰鬥按鍵與視角旋轉，戰鬥在背景持續運行。 |
-| **情境切換按鈕** | 4 種情境切換 | HUD 面板提供 `1P vs 1 AI`、`1P vs 2 AI`、`2P vs 2 AI`、`2P PvP` 一鍵切換。 |
-| **匯出紀錄按鈕** | JSON 結構化日誌 | HUD 面板一鍵將戰鬥日誌匯出至 `Application.persistentDataPath`。 |
+| **W / A / S / D** | 視角 8 方向移動 | 角色以鏡頭水平面為基準轉向輸入方向並前進。 |
+| **Space** | 起跳與空中位移 | 垂直起跳（高度 `1.5m`，重力 `-20m/s²`）；著地後立即恢復移動與出招。 |
+| **Left Ctrl (Hold) / C (Toggle)** | 蹲下維持／切換 | 蹲姿碰撞高度減半；放開或再按恢復站立。 |
+| **滑鼠左鍵 (Click)** | 原地／方向出招 | 歷經 Startup (`0.20s`) ➔ Active (`0.15s`) ➔ Recovery (`0.25s`)。 |
+| **滑鼠右鍵 (Hold)** | 普通防禦與警戒慢步 | 正面 120 度錐形減傷 80%，防禦中可以 `2.2 m/s` 慢步移動。 |
+| **滑鼠右鍵 (Tap <=0.22s)** | 精準防禦 (Parry) | 時窗 `0.18s` 內正面受擊免疫傷害，並打斷攻擊者使其陷入 `1.0s` 暈眩。 |
+| **R 鍵 / HUD 按鈕** | 全場統一重設 | 重設所有角色位置、生命與 AI 狀態。 |
 
 ---
 
-## 5. 表現與動作識別
+## 5. 人形動作資產與 Runtime Humanoid IK
 
-WhiteRoom 採用素面白色機械外殼與幾何人形骨架，透過視鏡顏色、雙臂伸展、軀幹縮放與衝量衰減呈現互動與攻防時機：
-* **握手發起／等待**：右臂前伸 0.65m 並內斜 0.30m 對齊身體中線，視鏡呈黃色；等待期間帶有呼吸微動。
-* **握手碰觸／握緊**：雙手交扣，視鏡呈紫色（Grip 時窗 0.50s）。
-* **握手成功／搖一下**：雙手上下同步振動（振幅 0.06m，頻率約 4Hz），視鏡呈綠色。
-* **握手中途放開**：視鏡轉灰，雙手平滑返回站姿。
-* **戰鬥前搖預警**：視鏡呈橘紅色，拳頭微後縮（給予對手反應時窗）。
-* **戰鬥打擊判定**：視鏡呈鮮紅色，拳頭向前突進伸展 0.75m。
-* **戰鬥普通防禦**：視鏡呈黃色，雙臂護於胸前。
-* **戰鬥精準彈刀**：視鏡呈亮青色，成功時觸發受擊方打斷與暈眩。
-* **戰鬥受擊／擊暈**：受擊閃紅並承接物理擊退，暈眩時視鏡呈紫藍色。
-* **戰鬥倒地 (KO)**：生命歸零時進入 Incapacitated 姿態，視鏡熄滅。
-
-> 註：獨立動作系統（`Yu5h1Lib/data-driven/animation`）之跨平台動作檔案接用屬於後續規劃，目前以程序化幾何人形表現層驗證。
+`Samples~/WhiteRoom/Art/Handshake/` 包含由動畫線（`W:\Yu5h1Lib\AnimationEditor\samples\handshake\*.anim.json` 搭配 `punch-puppet.limb.json`）匯出並透過 `com.yu5h1.animation` 之 `HumanoidImporter`（`LIMB-ANIM-1`）建立的人形資產：
+* **角色模型與 Avatar**：`punch-character.glb` ＋ `punch-character.humanoid.asset`（`punch-characterAvatar`，`isHuman = true`）。
+* **5 個第 1 批人形動作片段**：
+  1. `handshake-reach.humanoid.asset`（長度 `0.500s`，`isHumanMotion = true`，單次播放）
+  2. `handshake-wait.humanoid.asset`（長度 `2.000s`，`isHumanMotion = true`，循環播放）
+  3. `handshake-withdraw.humanoid.asset`（長度 `0.500s`，`isHumanMotion = true`，單次播放）
+  4. `handshake-grip.humanoid.asset`（長度 `0.500s`，`isHumanMotion = true`，單次播放）
+  5. `handshake-shake.humanoid.asset`（長度 `0.500s`，`isHumanMotion = true`，單次播放）
+* **Animator Controller**：`HandshakeAnimator.controller`（Base Layer 啟用 `iKPass = true`，包含 `Idle`、`Reach`、`Wait`、`Grip`、`Shake`、`Withdraw` 六個狀態）。
+* **Runtime Humanoid IK (`HandshakeVisualFeedback.OnAnimatorIK`)**：
+  * 在 `Reaching`、`Waiting`、`Grip`、`Shaking` 狀態下，以 `Animator.SetIKPositionWeight(AvatarIKGoal.RightHand, weight)` 與 `SetIKPosition` 將右手對準雙方手部中點目標。
+  * 右手碰撞體（`RightHandContactCollider`）每幀於 `OnAnimatorIK` 套用 IK 前先同步至純動畫手腕延伸位置，確保 IK 只服務視覺對準，不影響物理觸發判定。
 
 ---
 
-## 6. 實跑驗證與證據
+## 6. 驗證紀錄與證據分界
+
+> **重要說明**：實體鍵盤與滑鼠的親手操作手感驗收由使用者本人執行；下列 PlayMode 畫面擷取與 `HandshakeVerificationRunner` 測試案例為**輔助驗證**，不冒充使用者本人的手動鍵盤操作。
 
 | 驗證項目 | 執行方式 | 結果與證據 |
 |---|---|---|
-| **套件與 Sample 編譯** | Unity 6000.6.0f1 Host (`Yu5h1LibTest`) | **0 錯誤**，Runtime 與 Handshake 雙 asmdef 均編譯通過。 |
-| **握手案例 1：發起後取消** | PlayMode 自動化測試 (`HandshakeVerificationRunner`) | **PASS**。按住 E 伸手 0.15s，放開 E 觸發收手過渡，0.6s 後乾淨返回站立常態。 |
-| **握手案例 2：AI發起、玩家回應成功** | PlayMode 自動化測試 (`HandshakeVerificationRunner`) | **PASS**。AI 原地伸手等待，玩家按住 E 走近，手部接觸觸發握緊 (0.50s)，持續按住進入搖手 (0.50s)，正式結果為 `Success`。 |
-| **握手案例 3：玩家發起、AI回應成功** | PlayMode 自動化測試 (`HandshakeVerificationRunner`) | **PASS**。角色對調驗證，玩家原地伸手，AI 自動轉向走近，碰觸握緊並搖手成功，正式結果為 `Success`。 |
-| **握手案例 4：握緊中途放開收手** | PlayMode 自動化測試 (`HandshakeVerificationRunner`) | **PASS**。握緊期間 AI 於 0.15s 提前放開 E，判定元件裁決為 `EarlyReleaseDuringGrip`（標明第 2 批情況），雙方直接收手返回。 |
-| **握手案例 5：AI發起後取消** | PlayMode 自動化測試 (`HandshakeVerificationRunner`) | **PASS**。AI 主動伸手後放開 E，成功驗證 AI 取消收手流程。 |
-| **握手案例 6：全場統一快速重設** | PlayMode 自動化測試 (`HandshakeVerificationRunner`) | **PASS**。R 鍵／ResetAll 清除會話狀態，玩家還原 (0, 0, -1.2)，AI 還原 (0, 0, 1.2)，無物理殘留。 |
-| **握手結構化日誌匯出** | PlayMode HUD 匯出 | **成功**。產生 `WhiteRoom_Handshake_Logs_20261031_022558.json`，完整記錄 6 大案例判定時序。 |
-| **戰鬥最小攻防循環** | PlayMode 實機操作 | P1 出招命中 AI，單次打擊成立（20 傷害），受力位移正常。 |
-| **戰鬥精準防禦打斷** | PlayMode 實機操作 | P1 於 0.18s 內點按右鍵，正面承受攻擊時傷害為 0，且**攻擊者動作立即中斷並陷入 1.0s 暈眩**。 |
-| **戰鬥普通防禦與警戒慢步** | PlayMode 實機操作 | 長按右鍵承受攻擊時減傷 80%（扣 4 滴），移動時保持防禦姿態慢步 (2.2 m/s)。 |
-| **戰鬥跳躍落地恢復** | PlayMode 實機操作 | 按 Space 起跳，著地後 `_controller.isGrounded` 正常觸發，狀態恢復 `Idle`，可立即出招與移動。 |
-| **戰鬥全場重設** | PlayMode R 鍵 / 面板按鈕 | P1 與 AI 同步還原位置、生命 100/100、清除 AI 決策計時與模擬佇列，兩入口行為一致。 |
-| **戰鬥情境配置** | PlayMode HUD 切換 | 成功切換 1P vs 1 AI (2人)、1P vs 2 AI (3人)、2P vs 2 AI (4人)、2P PvP (2人)。 |
-| **Windows 建置** | Unity StandaloneWindows64 | **建置成功**，產生 `Builds/WhiteRoom/WhiteRoom.exe`（667,136 bytes）。 |
+| **套件與 Sample 編譯** | Unity `6000.6.0f1` 宿主 (`Yu5h1LibTest`) | **0 錯誤、0 警告**（`Runtime`、`Handshake`、`Tests` 三個 asmdef 均編譯通過）。 |
+| **場景直接可操作性檢查** | 開啟 `Handshake/Handshake.unity` 進入 Play Mode | **通過**。場景無掛載 `HandshakeVerificationRunner`；進入 Play Mode 後 `playerOverride = False`，AI 預設為 `AiInitiator` 伸手等待，玩家可直接控制角色（見截圖 `Documentation/Screenshots/Handshake_PlayMode_Initial.png`）。 |
+| **輔助案例 1：玩家發起後放開取消** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。按住 E 進入 `Reaching`，放開 E 經 `Withdrawing`（`0.50s`）返回 `None`。 |
+| **輔助案例 2：AI 發起、玩家走近回應成功** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。AI 伸手等待，玩家按住 E 走近至右手 `SphereCollider`（半徑 `0.22m`）實際接觸，歷經 `Grip`（`0.50s`）與 `Shaking`（`0.50s`），裁定 `Success`（見截圖 `Documentation/Screenshots/Handshake_PlayMode_Success.png`）。 |
+| **輔助案例 3：未放開 E 不重新發起（第 10 項）** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。握手結束回到 `None` 後持續按住 E 達 `0.35s`，狀態維持 `None` 不再伸手；放開 `0.10s` 後再按下才重新進入 `Reaching`。 |
+| **輔助案例 4：玩家發起、AI 走近回應成功** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。玩家原地伸手，AI 走近使右手碰撞體接觸，完成 `Grip` ➔ `Shaking` ➔ `Success`。 |
+| **輔助案例 5：握緊期間提前放開收手** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。`Grip` 期間 AI 於 `0.18s` 提前放開，裁定 `EarlyReleaseDuringGrip`（第 2 批情況），雙方立即收手。 |
+| **輔助案例 6：AI 發起後依設定時長取消** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。AI 伸手後依可設定之 `_cancelHoldDuration`（測試設為 `0.60s`）放開取消，經 `Withdrawing` 返回 `None`。 |
+| **輔助案例 7：全場統一快速重設** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。呼叫 `CombatEntity.ResetAllArenaEntities()`，雙方回到 `(0, 0, -1.2)` 與 `(0, 0, 1.2)`、狀態 `None`、判定會話無殘留。 |
+| **結構化日誌匯出** | `WhiteRoomHUD.ExportStructuredLogs()` | **通過**。匯出 `Documentation/WhiteRoom_Handshake_Logs.json`，共 **43 筆**結構化紀錄，涵蓋全部 7 項輔助案例之狀態與裁決轉換。 |
+| **戰鬥場景相容性檢查** | 開啟 `Combat/WhiteRoom.unity` 進入 Play Mode | **通過**。共用 `Runtime/` 修改後，戰鬥場景正常生成玩家與 AI（`OnePlayerVsOneAI`），無編譯或執行期錯誤。 |
+| **待使用者本人親手驗收項目** | 實體鍵盤 WASD + E / R 與 HUD 操作 | **待使用者驗收**（包含實體按鍵手感、改鍵操作、攝影機視角與畫面微調感受）。 |
 
 ---
 

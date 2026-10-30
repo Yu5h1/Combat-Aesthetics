@@ -6,6 +6,9 @@ using UnityEngine.InputSystem;
 
 namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
 {
+    /// <summary>
+    /// Third-person orbit camera that tracks a target transform and yields cursor focus when the HUD is hovered.
+    /// </summary>
     public class WhiteRoomCamera : MonoBehaviour
     {
         [Header("Target Settings")]
@@ -36,14 +39,12 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             _yaw = angles.y;
             _pitch = angles.x;
 
-            // Lock cursor for comfortable 3D camera orbit
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
         }
 
         private void Update()
         {
-            // 当除错面板取得操作焦点时，释放光标并禁止旋转镜头
             if (WhiteRoomCharacter.IsUIFocused)
             {
                 if (Cursor.lockState == CursorLockMode.Locked)
@@ -54,7 +55,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                 return;
             }
 
-            // Toggle cursor lock with Left Alt or Escape via InputHandler
             bool toggleCursor = InputHandler.GetKeyDown(KeyCode.LeftAlt) || InputHandler.GetKeyDown(KeyCode.Escape);
 
             if (toggleCursor)
@@ -71,7 +71,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                 }
             }
 
-            // Only rotate when cursor is locked or middle mouse is held
             if (Cursor.lockState == CursorLockMode.Locked)
             {
                 Vector2 mouseDelta = Vector2.zero;
@@ -99,7 +98,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             Quaternion rotation = Quaternion.Euler(_pitch, _yaw, 0f);
             Vector3 desiredPosition = pivot - (rotation * Vector3.forward * _distance);
 
-            // Simple camera collision prevention against floor/walls
             if (Physics.Raycast(pivot, desiredPosition - pivot, out RaycastHit hit, _distance))
             {
                 if (hit.transform != _target)

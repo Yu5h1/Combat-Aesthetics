@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
 {
+    /// <summary>
+    /// Represents a sequenced action intent packet in the local network simulation queue.
+    /// </summary>
     [Serializable]
     public struct CombatNetworkMessage
     {
@@ -19,8 +22,8 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
     }
 
     /// <summary>
-    /// 不良網路模擬通道：提供延遲 (Latency)、抖動 (Jitter) 與丟包 (Packet Loss) 參數實驗。
-    /// 【注意】：此通道目前為單一程序內的記憶體模擬佇列，未接入真實傳輸層，不代表跨程序傳輸、主機裁定或 LAN 真實連線。
+    /// In-process memory queue simulating latency, jitter, and packet loss for diagnostic experiments.
+    /// Does not provide cross-process transport or remote host arbitration.
     /// </summary>
     public class SimulatedNetworkChannel
     {
@@ -30,10 +33,10 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             public float DeliverTime;
         }
 
-        public float LatencyMs = 50f;      // 基礎單向延遲 (毫秒)
-        public float JitterMs = 10f;       // 延遲隨機抖動 (毫秒)
+        public float LatencyMs = 50f;
+        public float JitterMs = 10f;
         [Range(0f, 1f)]
-        public float PacketLossRate = 0f;  // 丟包率 (0.0 ~ 1.0)
+        public float PacketLossRate = 0f;
 
         private readonly List<QueuedPacket> _packetQueue = new List<QueuedPacket>();
         private uint _nextSeq = 1;
@@ -46,11 +49,13 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
         public event Action<CombatNetworkMessage> OnPacketDelivered;
         public event Action<CombatNetworkMessage> OnPacketDropped;
 
+        /// <summary>
+        /// Enqueues a packet with simulated latency/jitter or drops it according to the configured loss rate.
+        /// </summary>
         public void SendPacket(string senderId, CombatActionIntent intent)
         {
             _sentCount++;
 
-            // 模擬丟包
             if (PacketLossRate > 0.001f && UnityEngine.Random.value < PacketLossRate)
             {
                 _droppedCount++;
@@ -65,7 +70,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                 return;
             }
 
-            // 計算延遲與抖動
             float jitterOffset = UnityEngine.Random.Range(-JitterMs, JitterMs);
             float totalDelay = Mathf.Max(0f, (LatencyMs + jitterOffset) / 1000f);
 
@@ -84,6 +88,9 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             _packetQueue.Add(packet);
         }
 
+        /// <summary>
+        /// Delivers any queued packets whose simulated delivery timestamp has been reached.
+        /// </summary>
         public void UpdateQueue()
         {
             float now = Time.time;
@@ -98,6 +105,9 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             }
         }
 
+        /// <summary>
+        /// Clears all pending packets and resets sequence and drop counters.
+        /// </summary>
         public void ResetStats()
         {
             _packetQueue.Clear();

@@ -129,7 +129,6 @@ GameObject:
   m_Component:
   - component: {fileID: 33443945}
   - component: {fileID: 33443944}
-  - component: {fileID: 33443946}
   m_Layer: 0
   m_Name: Handshake_Bootstrap
   m_TagString: Untagged
@@ -150,6 +149,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake::Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake.HandshakeSceneBuilder
   _autoSetupOnAwake: 1
+  _characterModelPrefab: {fileID: 6334693208988405809, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+  _humanoidAvatar: {fileID: -5478683720352436592, guid: 5752433c6143861469b371f8bbe0144d, type: 2}
+  _animatorController: {fileID: 9100000, guid: 0767a4c7110421d449a5e61834fc2a96, type: 2}
+  _reachClip: {fileID: 8779831864619793406, guid: 2110e5b1e6b8f434284ad27fea77b4b1, type: 2}
+  _waitClip: {fileID: 8952854439076216105, guid: 827bef51320c4f142a4d56390cf741b1, type: 2}
+  _withdrawClip: {fileID: -6327883441209141040, guid: 00aa645ac5d8a1644a9a6c087d44bd41, type: 2}
+  _gripClip: {fileID: 6561813818055005941, guid: 05699cc6fd156d64bae27408ce5afcc1, type: 2}
+  _shakeClip: {fileID: 6303289161557001744, guid: 45ae0b402cd25004daffa8e0930fec4c, type: 2}
 --- !u!4 &33443945
 Transform:
   m_ObjectHideFlags: 0
@@ -165,18 +172,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &33443946
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 33443943}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1be684af59e31bf4a9e3d3d28d83749f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake::Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake.HandshakeVerificationRunner
 --- !u!1 &794131627
 GameObject:
   m_ObjectHideFlags: 0

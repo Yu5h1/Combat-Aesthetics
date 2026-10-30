@@ -187,3 +187,58 @@
 - 結果之後仍按著互動鍵會立刻再伸手：匯出紀錄在 4.603 秒與 7.159 秒各出現一次沒有人重新按鍵的「碰到」，之後被下一個案例的重設打斷，自動驗證沒有發現。使用者已決定要先放開再按下才發起，列入 [第 1 批修正交辦](../Samples~/WhiteRoom/Implementation-Plan.md#第-1-批修正交辦) 第 10 項。
 - 上一節寫「155 筆事件」，`WhiteRoom_Handshake_Logs.json` 實際只有 37 筆；README 與上一節寫的人形 IK 在程式中並不存在。
 - 握手程式在 method 內有大量說明註解，不符合 CodingConventions。
+
+---
+
+## 握手第 1 批修正與驗收紀錄 (2026-10-31)
+
+本節記錄針對 [第 1 批修正交辦](../Samples~/WhiteRoom/Implementation-Plan.md#第-1-批修正交辦) 10 項問題之實作修正與宿主 Unity `6000.6.0f1` (`W:\UnityProject\Yu5h1LibTest`) 實機驗證證據。
+
+### 1. 修正項目逐項對照
+
+| 項 | 修正交辦要求 | 實作修正與檔案位置 | 驗證結果 |
+|---|---|---|---|
+| **1** | **碰到的判定**：只有兩人右手的碰撞體接觸才算碰到，並對應到實際接觸的那隻手；移除 `0.65m` 手部距離與 `1.05m` 身體距離門檻。 | 刪除 `HandshakeArbitrator` 的 `_contactDistanceThreshold`、`_contactBodyDistanceThreshold` 與 `CheckHandProximityContact()`。`HandContactBridge` 驗證 `other.TryGetComponent(out HandContactBridge otherBridge)` 且雙方皆為各自參與者的 `RightHandBridge`，呼叫 `OnTriggerContact(this, otherBridge)`；`HandshakeArbitrator.AreHandsActuallyTouching()` 僅在雙方 `RightHandCollider.bounds.Intersects` 實際重疊且雙方處於 `Reaching`/`Waiting` 時裁定碰到。 | **通過**（未接觸時絕不提前觸發 `Grip`；走近至兩顆半徑 `0.22m` 的右手 `SphereCollider` 實際相交才觸發） |
+| **2** | **動作片段**：從動畫線匯出第 1 批 5 個片段，用 `com.yu5h1.animation` 的 `LIMB-ANIM-1` 產生人形片段並由 `Animator` 播放；時間直接讀片段；加上執行期人形 IK 將手對準對方，不影響碰到判定。 | 由 `W:\Yu5h1Lib\AnimationEditor\samples\handshake\*.anim.json` 搭配 `punch-puppet.limb.json` 匯出 GLB 並透過 `HumanoidImporter.Generate` 建立 `Samples~/WhiteRoom/Art/Handshake/` 下之 `punch-character.humanoid.asset` 與 5 個片段：`handshake-reach` (`0.500s`)、`handshake-wait` (`2.000s`, loop)、`handshake-withdraw` (`0.500s`)、`handshake-grip` (`0.500s`)、`handshake-shake` (`0.500s`) 及 `HandshakeAnimator.controller`（`iKPass = true`）。`HandshakeParticipant.ConfigureClips` 與 `HandshakeArbitrator.ConfigureClips` 直接由 `AnimationClip.length` 讀取時間。`HandshakeVisualFeedback.OnAnimatorIK` 使用 `Animator.SetIKPosition(AvatarIKGoal.RightHand, ...)` 對準對方右手，並在套用 IK 前先將 `RightHandContactCollider` 同步至純動畫手腕延伸位置，確保 IK 不影響碰撞判定。 | **通過**（`isHuman = true`、5 支 `AnimationClip.isHumanMotion = true`，`OnAnimatorIK` 正常運作且碰撞球維持純動畫位置） |
+| **3** | **共用 `Runtime/`**：重用 `CombatEntity`、`WhiteRoomCharacter`、`WhiteRoomHUD`、`WhiteRoomSceneBuilder`，刪除重複的握手專用複製版，並確認戰鬥場景仍可運作。 | 刪除 `HandshakeCharacter.cs` 與 `HandshakeHUD.cs`。`HandshakeParticipant` 標註 `[RequireComponent(typeof(CombatEntity))]` 直接重用 `CombatEntity.StepLocomotionOnly` 與 `CombatEntity.ResetAllArenaEntities`；`WhiteRoomCharacter` 同時支援戰鬥與握手意圖派發；`WhiteRoomHUD` 整合戰鬥與握手面板及 JSON 匯出；`HandshakeSceneBuilder` 呼叫 `WhiteRoomSceneBuilder.EnsureEnvironment` / `EnsureHUD` / `EnsureCamera`。 | **通過**（`Handshake.unity` 與 `Combat/WhiteRoom.unity` 均於 Play Mode 實測正常運作） |
+| **4** | **Sample 場景只放可操作的內容**：從 `Handshake.unity` 移除 `HandshakeVerificationRunner`；進入 Play 即可操作玩家，測試移至 `Tests/`。 | 將 `HandshakeVerificationRunner.cs` 移至 `Samples~/WhiteRoom/Tests/` 並建立 `Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.asmdef`。重新建立並儲存 `Handshake.unity`，確認場景內無 `HandshakeVerificationRunner`，進入 Play Mode 後 `playerOverride = False`、AI 預設為 `AiInitiator`。 | **通過**（進入 Play Mode 立即可由玩家操作，無腳本搶控） |
+| **5** | **AI 測試設定**：`HandshakeAiController` 改為可設定何時伸手、按住多久、要不要走近，移除寫死的 `1.2s`。 | `HandshakeAiController` 新增序列化欄位與公開屬性：`ReachDelay` (`0.25s`)、`HoldDuration` (`6.0s`)、`CancelHoldDuration` (`1.2s`)、`EarlyReleaseGripTime` (`0.18s`)、`WalkIn` (`true`)、`StopDistance` (`0.78m`)，並於 `WhiteRoomHUD` 提供即時滑桿與勾選開關。 | **通過**（Inspector 與 HUD 皆可動態調整 AI 時序與走近開關） |
+| **6** | **互動鍵**：P1 與 P2 的互動鍵皆可於 Inspector 與執行期介面改鍵，HUD 顯示目前按鍵。 | `WhiteRoomCharacter` 提供 `_interactKey`（預設 `KeyCode.E`）與 `_player2InteractKey`（預設 `KeyCode.Keypad3`）；`WhiteRoomHUD` 顯示目前 P1/P2 互動鍵並提供點擊改鍵按鈕（按下任意鍵即完成綁定）。 | **通過**（Inspector 與 HUD 面板皆可修改並即時顯示 P1/P2 互動鍵） |
+| **7** | **程式慣例**：遵循 `CodingConventions.md` 移除 method 內說明註解，並使用 `Yu5h1Lib` 封裝。 | 清理 `Runtime/`、`Handshake/`、`Tests/` 全部 C# 檔案之 method 內 `//` 註解，改為英文 XML `<summary>`；以 `ObjectUtility.FindObject<T>` / `FindObjects<T>` 取代全部 `FindAnyObjectByType` / `FindObjectsByType`；全數透過 `Yu5h1Lib.InputHandler` 讀取輸入。 | **通過**（全目錄 C# 掃描 0 處 method 內 `//` 註解、0 處原生 `Find*Object*` 或 `UnityEngine.Input`） |
+| **8** | **驗收證據**：在宿主 `Yu5h1LibTest` 實際檢查，附上編譯結果、PlayMode 畫面與紀錄；未親手做的測試不寫成通過，自動檢查僅列為輔助。 | 於 Unity `6000.6.0f1` 宿主完成編譯（0 錯誤）、擷取 PlayMode 初始可操作畫面與握手成功畫面、執行 7 項輔助自動檢查並匯出 JSON 日誌（43 筆），同時明確區分輔助檢查與待使用者親手操作項目。 | **通過**（見下方第 2～4 節證據） |
+| **9** | **文件校正**：校正 `README.md`、`WhiteRoom-Acceptance.md` 與 `handoff.md`，使數字與宣稱完全符合實況。 | 更新三份文件，校正結構化日誌筆數為實際匯出之 **43 筆**，移除舊文件虛報的「155 筆」與已刪除之檔案名稱。 | **通過** |
+| **10** | **重新按下才發起**：一次握手結束或收手回到站立後，仍按著互動鍵不會再伸手；必須先放開再按下才發起。 | `HandshakeParticipant` 新增 `_requireInteractRelease` 鎖定旗標：進入 `Reaching` 時設為 `true`，回到 `None` 後若 `InteractHold` 仍為 `true` 則保持 `None`（HUD 顯示 `按住互動: YES (需先放開再按)`），直到 `!InteractHold` 才解除鎖定。 | **通過**（玩家與 AI 皆遵守此規則，杜絕結束後自動再次伸手與重複碰到） |
+
+### 2. 宿主編譯與場景檢查證據
+
+- **宿主專案**：`W:\UnityProject\Yu5h1LibTest`（Unity `6000.6.0f1` URP）
+- **套件同步檢查**：`Samples~/WhiteRoom/` 與宿主 `Assets/Samples/Combat Aesthetic/1.0.0/WhiteRoom/` 之 `Art/`、`Combat/`、`Handshake/`、`Runtime/`、`Tests/` 全數檔案已同步一致。
+- **Console 編譯與執行期檢查**：重新編譯並進入 `Handshake.unity` 與 `Combat/WhiteRoom.unity` Play Mode，Console 為 **0 Errors、0 Warnings**。
+
+### 3. PlayMode 畫面證據
+
+1. **進入 `Handshake.unity` Play Mode 初始狀態（無自動腳本搶控，玩家可直接操作，AI 伸手等待）**：
+   - 截圖檔案：[Handshake_PlayMode_Initial.png](Screenshots/Handshake_PlayMode_Initial.png)
+   - 畫面內容：Player (`z = -1.2m`) 與 Partner_AI (`z = +1.2m`) 面對面站立；Partner_AI 處於 `Waiting (伸手等待回應)`，Player 處於 `None (常態站立)` 且 `控制覆寫=False`；左上角 HUD 顯示 P1 (`E`) 與 P2 (`Keypad3`) 改鍵按鈕及 AI 參數滑桿。
+2. **雙方右手碰撞體接觸、握緊至搖手成功，以及結束後持續按住 E 要求先放開再按**：
+   - 截圖檔案：[Handshake_PlayMode_Success.png](Screenshots/Handshake_PlayMode_Success.png)
+   - 畫面內容：完成 `Grip` (`0.50s`) 與 `Shaking` (`0.50s`) 後正式結果為 `Success (握手成功！)`；Player 持續按住 E 時維持站立 `None`，HUD 明確顯示 `按住互動: YES (需先放開再按)`，未發生自動二次伸手。
+
+### 4. 輔助自動檢查與匯出紀錄（不替代使用者親手操作）
+
+> **聲明**：下列 7 項案例由 `Samples~/WhiteRoom/Tests/HandshakeVerificationRunner.cs` 在 Play Mode 中動態掛載執行，作為狀態機、碰撞觸發與時間參數的**輔助回歸驗證**；實體鍵盤的手動操作體驗與手感驗收留待使用者本人親手確認。
+
+| 輔助案例 | 驗證重點 | 結果 |
+|---|---|---|
+| **Case 1** | 玩家按住 E 伸手 (`Reaching`)，放開 E 經 `Withdrawing` (`0.50s`) 返回 `None` | **PASS** |
+| **Case 2** | AI 伸手等待，玩家按住 E 走近至右手 `SphereCollider` (`r = 0.22m`) 真實接觸 ➔ `Grip` (`0.50s`) ➔ `Shaking` (`0.50s`) ➔ `Success` | **PASS** |
+| **Case 3** | **重新按下才發起（第 10 項）**：Case 2 結束回到 `None` 後持續按住 E 達 `0.35s`，確認維持 `None` (`requireRelease = True`)；放開 `0.10s` 後再按才進入 `Reaching` | **PASS** |
+| **Case 4** | 玩家原地伸手等待，AI (`AiResponder`) 走近至右手碰撞體接觸 ➔ `Grip` ➔ `Shaking` ➔ `Success` | **PASS** |
+| **Case 5** | 握緊期間 AI (`AiEarlyRelease`) 於 `0.18s` 提前放開 ➔ 裁定 `EarlyReleaseDuringGrip`（第 2 批情況），雙方立即收手 | **PASS** |
+| **Case 6** | AI (`AiCancel`) 主動伸手後依可設定之 `CancelHoldDuration` (`0.60s`) 放開取消 ➔ 經 `Withdrawing` 回到 `None` | **PASS** |
+| **Case 7** | 呼叫 `CombatEntity.ResetAllArenaEntities()` 全場快速重設 ➔ 玩家回到 `(0, 0, -1.2)`、AI 回到 `(0, 0, 1.2)`、狀態 `None`、會話無殘留 | **PASS** |
+
+- **匯出日誌檔案**：[WhiteRoom_Handshake_Logs.json](WhiteRoom_Handshake_Logs.json)
+- **實際記錄筆數**：共 **43 筆**結構化 JSON 紀錄（涵蓋上述 7 項輔助案例的每次狀態轉換與接觸裁決，無任何未重新按鍵的異常重複碰到）。
+- **待使用者親手驗收項目**：實體鍵盤 WASD 走位、E 鍵按住/放開/重按手感、HUD 改鍵與 AI 滑桿操作、第三人稱鏡頭視角與人形 IK 視覺微調。
+

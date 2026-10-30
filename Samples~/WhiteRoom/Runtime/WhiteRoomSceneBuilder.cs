@@ -1,17 +1,23 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Yu5h1Lib;
 
 namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
 {
+    /// <summary>
+    /// Predefined combat arena scenarios for the WhiteRoom sample.
+    /// </summary>
     public enum ArenaScenario
     {
-        OnePlayerVsOneAI = 0,    // 1P vs 1 AI（預設單挑測試）
-        OnePlayerVsTwoAI = 1,    // 1P vs 2 AI（多對手圍攻測試）
-        TwoPlayerVsTwoAI = 2,    // 2P vs 2 AI（雙人合作 vs AI 傀儡）
-        TwoPlayerPvP = 3         // 2P PvP（同機/雙人互打測試）
+        OnePlayerVsOneAI = 0,
+        OnePlayerVsTwoAI = 1,
+        TwoPlayerVsTwoAI = 2,
+        TwoPlayerPvP = 3
     }
 
+    /// <summary>
+    /// Builds and manages the shared WhiteRoom environment, lighting, third-person camera, HUD, and combat entities.
+    /// </summary>
     public class WhiteRoomSceneBuilder : MonoBehaviour
     {
         [SerializeField] private bool _autoSetupOnAwake = true;
@@ -32,9 +38,19 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             }
         }
 
+        /// <summary>
+        /// Ensures the 50m x 50m white floor and directional light exist in the current scene.
+        /// </summary>
         public void SetupEnvironment()
         {
-            // Floor (50m x 50m White Room)
+            EnsureEnvironment();
+        }
+
+        /// <summary>
+        /// Static helper that creates the shared WhiteRoom floor and directional light if not already present.
+        /// </summary>
+        public static void EnsureEnvironment()
+        {
             if (GameObject.Find("WhiteRoom_Floor") == null)
             {
                 GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Plane);
@@ -47,8 +63,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                 floor.GetComponent<Renderer>().sharedMaterial = floorMat;
             }
 
-            // Directional Light
-            if (FindAnyObjectByType<Light>() == null)
+            if (ObjectUtility.FindObject<Light>(false) == null)
             {
                 GameObject lightGo = new GameObject("Directional Light");
                 Light light = lightGo.AddComponent<Light>();
@@ -59,29 +74,65 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             }
         }
 
-        public void SetupHUD()
+        /// <summary>
+        /// Ensures the shared <see cref="WhiteRoomHUD"/> exists in the current scene.
+        /// </summary>
+        public WhiteRoomHUD SetupHUD()
         {
-            WhiteRoomHUD hud = FindAnyObjectByType<WhiteRoomHUD>();
+            return EnsureHUD();
+        }
+
+        /// <summary>
+        /// Static helper that locates or creates the shared <see cref="WhiteRoomHUD"/>.
+        /// </summary>
+        public static WhiteRoomHUD EnsureHUD()
+        {
+            WhiteRoomHUD hud = ObjectUtility.FindObject<WhiteRoomHUD>(false);
             if (hud == null)
             {
                 GameObject hudGo = new GameObject("WhiteRoomHUD");
-                hudGo.AddComponent<WhiteRoomHUD>();
+                hud = hudGo.AddComponent<WhiteRoomHUD>();
             }
+            return hud;
         }
 
+        /// <summary>
+        /// Static helper that attaches or updates the shared <see cref="WhiteRoomCamera"/> to follow the target transform.
+        /// </summary>
+        public static WhiteRoomCamera EnsureCamera(Transform targetTransform)
+        {
+            if (targetTransform == null) return null;
+
+            WhiteRoomCamera cam = ObjectUtility.FindObject<WhiteRoomCamera>(false);
+            if (cam == null)
+            {
+                Camera mainCam = Camera.main;
+                GameObject camGo = mainCam != null ? mainCam.gameObject : new GameObject("Main Camera", typeof(Camera));
+                if (mainCam == null)
+                {
+                    camGo.tag = "MainCamera";
+                    camGo.AddComponent<AudioListener>();
+                }
+                cam = camGo.AddComponent<WhiteRoomCamera>();
+            }
+            cam.Target = targetTransform;
+            return cam;
+        }
+
+        /// <summary>
+        /// Spawns the entities for the specified <see cref="ArenaScenario"/> and binds the camera and HUD.
+        /// </summary>
         public void ApplyScenario(ArenaScenario scenario)
         {
             _currentScenario = scenario;
 
-            // 1. 清除先前動態生成的角色
             foreach (var go in _spawnedEntities)
             {
                 if (go != null) SafeDestroy(go);
             }
             _spawnedEntities.Clear();
 
-            // 2. 清理場景中任何舊有的 CombatEntity（確保純淨初始狀態）
-            var oldEntities = FindObjectsByType<CombatEntity>();
+            var oldEntities = ObjectUtility.FindObjects<CombatEntity>(false);
             foreach (var ent in oldEntities)
             {
                 if (ent != null && ent.gameObject != null)
@@ -92,7 +143,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
 
             WhiteRoomCharacter p1 = null;
 
-            // 3. 依據情境配置生成角色
             switch (scenario)
             {
                 case ArenaScenario.OnePlayerVsOneAI:
@@ -119,11 +169,12 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                     break;
             }
 
-            // 4. 配置第三人稱鏡頭追蹤 P1
-            SetupCamera(p1);
+            if (p1 != null)
+            {
+                EnsureCamera(p1.transform);
+            }
 
-            // 5. 通知 HUD 刷新綁定
-            WhiteRoomHUD hud = FindAnyObjectByType<WhiteRoomHUD>();
+            WhiteRoomHUD hud = ObjectUtility.FindObject<WhiteRoomHUD>(false);
             if (hud != null)
             {
                 hud.RefreshBindings();
@@ -192,26 +243,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             return dummy;
         }
 
-        private void SetupCamera(WhiteRoomCharacter targetPlayer)
-        {
-            if (targetPlayer == null) return;
-
-            WhiteRoomCamera cam = FindAnyObjectByType<WhiteRoomCamera>();
-            if (cam == null)
-            {
-                Camera mainCam = Camera.main;
-                GameObject camGo = mainCam != null ? mainCam.gameObject : new GameObject("Main Camera", typeof(Camera));
-                if (mainCam == null)
-                {
-                    camGo.tag = "MainCamera";
-                    camGo.AddComponent<AudioListener>();
-                }
-                cam = camGo.AddComponent<WhiteRoomCamera>();
-            }
-            cam.Target = targetPlayer.transform;
-        }
-
-        private void SafeDestroy(GameObject go)
+        private static void SafeDestroy(GameObject go)
         {
             if (go == null) return;
             if (Application.isPlaying) Destroy(go);

@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
 {
     /// <summary>
-    /// 抽象操作意圖：分離「輸入來源」（本機鍵鼠、AI 決策、遠端網路封包）與「戰鬥判定」。
+    /// Represents a unified action intent snapshot decoupled from input hardware, AI logic, or network transport.
     /// </summary>
     [Serializable]
     public struct CombatActionIntent
@@ -40,7 +40,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
     }
 
     /// <summary>
-    /// 操作來源介面：本機玩家、AI 傀儡或遠端網路客戶端皆實作此介面
+    /// Defines a provider of per-frame action intents for a <see cref="CombatEntity"/>.
     /// </summary>
     public interface ICombatInputSource
     {

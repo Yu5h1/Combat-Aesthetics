@@ -4,28 +4,30 @@ using UnityEngine;
 namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 {
     /// <summary>
-    /// 右手接觸偵測橋接器：
-    /// 掛載於角色右手上，持有觸發碰撞體 (Trigger Collider)，
-    /// 當雙方在伸手或等待階段接觸時，通報判定元件。
+    /// Trigger collider bridge attached to a participant's right hand to report exact hand-to-hand physical contact.
     /// </summary>
     [RequireComponent(typeof(Collider))]
     public class HandContactBridge : MonoBehaviour
     {
         public HandshakeParticipant Owner { get; private set; }
         public Collider HandCollider { get; private set; }
+        public Transform TrackedTransform { get; set; }
 
-        public event Action<HandContactBridge> OnTriggerContact;
+        public event Action<HandContactBridge, HandContactBridge> OnTriggerContact;
 
-        public void Initialize(HandshakeParticipant owner)
+        /// <summary>
+        /// Configures this contact bridge with its owning participant and ensures a kinematic Rigidbody is present.
+        /// </summary>
+        public void Initialize(HandshakeParticipant owner, Transform trackedTransform = null)
         {
             Owner = owner;
+            TrackedTransform = trackedTransform;
             HandCollider = GetComponent<Collider>();
             if (HandCollider != null)
             {
                 HandCollider.isTrigger = true;
             }
 
-            // 確保觸發事件運作：附加 kinematic Rigidbody
             var rb = GetComponent<Rigidbody>();
             if (rb == null)
             {
@@ -35,21 +37,30 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             rb.useGravity = false;
         }
 
+        private void LateUpdate()
+        {
+            if (TrackedTransform != null)
+            {
+                transform.position = TrackedTransform.position;
+                transform.rotation = TrackedTransform.rotation;
+            }
+        }
+
         private void OnTriggerEnter(Collider other)
         {
             var otherBridge = other.GetComponent<HandContactBridge>();
-            if (otherBridge != null && otherBridge.Owner != null && otherBridge.Owner != Owner)
+            if (otherBridge != null && otherBridge.Owner != null && Owner != null && otherBridge.Owner != Owner)
             {
-                OnTriggerContact?.Invoke(otherBridge);
+                OnTriggerContact?.Invoke(this, otherBridge);
             }
         }
 
         private void OnTriggerStay(Collider other)
         {
             var otherBridge = other.GetComponent<HandContactBridge>();
-            if (otherBridge != null && otherBridge.Owner != null && otherBridge.Owner != Owner)
+            if (otherBridge != null && otherBridge.Owner != null && Owner != null && otherBridge.Owner != Owner)
             {
-                OnTriggerContact?.Invoke(otherBridge);
+                OnTriggerContact?.Invoke(this, otherBridge);
             }
         }
     }

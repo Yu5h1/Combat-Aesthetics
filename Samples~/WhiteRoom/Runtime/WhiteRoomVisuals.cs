@@ -2,6 +2,9 @@ using UnityEngine;
 
 namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
 {
+    /// <summary>
+    /// Drives primitive robot visual feedback (crouch scale, punch extension, visor color) from <see cref="CombatEntity"/> state.
+    /// </summary>
     public class WhiteRoomVisualFeedback : MonoBehaviour
     {
         [SerializeField] private CombatEntity _entity;
@@ -25,6 +28,9 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                 _defaultTorsoColor = _torsoRenderer.material.color;
         }
 
+        /// <summary>
+        /// Binds the visual hierarchy references for state-driven color and transform feedback.
+        /// </summary>
         public void BindVisuals(Transform root, Transform fist, Transform head, Renderer visor, Renderer torso)
         {
             _visualRoot = root;
@@ -45,54 +51,48 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
 
             CombatState state = _entity.State;
 
-            // 1. 蹲下縮放回饋
             float targetYScale = _entity.IsCrouching ? 0.6f : 1.0f;
-            if (state == CombatState.Incapacitated) targetYScale = 0.35f; // 擊倒倒地姿態
+            if (state == CombatState.Incapacitated) targetYScale = 0.35f;
             Vector3 scale = _visualRoot.localScale;
             scale.y = Mathf.Lerp(scale.y, targetYScale, 15f * Time.deltaTime);
             _visualRoot.localScale = scale;
 
-            // 2. 出招時序的拳部伸展與蓄力反饋
             if (_fistTransform != null)
             {
                 Vector3 targetFistPos = _fistDefaultLocalPos;
                 if (state == CombatState.AttackStartup)
                 {
-                    // 前搖蓄力：拳頭向後微縮
                     targetFistPos = _fistDefaultLocalPos + new Vector3(0, 0.05f, -0.2f);
                 }
                 else if (state == CombatState.AttackActive)
                 {
-                    // 打擊有效幀：拳頭向前猛烈擊出（伸展 0.75m）
                     targetFistPos = _fistDefaultLocalPos + new Vector3(0, 0, 0.75f);
                 }
                 else if (state == CombatState.Guarding || state == CombatState.Parrying)
                 {
-                    // 防禦姿態：雙臂護於胸前
                     targetFistPos = _fistDefaultLocalPos + new Vector3(-0.25f, 0.1f, 0.25f);
                 }
 
                 _fistTransform.localPosition = Vector3.Lerp(_fistTransform.localPosition, targetFistPos, 20f * Time.deltaTime);
             }
 
-            // 3. 視鏡 (Visor) 與軀幹顏色狀態回饋（時機識別關鍵）
             if (_visorRenderer != null && _visorRenderer.material != null)
             {
                 Color targetVisorColor = _defaultVisorColor;
                 if (state == CombatState.AttackStartup)
-                    targetVisorColor = new Color(1f, 0.45f, 0f); // 橘紅蓄力預警（提示對手防禦/彈刀）
+                    targetVisorColor = new Color(1f, 0.45f, 0f);
                 else if (state == CombatState.AttackActive)
-                    targetVisorColor = new Color(1f, 0.1f, 0.1f); // 鮮紅打擊中
+                    targetVisorColor = new Color(1f, 0.1f, 0.1f);
                 else if (state == CombatState.Guarding)
-                    targetVisorColor = new Color(1f, 0.9f, 0.2f); // 黃色防禦中
+                    targetVisorColor = new Color(1f, 0.9f, 0.2f);
                 else if (state == CombatState.Parrying)
-                    targetVisorColor = new Color(0.2f, 1f, 1f);   // 亮青彈刀判定成功
+                    targetVisorColor = new Color(0.2f, 1f, 1f);
                 else if (state == CombatState.Stunned)
-                    targetVisorColor = new Color(0.4f, 0.4f, 0.9f); // 藍紫暈眩癱瘓
+                    targetVisorColor = new Color(0.4f, 0.4f, 0.9f);
                 else if (state == CombatState.Flinching)
-                    targetVisorColor = Color.red;                 // 受擊閃紅
+                    targetVisorColor = Color.red;
                 else if (state == CombatState.Incapacitated)
-                    targetVisorColor = new Color(0.15f, 0.15f, 0.15f); // 熄滅倒下
+                    targetVisorColor = new Color(0.15f, 0.15f, 0.15f);
 
                 _visorRenderer.material.color = Color.Lerp(_visorRenderer.material.color, targetVisorColor, 15f * Time.deltaTime);
             }
@@ -112,8 +112,14 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
         }
     }
 
+    /// <summary>
+    /// Factory methods for creating simplified robot geometry in the WhiteRoom arena.
+    /// </summary>
     public static class WhiteRoomVisuals
     {
+        /// <summary>
+        /// Builds a primitive robot hierarchy under the specified parent transform.
+        /// </summary>
         public static GameObject CreateRobotModel(Transform parent, out Transform rightFist, out Renderer visorRenderer, out Renderer torsoRenderer)
         {
             GameObject root = new GameObject("VisualRoot");
@@ -128,7 +134,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             Material visorMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard") ?? Shader.Find("Diffuse"));
             visorMat.color = new Color(0.1f, 0.7f, 1.0f);
 
-            // Torso
             GameObject torso = GameObject.CreatePrimitive(PrimitiveType.Cube);
             torso.name = "Torso";
             torso.transform.SetParent(root.transform, false);
@@ -138,7 +143,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             torsoRenderer.sharedMaterial = whiteMat;
             Object.DestroyImmediate(torso.GetComponent<Collider>());
 
-            // Head
             GameObject head = GameObject.CreatePrimitive(PrimitiveType.Cube);
             head.name = "Head";
             head.transform.SetParent(root.transform, false);
@@ -147,7 +151,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             head.GetComponent<Renderer>().sharedMaterial = whiteMat;
             Object.DestroyImmediate(head.GetComponent<Collider>());
 
-            // Visor (Orientation & Action indicator)
             GameObject visor = GameObject.CreatePrimitive(PrimitiveType.Cube);
             visor.name = "Visor";
             visor.transform.SetParent(head.transform, false);
@@ -157,7 +160,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             visorRenderer.sharedMaterial = visorMat;
             Object.DestroyImmediate(visor.GetComponent<Collider>());
 
-            // Left Arm
             GameObject leftArm = GameObject.CreatePrimitive(PrimitiveType.Cube);
             leftArm.name = "LeftArm";
             leftArm.transform.SetParent(root.transform, false);
@@ -166,7 +168,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             leftArm.GetComponent<Renderer>().sharedMaterial = darkMat;
             Object.DestroyImmediate(leftArm.GetComponent<Collider>());
 
-            // Right Arm Root & Fist (Punch mechanism)
             GameObject rightArmRoot = new GameObject("RightArmRoot");
             rightArmRoot.transform.SetParent(root.transform, false);
             rightArmRoot.transform.localPosition = new Vector3(0.4f, 1.1f, 0);
@@ -181,7 +182,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
 
             rightFist = fist.transform;
 
-            // Legs
             GameObject leftLeg = GameObject.CreatePrimitive(PrimitiveType.Cube);
             leftLeg.name = "LeftLeg";
             leftLeg.transform.SetParent(root.transform, false);

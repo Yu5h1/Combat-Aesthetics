@@ -3,127 +3,211 @@ using UnityEngine;
 namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 {
     /// <summary>
-    /// 握手視覺反饋與人形表現層（嚴格與判定分離）：
-    /// 依據 HandshakeState 驅動機械手臂伸展、握緊、上下搖晃與平滑收回，
-    /// 視鏡顏色提供即時時機反饋；IK 對齊僅調整畫面呈現，不干涉判定數值。
+    /// Presentation-only component that plays the five Stage 2b humanoid handshake clips on a humanoid <see cref="Animator"/>
+    /// and applies runtime humanoid IK (<c>OnAnimatorIK</c>) to align the right hand visually toward the opponent's hand.
+    /// Does not modify or participate in contact or outcome arbitration.
     /// </summary>
+    [RequireComponent(typeof(Animator))]
     public class HandshakeVisualFeedback : MonoBehaviour
     {
         [SerializeField] private HandshakeParticipant _participant;
-        [SerializeField] private Transform _visualRoot;
-        [SerializeField] private Transform _fistTransform;
-        [SerializeField] private Transform _headTransform;
-        [SerializeField] private Renderer _visorRenderer;
-        [SerializeField] private Renderer _torsoRenderer;
+        [SerializeField] private HandshakeParticipant _opponent;
+        [SerializeField] private Animator _animator;
+        [SerializeField] private Transform _preIkWristTransform;
+        [SerializeField] private Transform _contactProxyTransform;
+        [SerializeField] private Vector3 _fistLocalOffsetInWrist = new Vector3(0.08f, 0f, 0f);
+        [SerializeField] private Renderer _skinnedRenderer;
+        [SerializeField] private Color _defaultBodyColor = new Color(0.88f, 0.92f, 0.96f);
 
-        private Vector3 _fistDefaultLocalPos;
-        private Color _defaultVisorColor = new Color(0.1f, 0.7f, 1.0f);
-        private Color _defaultTorsoColor = new Color(0.92f, 0.92f, 0.92f);
+        private HandshakeState _lastPlayedState = (HandshakeState)(-1);
+        private float _currentIkWeight = 0f;
+        private Vector3 _currentIkTarget;
+        private Material _instanceMaterial;
 
-        private void Awake()
+        private static readonly int s_BaseColorFactorId = Shader.PropertyToID("baseColorFactor");
+        private static readonly int s_BaseColorId = Shader.PropertyToID("_BaseColor");
+        private static readonly int s_ColorId = Shader.PropertyToID("_Color");
+
+        public HandshakeParticipant Opponent { get => _opponent; set => _opponent = value; }
+
+        /// <summary>
+        /// Binds the participant, opponent, animator, and pre-IK contact proxy references.
+        /// </summary>
+        public void BindHumanoid(
+            HandshakeParticipant participant,
+            Animator animator,
+            Transform preIkWrist,
+            Transform contactProxy,
+            Renderer skinnedRenderer,
+            Color baseColor)
         {
-            if (_participant == null) _participant = GetComponent<HandshakeParticipant>();
-            if (_fistTransform != null) _fistDefaultLocalPos = _fistTransform.localPosition;
-            if (_visorRenderer != null && _visorRenderer.material != null)
-                _defaultVisorColor = _visorRenderer.material.color;
-            if (_torsoRenderer != null && _torsoRenderer.material != null)
-                _defaultTorsoColor = _torsoRenderer.material.color;
+            _participant = participant;
+            _animator = animator;
+            _preIkWristTransform = preIkWrist;
+            _contactProxyTransform = contactProxy;
+            _skinnedRenderer = skinnedRenderer;
+            _defaultBodyColor = baseColor;
+
+            if (_skinnedRenderer != null)
+            {
+                _instanceMaterial = _skinnedRenderer.material;
+                ApplyColor(_defaultBodyColor);
+            }
+
+            if (_participant != null)
+            {
+                _participant.OnStateChanged -= HandleStateChanged;
+                _participant.OnStateChanged += HandleStateChanged;
+            }
+
+            PlayClipForState(HandshakeState.None);
         }
 
-        public void BindVisuals(Transform root, Transform fist, Transform head, Renderer visor, Renderer torso)
+        private void OnDestroy()
         {
-            _visualRoot = root;
-            _fistTransform = fist;
-            _headTransform = head;
-            _visorRenderer = visor;
-            _torsoRenderer = torso;
-            if (_fistTransform != null) _fistDefaultLocalPos = _fistTransform.localPosition;
-            if (_visorRenderer != null && _visorRenderer.material != null)
-                _defaultVisorColor = _visorRenderer.material.color;
-            if (_torsoRenderer != null && _torsoRenderer.material != null)
-                _defaultTorsoColor = _torsoRenderer.material.color;
+            if (_participant != null)
+            {
+                _participant.OnStateChanged -= HandleStateChanged;
+            }
+        }
+
+        private void HandleStateChanged(HandshakeParticipant participant, HandshakeState newState)
+        {
+            PlayClipForState(newState);
+        }
+
+        private void PlayClipForState(HandshakeState state)
+        {
+            if (_animator == null || _lastPlayedState == state) return;
+            _lastPlayedState = state;
+
+            switch (state)
+            {
+                case HandshakeState.None:
+                    _animator.Play("Idle", 0, 1.0f);
+                    break;
+
+                case HandshakeState.Reaching:
+                    _animator.Play("Reach", 0, 0f);
+                    break;
+
+                case HandshakeState.Waiting:
+                    _animator.Play("Wait", 0, 0f);
+                    break;
+
+                case HandshakeState.Grip:
+                    _animator.Play("Grip", 0, 0f);
+                    break;
+
+                case HandshakeState.Shaking:
+                    _animator.Play("Shake", 0, 0f);
+                    break;
+
+                case HandshakeState.Withdrawing:
+                    _animator.Play("Withdraw", 0, 0f);
+                    break;
+            }
         }
 
         private void Update()
         {
-            if (_participant == null || _visualRoot == null) return;
+            if (_participant == null) return;
 
             HandshakeState state = _participant.State;
+            PlayClipForState(state);
 
-            // 1. 手部位置與姿態流轉
-            if (_fistTransform != null)
+            Color targetColor = _defaultBodyColor;
+            switch (state)
             {
-                Vector3 targetLocalPos = _fistDefaultLocalPos;
+                case HandshakeState.Reaching:
+                case HandshakeState.Waiting:
+                    targetColor = Color.Lerp(_defaultBodyColor, new Color(1f, 0.88f, 0.25f), 0.55f);
+                    break;
 
-                switch (state)
-                {
-                    case HandshakeState.None:
-                        targetLocalPos = _fistDefaultLocalPos;
-                        break;
+                case HandshakeState.Grip:
+                    targetColor = Color.Lerp(_defaultBodyColor, new Color(0.85f, 0.35f, 1.0f), 0.6f);
+                    break;
 
-                    case HandshakeState.Reaching:
-                        // 伸手：手部前進伸出 0.65m，向內斜伸 0.30m 對齊身體中線
-                        targetLocalPos = _fistDefaultLocalPos + new Vector3(-0.30f, 0.02f, 0.65f);
-                        break;
+                case HandshakeState.Shaking:
+                    targetColor = Color.Lerp(_defaultBodyColor, new Color(0.25f, 0.95f, 0.45f), 0.65f);
+                    break;
 
-                    case HandshakeState.Waiting:
-                        // 等待：維持伸直姿態，附帶微弱自然呼吸微動
-                        float breath = Mathf.Sin(Time.time * 2.5f) * 0.015f;
-                        targetLocalPos = _fistDefaultLocalPos + new Vector3(-0.30f, 0.02f + breath, 0.65f);
-                        break;
-
-                    case HandshakeState.Grip:
-                        // 握緊：雙手交扣
-                        targetLocalPos = _fistDefaultLocalPos + new Vector3(-0.30f, 0.02f, 0.65f);
-                        break;
-
-                    case HandshakeState.Shaking:
-                        // 搖手：雙手上下搖動（振幅 0.06m，頻率約 4Hz）
-                        float shakeOffset = Mathf.Sin(Time.time * 25f) * 0.06f;
-                        targetLocalPos = _fistDefaultLocalPos + new Vector3(-0.30f, 0.02f + shakeOffset, 0.65f);
-                        break;
-
-                    case HandshakeState.Withdrawing:
-                        // 收手：平滑返回起始站姿
-                        targetLocalPos = _fistDefaultLocalPos;
-                        break;
-                }
-
-                _fistTransform.localPosition = Vector3.Lerp(_fistTransform.localPosition, targetLocalPos, 15f * Time.deltaTime);
+                case HandshakeState.Withdrawing:
+                    targetColor = Color.Lerp(_defaultBodyColor, new Color(0.65f, 0.65f, 0.65f), 0.45f);
+                    break;
             }
 
-            // 2. 視鏡顏色反饋（時序與狀態識別）
-            if (_visorRenderer != null && _visorRenderer.material != null)
+            if (_instanceMaterial != null)
             {
-                Color targetColor = _defaultVisorColor;
-
-                switch (state)
-                {
-                    case HandshakeState.Reaching:
-                    case HandshakeState.Waiting:
-                        targetColor = new Color(1f, 0.85f, 0.1f); // 黃色：發起與等待互動
-                        break;
-
-                    case HandshakeState.Grip:
-                        targetColor = new Color(0.9f, 0.3f, 1.0f); // 亮紫：握緊判定時窗
-                        break;
-
-                    case HandshakeState.Shaking:
-                        targetColor = new Color(0.2f, 1.0f, 0.4f); // 鮮綠：握手成功！
-                        break;
-
-                    case HandshakeState.Withdrawing:
-                        targetColor = new Color(0.6f, 0.6f, 0.6f); // 灰色：收手中
-                        break;
-
-                    case HandshakeState.None:
-                    default:
-                        targetColor = _defaultVisorColor;
-                        break;
-                }
-
-                _visorRenderer.material.color = Color.Lerp(_visorRenderer.material.color, targetColor, 12f * Time.deltaTime);
+                Color current = GetCurrentColor();
+                ApplyColor(Color.Lerp(current, targetColor, 12f * Time.deltaTime));
             }
+        }
+
+        private void OnAnimatorIK(int layerIndex)
+        {
+            if (_animator == null || _participant == null) return;
+
+            if (_preIkWristTransform != null && _contactProxyTransform != null)
+            {
+                _contactProxyTransform.position = _preIkWristTransform.TransformPoint(_fistLocalOffsetInWrist);
+                _contactProxyTransform.rotation = _preIkWristTransform.rotation;
+            }
+
+            float targetWeight = 0f;
+            HandshakeState state = _participant.State;
+
+            if (_opponent != null && _opponent.RightHandTransform != null)
+            {
+                bool selfActive = (state == HandshakeState.Reaching || state == HandshakeState.Waiting ||
+                                   state == HandshakeState.Grip || state == HandshakeState.Shaking);
+                bool oppActive = (_opponent.State == HandshakeState.Reaching || _opponent.State == HandshakeState.Waiting ||
+                                  _opponent.State == HandshakeState.Grip || _opponent.State == HandshakeState.Shaking);
+
+                if (state == HandshakeState.Grip || state == HandshakeState.Shaking)
+                {
+                    targetWeight = 0.85f;
+                    Vector3 myHand = _preIkWristTransform != null ? _preIkWristTransform.position : _participant.RightHandTransform.position;
+                    Vector3 oppHand = _opponent.RightHandTransform.position;
+                    _currentIkTarget = Vector3.Lerp(myHand, oppHand, 0.5f);
+                }
+                else if (selfActive && oppActive)
+                {
+                    float dist = Vector3.Distance(_participant.transform.position, _opponent.transform.position);
+                    if (dist <= 1.8f)
+                    {
+                        targetWeight = Mathf.Clamp01((1.8f - dist) / 1.0f) * 0.55f;
+                        Vector3 myHand = _preIkWristTransform != null ? _preIkWristTransform.position : _participant.RightHandTransform.position;
+                        Vector3 oppHand = _opponent.RightHandTransform.position;
+                        _currentIkTarget = Vector3.Lerp(myHand, oppHand, 0.5f);
+                    }
+                }
+            }
+
+            _currentIkWeight = Mathf.MoveTowards(_currentIkWeight, targetWeight, 4.0f * Time.deltaTime);
+
+            _animator.SetIKPositionWeight(AvatarIKGoal.RightHand, _currentIkWeight);
+            if (_currentIkWeight > 0.001f)
+            {
+                _animator.SetIKPosition(AvatarIKGoal.RightHand, _currentIkTarget);
+            }
+        }
+
+        private Color GetCurrentColor()
+        {
+            if (_instanceMaterial == null) return _defaultBodyColor;
+            if (_instanceMaterial.HasProperty(s_BaseColorFactorId)) return _instanceMaterial.GetColor(s_BaseColorFactorId);
+            if (_instanceMaterial.HasProperty(s_BaseColorId)) return _instanceMaterial.GetColor(s_BaseColorId);
+            if (_instanceMaterial.HasProperty(s_ColorId)) return _instanceMaterial.GetColor(s_ColorId);
+            return _defaultBodyColor;
+        }
+
+        private void ApplyColor(Color color)
+        {
+            if (_instanceMaterial == null) return;
+            if (_instanceMaterial.HasProperty(s_BaseColorFactorId)) _instanceMaterial.SetColor(s_BaseColorFactorId, color);
+            if (_instanceMaterial.HasProperty(s_BaseColorId)) _instanceMaterial.SetColor(s_BaseColorId, color);
+            if (_instanceMaterial.HasProperty(s_ColorId)) _instanceMaterial.SetColor(s_ColorId, color);
         }
     }
 }

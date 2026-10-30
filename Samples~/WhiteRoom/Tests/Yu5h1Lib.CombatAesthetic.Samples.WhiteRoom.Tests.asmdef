@@ -1,0 +1,23 @@
+{
+    "name": "Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests",
+    "rootNamespace": "Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests",
+    "references": [
+        "GUID:8906a9f0089b4f51a53bc849a851b793",
+        "GUID:ee413da94535e344b98b09a2067b0e84",
+        "GUID:5bebe61b49d4f3b4ab967767b260ea4c",
+        "GUID:15bc4668ef1785848a9c85a0b340b9da",
+        "GUID:88f14d179e7c91c4eac28302d69f32e1",
+        "GUID:e097909683439544eb9da6a0b8f26f54",
+        "GUID:75469ad4d38634e559750d17036d5f7c",
+        "GUID:0a2ad6279ef01794b8610804d06308fa"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
