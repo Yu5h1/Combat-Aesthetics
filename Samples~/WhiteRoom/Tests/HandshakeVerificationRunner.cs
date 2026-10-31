@@ -86,6 +86,9 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
                 yield break;
             }
 
+            _arb.RegisterParticipant(_playerParticipant);
+            _arb.RegisterParticipant(_aiParticipant);
+
             _player.OverrideIntent = true;
             yield return new WaitForSeconds(0.2f);
 
@@ -239,7 +242,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
                     {
                         successOutcome = true;
                     }
-                    CaptureCameraToFile(ResolveScreenshotPath("Handshake_Batch3_Success.png"));
                     break;
                 }
                 gripElapsed += Time.deltaTime;
@@ -305,6 +307,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
         {
             _arb.ResetAll();
             _ai.Mode = HandshakeAiMode.AiResponder;
+            _ai.StopDistance = 0.60f;
             _player.CustomIntent = CombatActionIntent.Empty;
             yield return new WaitForSeconds(0.2f);
 
@@ -372,6 +375,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
                 yield return null;
             }
 
+
             yield return new WaitForSeconds(0.15f);
             var releaseIntent = CombatActionIntent.Empty;
             releaseIntent.InteractHold = false;
@@ -385,7 +389,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
                 if (_arb.LastOutcome == HandshakeOutcome.Prank)
                 {
                     prankerIsPlayer = (_arb.LastPranker == _playerParticipant);
-                    CaptureCameraToFile(ResolveScreenshotPath("Handshake_Batch3_Prank.png"));
                     break;
                 }
                 waitPrank += Time.deltaTime;
@@ -456,6 +459,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
                 yield return null;
             }
 
+
             float waitPrank = 0f;
             bool prankerIsAi = false;
             while (waitPrank < 1.2f)
@@ -505,6 +509,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
                 yield return null;
             }
 
+
             yield return new WaitForSeconds(0.15f);
             var releaseIntent = CombatActionIntent.Empty;
             releaseIntent.InteractHold = false;
@@ -516,14 +521,15 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
             {
                 if (_arb.LastOutcome == HandshakeOutcome.BothWithdraw)
                 {
-                    CaptureCameraToFile(ResolveScreenshotPath("Handshake_Batch3_BothWithdraw.png"));
                     break;
                 }
                 waitBoth += Time.deltaTime;
                 yield return null;
             }
 
-            bool orderChecked = (_arb.ParticipantAReleaseTimestamp > 0f && _arb.ParticipantBReleaseTimestamp > 0f);
+            float pTime = _arb.ParticipantA == _playerParticipant ? _arb.ParticipantAReleaseTimestamp : _arb.ParticipantBReleaseTimestamp;
+            float aiTime = _arb.ParticipantA == _aiParticipant ? _arb.ParticipantAReleaseTimestamp : _arb.ParticipantBReleaseTimestamp;
+            bool orderChecked = (pTime > 0f && aiTime > 0f && aiTime > pTime);
 
             _ai.Mode = HandshakeAiMode.Idle;
             _player.CustomIntent = CombatActionIntent.Empty;
@@ -601,9 +607,9 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
             _ai.Mode = HandshakeAiMode.Idle;
             _player.CustomIntent = CombatActionIntent.Empty;
 
-            bool timestampValid = (releaseTimestamp > 0f);
+            bool timestampValid = (_arb.ParticipantAReleaseTimestamp > 0f && Mathf.Abs(_arb.ParticipantAReleaseTimestamp - releaseTimestamp) < 0.2f);
             _case11Pass = reachedHolding && timestampValid;
-            _results.Add($"[Case 11] Release after grip completion recorded timestamp: {(_case11Pass ? "PASS" : "FAIL")} (ReachedHolding={reachedHolding}, ReleaseTime={releaseTimestamp:F2}s)");
+            _results.Add($"[Case 11] Release after grip completion recorded timestamp: {(_case11Pass ? "PASS" : "FAIL")} (ReachedHolding={reachedHolding}, ReleaseTime={_arb.ParticipantAReleaseTimestamp:F2}s, LocalTime={releaseTimestamp:F2}s)");
         }
 
         private IEnumerator Case12_StrengthContest_AiWin()
@@ -648,7 +654,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
                 if (_arb.LastOutcome == HandshakeOutcome.StrengthContestWin && _arb.ContestWinner == _aiParticipant)
                 {
                     aiWon = true;
-                    CaptureCameraToFile(ResolveScreenshotPath("Handshake_Batch3_Contest_AiWin.png"));
                     break;
                 }
                 waitContest += Time.deltaTime;
@@ -708,7 +713,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
                 if (_arb.LastOutcome == HandshakeOutcome.StrengthContestWin && _arb.ContestWinner == _playerParticipant)
                 {
                     playerWon = true;
-                    CaptureCameraToFile(ResolveScreenshotPath("Handshake_Batch3_Contest_PlayerWin.png"));
                     break;
                 }
                 waitContest += Time.deltaTime;
@@ -773,7 +777,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
                 if (_arb.LastOutcome == HandshakeOutcome.StrengthContestTie)
                 {
                     tieOccurred = true;
-                    CaptureCameraToFile(ResolveScreenshotPath("Handshake_Batch3_Contest_Tie.png"));
                     break;
                 }
                 waitContest += Time.deltaTime;
@@ -819,7 +822,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
                 if (_arb.LastOutcome == HandshakeOutcome.StrengthContestZeroZero)
                 {
                     zeroZeroOccurred = true;
-                    CaptureCameraToFile(ResolveScreenshotPath("Handshake_Batch3_Contest_ZeroZero.png"));
                     break;
                 }
                 waitContest += Time.deltaTime;
@@ -866,7 +868,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
                 if (_arb.SessionState == HandshakeState.Catching)
                 {
                     caughtOccurred = true;
-                    CaptureCameraToFile(ResolveScreenshotPath("Handshake_Batch3_Caught.png"));
                 }
                 waitCatch += Time.deltaTime;
                 yield return null;
@@ -883,7 +884,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
                 if (_arb.LastOutcome == HandshakeOutcome.Escaped)
                 {
                     escapeOccurred = true;
-                    CaptureCameraToFile(ResolveScreenshotPath("Handshake_Batch3_Escape.png"));
                 }
                 waitEscape += Time.deltaTime;
                 yield return null;
@@ -920,11 +920,20 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
                 yield return null;
             }
 
-            var tapIntent = CombatActionIntent.Empty;
-            tapIntent.InteractHold = true;
-            tapIntent.InteractDown = true;
-            _player.CustomIntent = tapIntent;
-            yield return new WaitForSeconds(0.08f);
+            for (int i = 0; i < 2; i++)
+            {
+                var tap = CombatActionIntent.Empty;
+                tap.InteractHold = true;
+                tap.InteractDown = true;
+                _player.CustomIntent = tap;
+                yield return new WaitForSeconds(0.06f);
+
+                tap.InteractHold = false;
+                tap.InteractDown = false;
+                tap.InteractUp = true;
+                _player.CustomIntent = tap;
+                yield return new WaitForSeconds(0.06f);
+            }
 
             int tapsBefore = _playerParticipant.InteractPressCount;
 
@@ -949,14 +958,30 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
             yield return new WaitForSeconds(0.12f);
 
             bool returnedToHolding = (_arb.SessionState == HandshakeState.Holding);
-            int tapsAfter = _playerParticipant.InteractPressCount;
-            bool tapsPreserved = (tapsAfter >= tapsBefore);
+
+            for (int i = 0; i < 2; i++)
+            {
+                var tap = CombatActionIntent.Empty;
+                tap.InteractHold = true;
+                tap.InteractDown = true;
+                _player.CustomIntent = tap;
+                yield return new WaitForSeconds(0.06f);
+
+                tap.InteractHold = false;
+                tap.InteractDown = false;
+                tap.InteractUp = true;
+                _player.CustomIntent = tap;
+                yield return new WaitForSeconds(0.06f);
+            }
+
+            int tapsFinal = _playerParticipant.InteractPressCount;
+            bool tapsPreserved = (tapsBefore == 2 && tapsFinal == 5);
 
             _ai.Mode = HandshakeAiMode.Idle;
             _player.CustomIntent = CombatActionIntent.Empty;
 
             _case17Pass = playerCaught && returnedToHolding && tapsPreserved;
-            _results.Add($"[Case 17] Caught participant re-presses interact returns to Holding (Taps preserved): {(_case17Pass ? "PASS" : "FAIL")} (WasCaught={playerCaught}, ReturnedHolding={returnedToHolding}, TapsPreserved={tapsPreserved})");
+            _results.Add($"[Case 17] Caught participant re-presses interact returns to Holding (Taps preserved): {(_case17Pass ? "PASS" : "FAIL")} (WasCaught={playerCaught}, ReturnedHolding={returnedToHolding}, InitialTaps={tapsBefore}, FinalTaps={tapsFinal})");
         }
 
         private IEnumerator Case18_CatcherReleaseResolvesContest()
@@ -1034,15 +1059,33 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
 
             float waitCaught = 0f;
             bool chaseMaintained = false;
-            while (waitCaught < 1.2f)
+            bool playerMoved = false;
+            bool aiMoved = false;
+            Vector3 startPlayerPos = _player.transform.position;
+            Vector3 startAiPos = _ai.transform.position;
+
+            while (waitCaught < 1.5f)
             {
-                if (_arb.SessionState == HandshakeState.Catching)
+                if (_arb.SessionState == HandshakeState.Catching && _arb.CaughtParticipant == _playerParticipant)
                 {
+                    var pullAway = CombatActionIntent.Empty;
+                    pullAway.MoveInput = new Vector2(0f, -1f);
+                    _player.CustomIntent = pullAway;
+
                     float dist = _arb.BodyDistance;
                     float thresh = _arb.GetEffectiveEscapeThreshold();
                     if (dist < thresh)
                     {
                         chaseMaintained = true;
+                    }
+
+                    if (Vector3.Distance(_player.transform.position, startPlayerPos) > 0.04f)
+                    {
+                        playerMoved = true;
+                    }
+                    if (Vector3.Distance(_ai.transform.position, startAiPos) > 0.04f)
+                    {
+                        aiMoved = true;
                     }
                 }
                 waitCaught += Time.deltaTime;
@@ -1050,8 +1093,9 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
             }
 
             _ai.Mode = HandshakeAiMode.Idle;
-            _case19Pass = reachedHolding && chaseMaintained;
-            _results.Add($"[Case 19] Catcher chases and prevents distance escape: {(_case19Pass ? "PASS" : "FAIL")} (ReachedHolding={reachedHolding}, ChaseMaintained={chaseMaintained})");
+            _player.CustomIntent = CombatActionIntent.Empty;
+            _case19Pass = reachedHolding && chaseMaintained && playerMoved && aiMoved;
+            _results.Add($"[Case 19] Catcher chases and prevents distance escape: {(_case19Pass ? "PASS" : "FAIL")} (ReachedHolding={reachedHolding}, ChaseMaintained={chaseMaintained}, PlayerMoved={playerMoved}, AiChased={aiMoved})");
         }
 
         private IEnumerator Case20_CaughtJumpsWithoutEscape()
@@ -1080,19 +1124,26 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
 
             float waitCatch = 0f;
             bool caughtStillHeld = false;
-            while (waitCatch < 1.2f)
+            bool aiJumped = false;
+            while (waitCatch < 1.5f)
             {
                 var intent = CombatActionIntent.Empty;
                 intent.InteractHold = true;
                 _player.CustomIntent = intent;
 
-                if (_arb.SessionState == HandshakeState.Catching)
+                if (_arb.SessionState == HandshakeState.Catching && _arb.CaughtParticipant == _aiParticipant)
                 {
                     float dist = _arb.BodyDistance;
                     float thresh = _arb.GetEffectiveEscapeThreshold();
                     if (dist < thresh)
                     {
                         caughtStillHeld = true;
+                    }
+
+                    CombatEntity aiEntity = _ai.GetComponent<CombatEntity>();
+                    if ((aiEntity != null && !aiEntity.IsGrounded) || _ai.transform.position.y > 0.04f)
+                    {
+                        aiJumped = true;
                     }
                 }
                 waitCatch += Time.deltaTime;
@@ -1102,8 +1153,8 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
             _ai.Mode = HandshakeAiMode.Idle;
             _player.CustomIntent = CombatActionIntent.Empty;
 
-            _case20Pass = reachedHolding && caughtStillHeld;
-            _results.Add($"[Case 20] Caught participant jumps without reaching threshold (Remains Caught): {(_case20Pass ? "PASS" : "FAIL")} (ReachedHolding={reachedHolding}, RemainsCaught={caughtStillHeld})");
+            _case20Pass = reachedHolding && caughtStillHeld && aiJumped;
+            _results.Add($"[Case 20] Caught participant jumps without reaching threshold (Remains Caught): {(_case20Pass ? "PASS" : "FAIL")} (ReachedHolding={reachedHolding}, RemainsCaught={caughtStillHeld}, AiJumped={aiJumped})");
         }
 
         private IEnumerator Case21_ResetConsistency()
@@ -1121,154 +1172,25 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
             _results.Add($"[Case 21] Global arena reset consistency: {(_case21Pass ? "PASS" : "FAIL")} (PlayerClean={pClean}, AiClean={aiClean}, ArbClean={arbClean})");
         }
 
-        private void CaptureCameraToFile(string filePath)
-        {
-            Camera cam = Camera.main;
-            if (cam == null) return;
-
-            Vector3 savedPos = cam.transform.position;
-            Quaternion savedRot = cam.transform.rotation;
-
-            cam.transform.position = new Vector3(-2.6f, 1.35f, 0f);
-            cam.transform.LookAt(new Vector3(0.05f, 1.15f, 0f));
-
-            GameObject overlayCanvasGo = CreateScreenshotOverlayCanvas(cam);
-
-            int w = 1920;
-            int h = 1080;
-            RenderTexture rt = RenderTexture.GetTemporary(w, h, 24);
-            RenderTexture prev = cam.targetTexture;
-            cam.targetTexture = rt;
-            cam.Render();
-            cam.targetTexture = prev;
-
-            RenderTexture prevActive = RenderTexture.active;
-            RenderTexture.active = rt;
-            Texture2D tex = new Texture2D(w, h, TextureFormat.RGB24, false);
-            tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
-            tex.Apply();
-            RenderTexture.active = prevActive;
-            RenderTexture.ReleaseTemporary(rt);
-
-            cam.transform.position = savedPos;
-            cam.transform.rotation = savedRot;
-
-            if (overlayCanvasGo != null)
-            {
-                DestroyImmediate(overlayCanvasGo);
-            }
-
-            byte[] bytes = tex.EncodeToPNG();
-            DestroyImmediate(tex);
-
-            string dir = Path.GetDirectoryName(filePath);
-            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-            {
-                Directory.CreateDirectory(dir);
-            }
-            File.WriteAllBytes(filePath, bytes);
-        }
-
-        private GameObject CreateScreenshotOverlayCanvas(Camera cam)
-        {
-            GameObject canvasGo = new GameObject("ScreenshotOverlayCanvas");
-            Canvas canvas = canvasGo.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceCamera;
-            canvas.worldCamera = cam;
-            canvas.planeDistance = 1.0f;
-
-            CanvasScaler scaler = canvasGo.AddComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920, 1080);
-
-            canvasGo.AddComponent<GraphicRaycaster>();
-
-            Font defaultFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (defaultFont == null) defaultFont = Resources.GetBuiltinResource<Font>("Arial.ttf");
-
-            GameObject panelGo = new GameObject("HUDPanel");
-            panelGo.transform.SetParent(canvasGo.transform, false);
-            RectTransform panelRt = panelGo.AddComponent<RectTransform>();
-            panelRt.anchorMin = new Vector2(0f, 0.65f);
-            panelRt.anchorMax = new Vector2(0.38f, 0.98f);
-            panelRt.offsetMin = new Vector2(30f, 0f);
-            panelRt.offsetMax = new Vector2(0f, -30f);
-
-            Image panelBg = panelGo.AddComponent<Image>();
-            panelBg.color = new Color(0.08f, 0.10f, 0.14f, 0.88f);
-
-            GameObject textGo = new GameObject("HUDText");
-            textGo.transform.SetParent(panelGo.transform, false);
-            RectTransform textRt = textGo.AddComponent<RectTransform>();
-            textRt.anchorMin = Vector2.zero;
-            textRt.anchorMax = Vector2.one;
-            textRt.offsetMin = new Vector2(18f, 15f);
-            textRt.offsetMax = new Vector2(-18f, -15f);
-
-            Text uiText = textGo.AddComponent<Text>();
-            uiText.font = defaultFont;
-            uiText.fontSize = 20;
-            uiText.lineSpacing = 1.25f;
-            uiText.color = Color.white;
-
-            string outcomeStr = _arb != null ? _arb.LastOutcome.ToString() : "None";
-            string stateStr = _arb != null ? _arb.SessionState.ToString() : "None";
-            int p1Taps = _arb != null ? _arb.PlayerTaps : 0;
-            int aiTaps = _arb != null ? _arb.AiTaps : 0;
-            float dist = _arb != null ? _arb.BodyDistance : 0f;
-            float threshold = _arb != null ? _arb.GetEffectiveEscapeThreshold() : 1.8f;
-
-            var hud = ObjectUtility.FindObject<WhiteRoomHUD>(false);
-            string recentLog = "";
-            if (hud != null && hud.AllHistoryLogs.Count > 0)
-            {
-                var lastEntry = hud.AllHistoryLogs[hud.AllHistoryLogs.Count - 1];
-                recentLog = lastEntry.message;
-            }
-
-            uiText.text = $"<b>WhiteRoom 握手互動系統 (Stage 2b 第 3 批)</b>\n" +
-                          $"<b>判定狀態:</b> <color=yellow>[{stateStr}]</color> | <b>最新結果:</b> <color=#44ff88>[{outcomeStr}]</color>\n" +
-                          $"<b>連按次數:</b> P1: {p1Taps} 次 | AI: {aiTaps} 次 | <b>身體相距:</b> {dist:F2}m\n" +
-                          $"<b>掙脫骨架門檻:</b> {threshold:F2}m | <b>容許時間:</b> {(_arb != null ? _arb.ReleaseGraceTime : 0.3f):F2}s\n" +
-                          $"<b>最新仲裁日誌:</b>\n<color=#aaccff>{recentLog}</color>";
-
-            return canvasGo;
-        }
-
-        private string ResolveScreenshotPath(string fileName)
-        {
-            DirectoryInfo current = new DirectoryInfo(Application.dataPath);
-            while (current != null)
-            {
-                string candidate = Path.Combine(current.FullName, "Documentation", "Screenshots");
-                if (Directory.Exists(candidate))
-                {
-                    return Path.Combine(candidate, fileName);
-                }
-                string candidateInSub = Path.Combine(current.FullName, "Unity", "Combat-Aesthetics", "Documentation", "Screenshots");
-                if (Directory.Exists(candidateInSub))
-                {
-                    return Path.Combine(candidateInSub, fileName);
-                }
-                current = current.Parent;
-            }
-            return Path.Combine(Application.dataPath, "../Screenshots", fileName);
-        }
-
         public static string ResolveDocumentationPath(string fileName)
         {
+            string packageDoc = @"C:\Users\Yu5h1\Dev\VSProjects\Yu5h1Lib\Unity\Combat-Aesthetics\Documentation";
+            if (Directory.Exists(packageDoc))
+            {
+                return Path.Combine(packageDoc, fileName);
+            }
             DirectoryInfo current = new DirectoryInfo(Application.dataPath);
             while (current != null)
             {
-                string candidate = Path.Combine(current.FullName, "Documentation");
-                if (Directory.Exists(candidate))
-                {
-                    return Path.Combine(candidate, fileName);
-                }
                 string candidateInSub = Path.Combine(current.FullName, "Unity", "Combat-Aesthetics", "Documentation");
                 if (Directory.Exists(candidateInSub))
                 {
                     return Path.Combine(candidateInSub, fileName);
+                }
+                string candidate = Path.Combine(current.FullName, "Documentation");
+                if (Directory.Exists(candidate))
+                {
+                    return Path.Combine(candidate, fileName);
                 }
                 current = current.Parent;
             }

@@ -44,7 +44,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         [SerializeField] private float _earlyReleaseGripTime = 0.18f;
         [SerializeField] private float _releaseAfterGripDelay = 0.15f;
         [SerializeField] private bool _walkIn = false;
-        [SerializeField] private float _stopDistance = 0.78f;
+        [SerializeField] private float _stopDistance = 0.65f;
 
         [Header("Batch 3 Contest & Catch Settings")]
         [SerializeField] private int _contestTapTarget = 0;
@@ -133,7 +133,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         /// <summary>
         /// Configures the AI test parameters directly for custom scenarios.
         /// </summary>
-        public void ConfigureSettings(float reachDelay, float holdDuration, bool walkIn, float stopDistance = 0.85f)
+        public void ConfigureSettings(float reachDelay, float holdDuration, bool walkIn, float stopDistance = 0.65f)
         {
             _reachDelay = reachDelay;
             _holdDuration = holdDuration;
@@ -160,6 +160,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 case HandshakeAiMode.AiResponder:
                     _holdDuration = -1f;
                     _walkIn = true;
+                    _stopDistance = 0.60f;
                     break;
 
                 case HandshakeAiMode.AiCancel:
@@ -181,7 +182,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                     _holdDuration = -1f;
                     _contestTapTarget = 5;
                     _contestTapInterval = 0.08f;
-                    _holdingReleaseDelay = 0.15f;
+                    _holdingReleaseDelay = 0.8f;
                     _walkIn = true;
                     break;
 

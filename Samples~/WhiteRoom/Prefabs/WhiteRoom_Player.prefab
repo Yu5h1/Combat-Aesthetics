@@ -1,0 +1,353 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &100282234621421555
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2397750615683074123}
+  - component: {fileID: 627643104751973134}
+  - component: {fileID: 364440989667463196}
+  - component: {fileID: 1449003670247217703}
+  m_Layer: 0
+  m_Name: RightHandContactCollider
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2397750615683074123
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100282234621421555}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.78000003, y: 1.39, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 9084236497297056326}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!135 &627643104751973134
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100282234621421555}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.25
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &364440989667463196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100282234621421555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19a42f0d6568de843acf68cba6783bf9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake::Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake.HandContactBridge
+--- !u!54 &1449003670247217703
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100282234621421555}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!1 &4063635321155427463
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9084236497297056326}
+  - component: {fileID: 6488031864855721593}
+  - component: {fileID: 6288823928876693815}
+  - component: {fileID: 2729116089047088739}
+  - component: {fileID: 8860330451645242290}
+  m_Layer: 0
+  m_Name: WhiteRoom_Player
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9084236497297056326
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4063635321155427463}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 3078902504790330667}
+  - {fileID: 2397750615683074123}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!143 &6488031864855721593
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4063635321155427463}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Height: 2
+  m_Radius: 0.5
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.08
+  m_MinMoveDistance: 0.001
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &6288823928876693815
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4063635321155427463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf1324e03b8ccb2439a07df39a252dfb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Runtime::Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.CombatEntity
+  _entityId: Player1
+  _teamId: 0
+  _enableCombatActions: 0
+  _maxHealth: 100
+  _currentHealth: 100
+  _walkSpeed: 5
+  _guardSpeed: 2.2
+  _crouchSpeed: 2.5
+  _turnSpeed: 720
+  _jumpHeight: 1.5
+  _gravity: -20
+  _standingHeight: 2
+  _crouchingHeight: 1
+  _colliderRadius: 0.25
+  _standingCenter: {x: 0, y: 1, z: 0}
+  _crouchingCenter: {x: 0, y: 0.5, z: 0}
+  _attackStartupTime: 0.2
+  _attackActiveTime: 0.15
+  _attackRecoveryTime: 0.25
+  _attackRange: 1.5
+  _attackDamage: 20
+  _attackKnockback: 7.5
+  _parryWindow: 0.18
+  _parryStunDuration: 1
+--- !u!114 &2729116089047088739
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4063635321155427463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8b39685617565f4899bca028bcd7aa2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake::Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake.HandshakeParticipant
+  _reachDuration: 0.5
+  _withdrawDuration: 0.5
+--- !u!114 &8860330451645242290
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4063635321155427463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a6199cb2f3f67b42b4c403fae6783c8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Runtime::Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.WhiteRoomCharacter
+  _cameraTransform: {fileID: 0}
+  _usePlayer2ControlScheme: 0
+  _interactKey: 101
+  _player2InteractKey: 259
+--- !u!1001 &4622499280268569330
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 9084236497297056326}
+    m_Modifications:
+    - target: {fileID: -1541322779041814567, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -1541322779041814567, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -1541322779041814567, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -1541322779041814567, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -1541322779041814567, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -1541322779041814567, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -1541322779041814567, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -1541322779041814567, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -1541322779041814567, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -1541322779041814567, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6334693208988405809, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      propertyPath: m_Name
+      value: HumanoidModel
+      objectReference: {fileID: 0}
+    - target: {fileID: 7002649398981340923, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6334693208988405809, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8842037221115911681}
+    - targetCorrespondingSourceObject: {fileID: 6334693208988405809, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4392452100663502515}
+  m_SourcePrefab: {fileID: 5922238873033648833, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+--- !u!1 &1715646554284325571 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6334693208988405809, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+  m_PrefabInstance: {fileID: 4622499280268569330}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &8842037221115911681
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1715646554284325571}
+  m_Enabled: 1
+  m_Avatar: {fileID: -5478683720352436592, guid: 5752433c6143861469b371f8bbe0144d, type: 2}
+  m_Controller: {fileID: 9100000, guid: 0767a4c7110421d449a5e61834fc2a96, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &4392452100663502515
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1715646554284325571}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27ed48368d886e84dafd6c048d29313b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake::Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake.HandshakeVisualFeedback
+  _participant: {fileID: 2729116089047088739}
+  _opponent: {fileID: 0}
+  _animator: {fileID: 8842037221115911681}
+  _preIkWristTransform: {fileID: 7924346423728326463}
+  _contactProxyTransform: {fileID: 2397750615683074123}
+  _fistLocalOffsetInWrist: {x: 0.08, y: 0, z: 0}
+  _skinnedRenderer: {fileID: 2380154724193829897}
+  _defaultBodyColor: {r: 0.75, g: 0.88, b: 1, a: 1}
+--- !u!137 &2380154724193829897 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 7002649398981340923, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+  m_PrefabInstance: {fileID: 4622499280268569330}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &3078902504790330667 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -1541322779041814567, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+  m_PrefabInstance: {fileID: 4622499280268569330}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &7924346423728326463 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -5918146020056830515, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+  m_PrefabInstance: {fileID: 4622499280268569330}
+  m_PrefabAsset: {fileID: 0}

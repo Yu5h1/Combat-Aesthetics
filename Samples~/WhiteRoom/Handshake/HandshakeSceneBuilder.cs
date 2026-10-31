@@ -20,26 +20,28 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         [SerializeField] private Avatar _humanoidAvatar;
         [SerializeField] private RuntimeAnimatorController _animatorController;
 
+        [Header("Participant and Camera Prefabs (Manual Scene Authoring)")]
+        [SerializeField] private GameObject _playerPrefab;
+        [SerializeField] private GameObject _aiPrefab;
+        [SerializeField] private GameObject _cameraPrefab;
+
         [Header("Handshake Settings Asset (Manual Authoring & Persistence)")]
         [SerializeField, Inline] private HandshakeSettings _settings;
 
-        [Header("Handshake Animation Clips")]
-        [SerializeField] private AnimationClip _reachClip;
-        [SerializeField] private AnimationClip _waitClip;
-        [SerializeField] private AnimationClip _withdrawClip;
-        [SerializeField] private AnimationClip _gripClip;
-        [SerializeField] private AnimationClip _shakeClip;
+        [Header("Scene Object References (Direct Scene Authoring)")]
+        [SerializeField] private WhiteRoomCharacter _player;
+        [SerializeField] private HandshakeAiController _ai;
+        [SerializeField] private WhiteRoomCamera _camera;
 
         private readonly List<GameObject> _spawnedEntities = new List<GameObject>();
-        private WhiteRoomCharacter _player;
         private HandshakeParticipant _playerParticipant;
-        private HandshakeAiController _ai;
         private HandshakeParticipant _aiParticipant;
 
         public WhiteRoomCharacter Player => _player;
         public HandshakeParticipant PlayerParticipant => _playerParticipant;
         public HandshakeAiController AI => _ai;
         public HandshakeParticipant AiParticipant => _aiParticipant;
+        public WhiteRoomCamera Camera => _camera;
         public HandshakeSettings Settings => _settings;
 
         private void Awake()
@@ -72,59 +74,107 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             {
                 arb.ConfigureSettings(_settings);
             }
-            arb.ConfigureClips(_reachClip, _waitClip, _withdrawClip, _gripClip, _shakeClip);
         }
 
         /// <summary>
-        /// Spawns the facing player and AI participants at 2.4m separation and binds their humanoid animators and IK.
+        /// Configures the facing player and AI participants and camera. Uses scene prefab instances when present.
         /// </summary>
         public void SpawnParticipants()
         {
-            foreach (var go in _spawnedEntities)
-            {
-                if (go != null) SafeDestroy(go);
-            }
-            _spawnedEntities.Clear();
+            if (_player == null) _player = ObjectUtility.FindObject<WhiteRoomCharacter>(false);
+            if (_ai == null) _ai = ObjectUtility.FindObject<HandshakeAiController>(false);
+            if (_camera == null) _camera = ObjectUtility.FindObject<WhiteRoomCamera>(false);
 
-            var oldParticipants = ObjectUtility.FindObjects<HandshakeParticipant>(false);
-            foreach (var p in oldParticipants)
+            HandshakeVisualFeedback playerFeedback = null;
+            HandshakeVisualFeedback aiFeedback = null;
+
+            if (_player != null && _ai != null)
             {
-                if (p != null && p.gameObject != null)
+                _playerParticipant = _player.GetComponent<HandshakeParticipant>();
+                _aiParticipant = _ai.GetComponent<HandshakeParticipant>();
+                playerFeedback = _player.GetComponentInChildren<HandshakeVisualFeedback>();
+                aiFeedback = _ai.GetComponentInChildren<HandshakeVisualFeedback>();
+
+                EnsureParticipantProxy(_playerParticipant, playerFeedback);
+                EnsureParticipantProxy(_aiParticipant, aiFeedback);
+            }
+            else
+            {
+                foreach (var go in _spawnedEntities)
                 {
-                    SafeDestroy(p.gameObject);
+                    if (go != null) SafeDestroy(go);
+                }
+                _spawnedEntities.Clear();
+
+                var oldParticipants = ObjectUtility.FindObjects<HandshakeParticipant>(false);
+                foreach (var p in oldParticipants)
+                {
+                    if (p != null && p.gameObject != null)
+                    {
+                        SafeDestroy(p.gameObject);
+                    }
+                }
+
+                if (_playerPrefab != null && _aiPrefab != null)
+                {
+                    GameObject pGo = Instantiate(_playerPrefab, new Vector3(0f, 0f, -1.2f), Quaternion.identity);
+                    _player = pGo.GetComponent<WhiteRoomCharacter>();
+                    _playerParticipant = pGo.GetComponent<HandshakeParticipant>();
+                    playerFeedback = pGo.GetComponentInChildren<HandshakeVisualFeedback>();
+                    _spawnedEntities.Add(pGo);
+
+                    GameObject aiGo = Instantiate(_aiPrefab, new Vector3(0f, 0f, 1.2f), Quaternion.Euler(0f, 180f, 0f));
+                    _ai = aiGo.GetComponent<HandshakeAiController>();
+                    _aiParticipant = aiGo.GetComponent<HandshakeParticipant>();
+                    aiFeedback = aiGo.GetComponentInChildren<HandshakeVisualFeedback>();
+                    _spawnedEntities.Add(aiGo);
+                }
+                else
+                {
+                    _player = SpawnPlayer(
+                        "Player1",
+                        0,
+                        new Vector3(0f, 0f, -1.2f),
+                        Quaternion.identity,
+                        new Color(0.75f, 0.88f, 1.0f),
+                        out _playerParticipant,
+                        out playerFeedback
+                    );
+
+                    _ai = SpawnAI(
+                        "AI_Opponent",
+                        1,
+                        new Vector3(0f, 0f, 1.2f),
+                        Quaternion.Euler(0f, 180f, 0f),
+                        new Color(0.96f, 0.78f, 0.78f),
+                        out _aiParticipant,
+                        out aiFeedback
+                    );
                 }
             }
-
-            _player = SpawnPlayer(
-                "Player1",
-                0,
-                new Vector3(0f, 0f, -1.2f),
-                Quaternion.identity,
-                new Color(0.75f, 0.88f, 1.0f),
-                out _playerParticipant,
-                out HandshakeVisualFeedback playerFeedback
-            );
-
-            _ai = SpawnAI(
-                "AI_Opponent",
-                1,
-                new Vector3(0f, 0f, 1.2f),
-                Quaternion.Euler(0f, 180f, 0f),
-                new Color(0.96f, 0.78f, 0.78f),
-                out _aiParticipant,
-                out HandshakeVisualFeedback aiFeedback
-            );
 
             if (playerFeedback != null) playerFeedback.Opponent = _aiParticipant;
             if (aiFeedback != null) aiFeedback.Opponent = _playerParticipant;
 
             if (_player != null)
             {
-                var cam = WhiteRoomSceneBuilder.EnsureCamera(_player.transform);
-                if (cam != null)
+                if (_camera == null)
                 {
-                    cam.SetOrbit(0f, 12f, 3.4f);
-                    cam.SetShoulderOffset(new Vector3(-0.45f, 0f, 0f));
+                    if (_cameraPrefab != null)
+                    {
+                        GameObject camGo = Instantiate(_cameraPrefab);
+                        _camera = camGo.GetComponent<WhiteRoomCamera>();
+                    }
+                    else
+                    {
+                        _camera = WhiteRoomSceneBuilder.EnsureCamera(_player.transform);
+                    }
+                }
+                if (_camera != null)
+                {
+                    _camera.Target = _player.transform;
+                    _camera.SetOrbit(0f, 12f, 3.4f);
+                    _camera.SetShoulderOffset(new Vector3(-0.45f, 0f, 0f));
                 }
             }
 
@@ -135,9 +185,27 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 {
                     arb.ConfigureSettings(_settings);
                 }
-                arb.ConfigureClips(_reachClip, _waitClip, _withdrawClip, _gripClip, _shakeClip);
                 arb.RegisterParticipant(_playerParticipant);
                 arb.RegisterParticipant(_aiParticipant);
+            }
+        }
+
+        private void EnsureParticipantProxy(HandshakeParticipant participant, HandshakeVisualFeedback feedback)
+        {
+            if (participant == null) return;
+            if (participant.ContactBridge == null)
+            {
+                participant.ContactBridge = participant.GetComponentInChildren<HandContactBridge>();
+                if (participant.ContactBridge != null)
+                {
+                    participant.ContactBridge.Initialize(participant);
+                }
+            }
+            if (participant.RightHandTransform == null)
+            {
+                Transform wrist = participant.transform.Find("HumanoidModel/root/pelvis/spine/chest/shoulder_r/elbow_r/wrist_r/fist_r");
+                if (wrist == null) wrist = participant.transform.Find("HumanoidModel/root/pelvis/spine/chest/shoulder_r/elbow_r/wrist_r");
+                if (wrist != null) participant.RightHandTransform = wrist;
             }
         }
 
@@ -324,30 +392,13 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 GUILayout.EndHorizontal();
 
                 float currentThreshold = arb.GetEffectiveEscapeThreshold();
+                float measuredReach = arb.MeasureTotalArmReach();
                 GUILayout.BeginHorizontal();
-                GUILayout.Label($"掙脫骨架門檻: {currentThreshold:F2}m", GUILayout.Width(135));
-                arb.EscapeDistanceThreshold = GUILayout.HorizontalSlider(arb.EscapeDistanceThreshold, 1.0f, 3.0f);
+                GUILayout.Label($"骨架門檻補償: {arb.Settings.EscapeDistanceCompensation:+0.00;-0.00;0.00}m (量測 {measuredReach:F2}m, 合計 {currentThreshold:F2}m)", GUILayout.Width(280));
+                arb.Settings.EscapeDistanceCompensation = GUILayout.HorizontalSlider(arb.Settings.EscapeDistanceCompensation, -0.5f, 1.0f);
                 GUILayout.EndHorizontal();
 
-                GUILayout.BeginHorizontal();
-                GUILayout.Label($"不可控制區間: {arb.Settings.PrankReactionDuration:F2}s", GUILayout.Width(135));
-                arb.Settings.PrankReactionDuration = GUILayout.HorizontalSlider(arb.Settings.PrankReactionDuration, 0.2f, 2.0f);
-                GUILayout.EndHorizontal();
-
-                GUILayout.BeginHorizontal();
-                GUILayout.Label($"被抓走路速度: {arb.Settings.CaughtWalkSpeed:F2}m/s", GUILayout.Width(135));
-                arb.Settings.CaughtWalkSpeed = GUILayout.HorizontalSlider(arb.Settings.CaughtWalkSpeed, 1.0f, 4.0f);
-                GUILayout.EndHorizontal();
-
-                GUILayout.BeginHorizontal();
-                GUILayout.Label($"抓者跟隨速度: {arb.Settings.CatchingFollowSpeed:F2}m/s", GUILayout.Width(135));
-                arb.Settings.CatchingFollowSpeed = GUILayout.HorizontalSlider(arb.Settings.CatchingFollowSpeed, 0.5f, 2.5f);
-                GUILayout.EndHorizontal();
-
-                GUILayout.BeginHorizontal();
-                GUILayout.Label($"跳躍彈退位移: {arb.Settings.JumpEscapeDisplacement:F2}m", GUILayout.Width(135));
-                arb.Settings.JumpEscapeDisplacement = GUILayout.HorizontalSlider(arb.Settings.JumpEscapeDisplacement, 0.2f, 1.5f);
-                GUILayout.EndHorizontal();
+                GUILayout.Label("<color=#aaccff><b>[動作驅動位移 - 暫代標示]</b> 根位移片段未到，暫以角色走路/慢步/起跳暫代。</color>");
             }
 
             if (_playerParticipant != null)

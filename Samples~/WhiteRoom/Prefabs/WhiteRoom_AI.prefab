@@ -1,0 +1,365 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1489291862182031375
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8161091513020147325}
+  - component: {fileID: 3015897330345852568}
+  - component: {fileID: 9176270892288708314}
+  - component: {fileID: 5544663365894916620}
+  m_Layer: 0
+  m_Name: RightHandContactCollider
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8161091513020147325
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1489291862182031375}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.78000003, y: 1.39, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3005131214219402900}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!135 &3015897330345852568
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1489291862182031375}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.25
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &9176270892288708314
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1489291862182031375}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19a42f0d6568de843acf68cba6783bf9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake::Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake.HandContactBridge
+--- !u!54 &5544663365894916620
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1489291862182031375}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!1 &9048193082720624028
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3005131214219402900}
+  - component: {fileID: 3314704418778055482}
+  - component: {fileID: 6009848969945131469}
+  - component: {fileID: 4642312736057500466}
+  - component: {fileID: 6703974261773534898}
+  m_Layer: 0
+  m_Name: WhiteRoom_AI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3005131214219402900
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9048193082720624028}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 286383227193314799}
+  - {fileID: 8161091513020147325}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!143 &3314704418778055482
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9048193082720624028}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Height: 2
+  m_Radius: 0.5
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.08
+  m_MinMoveDistance: 0.001
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &6009848969945131469
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9048193082720624028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf1324e03b8ccb2439a07df39a252dfb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Runtime::Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.CombatEntity
+  _entityId: AI_Opponent
+  _teamId: 1
+  _enableCombatActions: 0
+  _maxHealth: 100
+  _currentHealth: 100
+  _walkSpeed: 5
+  _guardSpeed: 2.2
+  _crouchSpeed: 2.5
+  _turnSpeed: 720
+  _jumpHeight: 1.5
+  _gravity: -20
+  _standingHeight: 2
+  _crouchingHeight: 1
+  _colliderRadius: 0.25
+  _standingCenter: {x: 0, y: 1, z: 0}
+  _crouchingCenter: {x: 0, y: 0.5, z: 0}
+  _attackStartupTime: 0.2
+  _attackActiveTime: 0.15
+  _attackRecoveryTime: 0.25
+  _attackRange: 1.5
+  _attackDamage: 20
+  _attackKnockback: 7.5
+  _parryWindow: 0.18
+  _parryStunDuration: 1
+--- !u!114 &4642312736057500466
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9048193082720624028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8b39685617565f4899bca028bcd7aa2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake::Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake.HandshakeParticipant
+  _reachDuration: 0.5
+  _withdrawDuration: 0.5
+--- !u!114 &6703974261773534898
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9048193082720624028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc9e9b2a848a8d14f86968d06cb608ef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake::Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake.HandshakeAiController
+  _mode: 1
+  _reachDelay: 0.6
+  _holdDuration: -1
+  _cancelHoldDuration: 1.2
+  _earlyReleaseGripTime: 0.18
+  _releaseAfterGripDelay: 0.15
+  _walkIn: 0
+  _stopDistance: 0.6
+  _contestTapTarget: 0
+  _contestTapInterval: 0.1
+  _holdingReleaseDelay: 0.8
+  _pullBackWhenCaught: 1
+  _jumpWhenCaught: 0
+  _followWhenCatching: 1
+  _repressWhenCaught: 0
+  _repressDelay: 0.5
+--- !u!1001 &7594598522754853430
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 3005131214219402900}
+    m_Modifications:
+    - target: {fileID: -1541322779041814567, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -1541322779041814567, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -1541322779041814567, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -1541322779041814567, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -1541322779041814567, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -1541322779041814567, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -1541322779041814567, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -1541322779041814567, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -1541322779041814567, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -1541322779041814567, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6334693208988405809, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      propertyPath: m_Name
+      value: HumanoidModel
+      objectReference: {fileID: 0}
+    - target: {fileID: 7002649398981340923, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6334693208988405809, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8117011008906224264}
+    - targetCorrespondingSourceObject: {fileID: 6334693208988405809, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5977296716637238557}
+  m_SourcePrefab: {fileID: 5922238873033648833, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+--- !u!4 &286383227193314799 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -1541322779041814567, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+  m_PrefabInstance: {fileID: 7594598522754853430}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &597579727126971597 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 7002649398981340923, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+  m_PrefabInstance: {fileID: 7594598522754853430}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &4507037763359947271 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6334693208988405809, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+  m_PrefabInstance: {fileID: 7594598522754853430}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &8117011008906224264
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4507037763359947271}
+  m_Enabled: 1
+  m_Avatar: {fileID: -5478683720352436592, guid: 5752433c6143861469b371f8bbe0144d, type: 2}
+  m_Controller: {fileID: 9100000, guid: 0767a4c7110421d449a5e61834fc2a96, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &5977296716637238557
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4507037763359947271}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27ed48368d886e84dafd6c048d29313b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake::Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake.HandshakeVisualFeedback
+  _participant: {fileID: 4642312736057500466}
+  _opponent: {fileID: 0}
+  _animator: {fileID: 8117011008906224264}
+  _preIkWristTransform: {fileID: 4952810130981554171}
+  _contactProxyTransform: {fileID: 8161091513020147325}
+  _fistLocalOffsetInWrist: {x: 0.08, y: 0, z: 0}
+  _skinnedRenderer: {fileID: 597579727126971597}
+  _defaultBodyColor: {r: 0.96, g: 0.78, b: 0.78, a: 1}
+--- !u!4 &4952810130981554171 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -5918146020056830515, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
+  m_PrefabInstance: {fileID: 7594598522754853430}
+  m_PrefabAsset: {fileID: 0}

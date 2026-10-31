@@ -13,12 +13,9 @@ MonoBehaviour:
   m_Name: HandshakeSettings
   _releaseGraceTime: 0.3
   _contestThreshold: 1
-  _escapeDistanceThreshold: 1.8
-  _prankReactionDuration: 0.6
+  _escapeDistanceCompensation: 0
   _reactionFallbackDuration: 0.5
-  _caughtWalkSpeed: 2.2
-  _catchingFollowSpeed: 1.2
-  _jumpEscapeDisplacement: 0.6
+  _clipIntervalBindings: []
   _reachClip: {fileID: 8779831864619793406, guid: 2110e5b1e6b8f434284ad27fea77b4b1, type: 2}
   _waitClip: {fileID: 8952854439076216105, guid: 827bef51320c4f142a4d56390cf741b1, type: 2}
   _withdrawClip: {fileID: -6327883441209141040, guid: 00aa645ac5d8a1644a9a6c087d44bd41, type: 2}

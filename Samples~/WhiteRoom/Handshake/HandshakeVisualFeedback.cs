@@ -48,7 +48,36 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             _skinnedRenderer = skinnedRenderer;
             _defaultBodyColor = baseColor;
 
-            if (_skinnedRenderer != null)
+            InitVisualFeedback();
+        }
+
+        private void Awake()
+        {
+            if (_participant == null) _participant = GetComponentInParent<HandshakeParticipant>();
+            if (_animator == null) _animator = GetComponent<Animator>();
+            if (_skinnedRenderer == null) _skinnedRenderer = GetComponentInChildren<SkinnedMeshRenderer>(true);
+            if (_contactProxyTransform == null && _participant != null)
+            {
+                var bridge = _participant.GetComponentInChildren<HandContactBridge>();
+                if (bridge != null) _contactProxyTransform = bridge.transform;
+            }
+            if (_preIkWristTransform == null && _animator != null)
+            {
+                _preIkWristTransform = _animator.GetBoneTransform(HumanBodyBones.RightHand);
+            }
+
+            InitVisualFeedback();
+        }
+
+        private void Start()
+        {
+            ConfigureAnimatorOverrides();
+            PlayClipForState(HandshakeState.None);
+        }
+
+        private void InitVisualFeedback()
+        {
+            if (_skinnedRenderer != null && _instanceMaterial == null)
             {
                 _instanceMaterial = _skinnedRenderer.material;
                 ApplyColor(_defaultBodyColor);
@@ -60,7 +89,46 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 _participant.OnStateChanged += HandleStateChanged;
             }
 
+            ConfigureAnimatorOverrides();
             PlayClipForState(HandshakeState.None);
+        }
+
+        private void ConfigureAnimatorOverrides()
+        {
+            if (_animator == null || _animator.runtimeAnimatorController == null) return;
+
+            var arb = HandshakeArbitrator.Instance;
+            var settings = arb != null ? arb.Settings : null;
+            if (settings == null) return;
+
+            var overrideController = new AnimatorOverrideController(_animator.runtimeAnimatorController);
+            overrideController.name = "HandshakeAnimatorOverride";
+
+            AnimationClip fallbackClip = settings.WithdrawClip;
+
+            void SetOverride(string stateName, AnimationClip clip)
+            {
+                overrideController[stateName] = clip != null ? clip : fallbackClip;
+            }
+
+            SetOverride("Reach", settings.ReachClip);
+            SetOverride("Wait", settings.WaitClip);
+            SetOverride("Withdraw", settings.WithdrawClip);
+            SetOverride("Grip", settings.GripClip);
+            SetOverride("Shake", settings.ShakeClip);
+            SetOverride("Laugh", settings.LaughClip);
+            SetOverride("Angry", settings.AngryClip);
+            SetOverride("ClapLaugh", settings.ClapLaughClip);
+            SetOverride("Hold", settings.HoldClip);
+            SetOverride("Triumph", settings.TriumphClip);
+            SetOverride("Pain", settings.PainClip);
+            SetOverride("SlowWithdraw", settings.SlowWithdrawClip);
+            SetOverride("Stumble", settings.StumbleClip);
+            SetOverride("GraspEmpty", settings.GraspEmptyClip);
+            SetOverride("Caught", settings.CaughtPullClip);
+            SetOverride("Catching", settings.CatchingHoldClip);
+
+            _animator.runtimeAnimatorController = overrideController;
         }
 
         private void OnDestroy()
@@ -81,104 +149,58 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             if (_animator == null || _lastPlayedState == state) return;
             _lastPlayedState = state;
 
-            var arb = HandshakeArbitrator.Instance;
             switch (state)
             {
                 case HandshakeState.None:
                     _animator.Play("Idle", 0, 1.0f);
                     break;
-
                 case HandshakeState.Reaching:
                     _animator.Play("Reach", 0, 0f);
                     break;
-
                 case HandshakeState.Waiting:
                     _animator.Play("Wait", 0, 0f);
                     break;
-
                 case HandshakeState.Grip:
                     _animator.Play("Grip", 0, 0f);
                     break;
-
                 case HandshakeState.Shaking:
                     _animator.Play("Shake", 0, 0f);
                     break;
-
                 case HandshakeState.Withdrawing:
                     _animator.Play("Withdraw", 0, 0f);
                     break;
-
                 case HandshakeState.Laugh:
-                    if (arb != null && arb.LaughClip != null && _animator.HasState(0, Animator.StringToHash("Laugh")))
-                        _animator.Play("Laugh", 0, 0f);
-                    else
-                        _animator.Play("Withdraw", 0, 0f);
+                    _animator.Play("Laugh", 0, 0f);
                     break;
-
                 case HandshakeState.Angry:
-                    if (arb != null && arb.AngryClip != null && _animator.HasState(0, Animator.StringToHash("Angry")))
-                        _animator.Play("Angry", 0, 0f);
-                    else
-                        _animator.Play("Withdraw", 0, 0f);
+                    _animator.Play("Angry", 0, 0f);
                     break;
-
                 case HandshakeState.ClapLaugh:
-                    if (arb != null && arb.ClapLaughClip != null && _animator.HasState(0, Animator.StringToHash("ClapLaugh")))
-                        _animator.Play("ClapLaugh", 0, 0f);
-                    else
-                        _animator.Play("Withdraw", 0, 0f);
+                    _animator.Play("ClapLaugh", 0, 0f);
                     break;
-
                 case HandshakeState.Holding:
-                    if (arb != null && arb.HoldClip != null && _animator.HasState(0, Animator.StringToHash("Hold")))
-                        _animator.Play("Hold", 0, 0f);
+                    _animator.Play("Hold", 0, 0f);
                     break;
-
                 case HandshakeState.Catching:
-                    if (arb != null && arb.CatchingHoldClip != null && _animator.HasState(0, Animator.StringToHash("Catching")))
-                        _animator.Play("Catching", 0, 0f);
+                    _animator.Play("Catching", 0, 0f);
                     break;
-
                 case HandshakeState.Caught:
-                    if (arb != null && arb.CaughtPullClip != null && _animator.HasState(0, Animator.StringToHash("Caught")))
-                        _animator.Play("Caught", 0, 0f);
-                    else
-                        _animator.Play("Withdraw", 0, 0f);
+                    _animator.Play("Caught", 0, 0f);
                     break;
-
                 case HandshakeState.ContestTriumph:
-                    if (arb != null && arb.TriumphClip != null && _animator.HasState(0, Animator.StringToHash("Triumph")))
-                        _animator.Play("Triumph", 0, 0f);
-                    else
-                        _animator.Play("Withdraw", 0, 0f);
+                    _animator.Play("Triumph", 0, 0f);
                     break;
-
                 case HandshakeState.ContestPain:
-                    if (arb != null && arb.PainClip != null && _animator.HasState(0, Animator.StringToHash("Pain")))
-                        _animator.Play("Pain", 0, 0f);
-                    else
-                        _animator.Play("Withdraw", 0, 0f);
+                    _animator.Play("Pain", 0, 0f);
                     break;
-
                 case HandshakeState.ContestTie:
-                    if (arb != null && arb.SlowWithdrawClip != null && _animator.HasState(0, Animator.StringToHash("SlowWithdraw")))
-                        _animator.Play("SlowWithdraw", 0, 0f);
-                    else
-                        _animator.Play("Withdraw", 0, 0f);
+                    _animator.Play("SlowWithdraw", 0, 0f);
                     break;
-
                 case HandshakeState.EscapedStumble:
-                    if (arb != null && arb.StumbleClip != null && _animator.HasState(0, Animator.StringToHash("Stumble")))
-                        _animator.Play("Stumble", 0, 0f);
-                    else
-                        _animator.Play("Withdraw", 0, 0f);
+                    _animator.Play("Stumble", 0, 0f);
                     break;
-
                 case HandshakeState.GraspEmpty:
-                    if (arb != null && arb.GraspEmptyClip != null && _animator.HasState(0, Animator.StringToHash("GraspEmpty")))
-                        _animator.Play("GraspEmpty", 0, 0f);
-                    else
-                        _animator.Play("Withdraw", 0, 0f);
+                    _animator.Play("GraspEmpty", 0, 0f);
                     break;
             }
         }
@@ -259,20 +281,46 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             }
         }
 
+        private bool _hasIkOverride = false;
+        private float _overrideIkWeight = 0f;
+        private Vector3 _overrideIkTarget = Vector3.zero;
+
+        public float CurrentIkWeight => _currentIkWeight;
+
+        public void SetIkOverride(Vector3 target, float weight)
+        {
+            _hasIkOverride = true;
+            _overrideIkTarget = target;
+            _overrideIkWeight = weight;
+        }
+
+        public void ClearIkOverride()
+        {
+            _hasIkOverride = false;
+        }
+
         private void OnAnimatorIK(int layerIndex)
         {
             if (_animator == null || _participant == null) return;
 
-            if (_preIkWristTransform != null && _contactProxyTransform != null)
+            if (_contactProxyTransform != null)
             {
-                _contactProxyTransform.position = _preIkWristTransform.TransformPoint(_fistLocalOffsetInWrist);
-                _contactProxyTransform.rotation = _preIkWristTransform.rotation;
+                Vector3 preIkHandPos = _animator.GetIKPosition(AvatarIKGoal.RightHand);
+                Quaternion preIkHandRot = _animator.GetIKRotation(AvatarIKGoal.RightHand);
+                _contactProxyTransform.position = preIkHandPos + preIkHandRot * _fistLocalOffsetInWrist;
+                _contactProxyTransform.rotation = preIkHandRot;
             }
 
             float targetWeight = 0f;
             HandshakeState state = _participant.State;
 
-            if (_opponent != null && _opponent.RightHandTransform != null)
+            if (_hasIkOverride)
+            {
+                targetWeight = _overrideIkWeight;
+                _currentIkTarget = _overrideIkTarget;
+                _currentIkWeight = _overrideIkWeight;
+            }
+            else if (_opponent != null && _opponent.RightHandTransform != null)
             {
                 bool oppActiveGrip = (_opponent.State == HandshakeState.Grip || _opponent.State == HandshakeState.Shaking || _opponent.State == HandshakeState.Holding);
                 bool myActiveGrip = (state == HandshakeState.Grip || state == HandshakeState.Shaking || state == HandshakeState.Holding);
@@ -280,7 +328,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 if (myActiveGrip && oppActiveGrip)
                 {
                     targetWeight = 0.85f;
-                    Vector3 myHand = _preIkWristTransform != null ? _preIkWristTransform.position : _participant.RightHandTransform.position;
+                    Vector3 myHand = _animator.GetIKPosition(AvatarIKGoal.RightHand);
                     Vector3 oppHand = _opponent.RightHandTransform.position;
                     _currentIkTarget = Vector3.Lerp(myHand, oppHand, 0.5f);
                 }

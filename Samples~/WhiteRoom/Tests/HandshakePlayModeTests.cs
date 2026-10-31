@@ -89,6 +89,20 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
                 Assert.IsTrue(vp.z > 0f && vp.x >= 0f && vp.x <= 1f && vp.y >= 0f && vp.y <= 1f,
                     "Player must remain within camera viewport frustum after movement.");
             }
+
+            // Verify camera occlusion avoidance raycast
+            float initialCamDist = Vector3.Distance(cam.transform.position, playerTransform.position);
+            GameObject obstacle = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            obstacle.name = "TestOcclusionObstacle";
+            obstacle.transform.position = Vector3.Lerp(playerTransform.position + new Vector3(0f, 1.4f, 0f), cam.transform.position, 0.5f);
+            obstacle.transform.localScale = new Vector3(2f, 2f, 0.5f);
+
+            yield return null;
+            yield return null;
+
+            float occludedDist = Vector3.Distance(cam.transform.position, playerTransform.position);
+            Assert.Less(occludedDist, initialCamDist, "Camera must pull forward when an obstacle occludes line of sight to player.");
+            Object.Destroy(obstacle);
         }
 
         [UnityTest]
@@ -151,16 +165,25 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
             character.CustomIntent = CombatActionIntent.Empty;
             yield return new WaitForSeconds(0.6f);
 
+            var charController = character.GetComponent<CharacterController>();
+            if (charController != null) charController.enabled = false;
+            character.transform.position = new Vector3(24.5f, 0.05f, 0f);
+            Physics.SyncTransforms();
+            if (charController != null) charController.enabled = true;
+            yield return null;
+
             var walkOffIntent = CombatActionIntent.Empty;
             walkOffIntent.MoveInput = new Vector2(1f, 0f);
             character.CustomIntent = walkOffIntent;
 
             float walkTime = 0f;
-            while (walkTime < 3.0f && entity.IsGrounded)
+            while (walkTime < 2.0f && entity.IsGrounded)
             {
                 walkTime += Time.deltaTime;
                 yield return null;
             }
+
+            Assert.IsFalse(entity.IsGrounded, "Character must become airborne/falling after walking off the arena platform edge.");
 
             character.CustomIntent = CombatActionIntent.Empty;
             character.OverrideIntent = false;
@@ -207,6 +230,19 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
 
             float distToWrist = Vector3.Distance(proxyTransform.position, wristBone.position);
             Assert.Less(distToWrist, 0.35f, "Contact proxy sphere must be anchored to the animated wrist bone position.");
+
+            // Verify pre-IK immunity when IK weight > 0 (Holding and Caught states)
+            HandshakeVisualFeedback feedback = player.GetComponentInChildren<HandshakeVisualFeedback>();
+            Assert.IsNotNull(feedback, "Feedback component must exist.");
+            feedback.SetIkOverride(new Vector3(10f, 10f, 10f), 1.0f);
+
+            yield return null;
+            yield return null;
+
+            float distToFakeTarget = Vector3.Distance(proxyTransform.position, new Vector3(10f, 10f, 10f));
+            Assert.Greater(distToFakeTarget, 5.0f, "Contact proxy sphere must NOT be pulled towards the IK target position.");
+
+            feedback.ClearIkOverride();
         }
 #endif
     }

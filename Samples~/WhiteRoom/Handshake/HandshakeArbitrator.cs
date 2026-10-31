@@ -39,6 +39,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
         private float _aReleaseTimer = 0f;
         private float _bReleaseTimer = 0f;
+        private float _catchingReleaseTimer = 0f;
         private HandshakeParticipant _contestWinner;
         private HandshakeParticipant _contestLoser;
         private int _winnerPressCount = 0;
@@ -142,6 +143,15 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             CombatEntity.OnGlobalArenaReset += HandleGlobalReset;
         }
 
+        private void Start()
+        {
+            var participants = ObjectUtility.FindObjects<HandshakeParticipant>(false);
+            foreach (var p in participants)
+            {
+                RegisterParticipant(p);
+            }
+        }
+
         private void OnDisable()
         {
             CombatEntity.OnGlobalArenaReset -= HandleGlobalReset;
@@ -165,11 +175,11 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         /// </summary>
         public void ConfigureClips(AnimationClip reach, AnimationClip wait, AnimationClip withdraw, AnimationClip grip, AnimationClip shake)
         {
-            Settings.ReachClip = reach;
-            Settings.WaitClip = wait;
-            Settings.WithdrawClip = withdraw;
-            Settings.GripClip = grip;
-            Settings.ShakeClip = shake;
+            if (reach != null) Settings.ReachClip = reach;
+            if (wait != null) Settings.WaitClip = wait;
+            if (withdraw != null) Settings.WithdrawClip = withdraw;
+            if (grip != null) Settings.GripClip = grip;
+            if (shake != null) Settings.ShakeClip = shake;
 
             foreach (var p in _participants)
             {
@@ -182,9 +192,9 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         /// </summary>
         public void ConfigureBatch2Clips(AnimationClip laugh, AnimationClip angry, AnimationClip clapLaugh)
         {
-            Settings.LaughClip = laugh;
-            Settings.AngryClip = angry;
-            Settings.ClapLaughClip = clapLaugh;
+            if (laugh != null) Settings.LaughClip = laugh;
+            if (angry != null) Settings.AngryClip = angry;
+            if (clapLaugh != null) Settings.ClapLaughClip = clapLaugh;
         }
 
         /// <summary>
@@ -192,12 +202,12 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         /// </summary>
         public void ConfigureBatch3Clips(AnimationClip hold, AnimationClip triumph, AnimationClip pain, AnimationClip slowWithdraw, AnimationClip stumble, AnimationClip graspEmpty)
         {
-            Settings.HoldClip = hold;
-            Settings.TriumphClip = triumph;
-            Settings.PainClip = pain;
-            Settings.SlowWithdrawClip = slowWithdraw;
-            Settings.StumbleClip = stumble;
-            Settings.GraspEmptyClip = graspEmpty;
+            if (hold != null) Settings.HoldClip = hold;
+            if (triumph != null) Settings.TriumphClip = triumph;
+            if (pain != null) Settings.PainClip = pain;
+            if (slowWithdraw != null) Settings.SlowWithdrawClip = slowWithdraw;
+            if (stumble != null) Settings.StumbleClip = stumble;
+            if (graspEmpty != null) Settings.GraspEmptyClip = graspEmpty;
         }
 
         private void ApplyClipDurationsToParticipant(HandshakeParticipant participant)
@@ -217,8 +227,18 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             ApplyClipDurationsToParticipant(participant);
             _participants.Add(participant);
 
+            if (participant.ContactBridge == null)
+            {
+                participant.ContactBridge = participant.GetComponentInChildren<HandContactBridge>();
+                if (participant.ContactBridge != null)
+                {
+                    participant.ContactBridge.Initialize(participant);
+                }
+            }
+
             if (participant.ContactBridge != null)
             {
+                participant.ContactBridge.OnTriggerContact -= OnHandTriggerContact;
                 participant.ContactBridge.OnTriggerContact += OnHandTriggerContact;
             }
         }
@@ -298,6 +318,8 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
             _participantA = p1;
             _participantB = p2;
+            _participantA.ResetPressCount();
+            _participantB.ResetPressCount();
             _participantAReleasedDuringGrip = false;
             _participantBReleasedDuringGrip = false;
             _participantAReleaseTimestamp = -1f;
@@ -374,11 +396,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                     : $"先放開者: {_participantB.EntityId} ({_participantBReleaseTimestamp:F2}s)，後放開者: {_participantA.EntityId} ({_participantAReleaseTimestamp:F2}s)";
 
                 EmitArbitrationLog($"[握手判定] 判定結果：同時收手 (BothWithdraw)！雙方均在握緊結束前放開 ({orderInfo})。");
-
-                float reactionLock = Settings.PrankReactionDuration;
-                _participantA.LockReachingForDuration(reactionLock);
-                _participantB.LockReachingForDuration(reactionLock);
-
                 TriggerBothWithdrawPresentation(withdrawLen);
             }
             else
@@ -389,10 +406,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 _lastPranker = pranker;
                 _lastPranked = pranked;
 
-                float reactionLock = Settings.PrankReactionDuration;
-                pranker.LockReachingForDuration(reactionLock);
-                EmitArbitrationLog($"[握手判定] 判定結果：惡作劇 (Prank)！放開者為【{pranker.EntityId}】，被惡作劇者為【{pranked.EntityId}】。放開者在反應結束前（{reactionLock:F2}s）不可重新發起伸手。");
-
+                EmitArbitrationLog($"[握手判定] 判定結果：惡作劇 (Prank)！放開者為【{pranker.EntityId}】，被惡作劇者為【{pranked.EntityId}】。動作綁定收手與反應片段，區間結束前不可重新發起伸手。");
                 TriggerPrankPresentation(pranker, pranked, withdrawLen);
             }
         }
@@ -408,6 +422,8 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             {
                 _participantA.ResetPressCount();
                 _participantB.ResetPressCount();
+                _participantAReleaseTimestamp = -1f;
+                _participantBReleaseTimestamp = -1f;
             }
 
             _participantA.SetState(HandshakeState.Holding);
@@ -429,11 +445,41 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
             float graceTime = Settings.ReleaseGraceTime;
 
-            if (!aHold) _aReleaseTimer += Time.deltaTime;
-            else _aReleaseTimer = 0f;
+            if (!aHold)
+            {
+                if (_participantAReleaseTimestamp < 0f)
+                {
+                    _participantAReleaseTimestamp = Time.time;
+                    EmitArbitrationLog($"[握手判定] [{_participantA.EntityId}] 於握住 (Holding) 期間放開互動鍵 (時間: {_participantAReleaseTimestamp:F2}s)！開始計算容許時間。");
+                }
+                _aReleaseTimer += Time.deltaTime;
+            }
+            else
+            {
+                _aReleaseTimer = 0f;
+                if (_sessionState == HandshakeState.Holding && _aReleaseTimer < graceTime)
+                {
+                    _participantAReleaseTimestamp = -1f;
+                }
+            }
 
-            if (!bHold) _bReleaseTimer += Time.deltaTime;
-            else _bReleaseTimer = 0f;
+            if (!bHold)
+            {
+                if (_participantBReleaseTimestamp < 0f)
+                {
+                    _participantBReleaseTimestamp = Time.time;
+                    EmitArbitrationLog($"[握手判定] [{_participantB.EntityId}] 於握住 (Holding) 期間放開互動鍵 (時間: {_participantBReleaseTimestamp:F2}s)！開始計算容許時間。");
+                }
+                _bReleaseTimer += Time.deltaTime;
+            }
+            else
+            {
+                _bReleaseTimer = 0f;
+                if (_sessionState == HandshakeState.Holding && _bReleaseTimer < graceTime)
+                {
+                    _participantBReleaseTimestamp = -1f;
+                }
+            }
 
             if (_aReleaseTimer >= graceTime && _bReleaseTimer >= graceTime)
             {
@@ -546,6 +592,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             _sessionState = HandshakeState.Catching;
             _catchingParticipant = catching;
             _caughtParticipant = caught;
+            _catchingReleaseTimer = 0f;
             _lastOutcome = HandshakeOutcome.Caught;
 
             catching.SetState(HandshakeState.Catching);
@@ -563,9 +610,19 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 return;
             }
 
-            if (!_catchingParticipant.CurrentIntent.InteractHold)
+            bool catchingHold = _catchingParticipant.CurrentIntent.InteractHold;
+            if (!catchingHold)
             {
-                EmitArbitrationLog($"[握手判定] 抓者【{_catchingParticipant.EntityId}】亦放開互動鍵！雙方均已放開，握住結束，照累計連按次數判定比力氣！");
+                _catchingReleaseTimer += Time.deltaTime;
+            }
+            else
+            {
+                _catchingReleaseTimer = 0f;
+            }
+
+            if (_catchingReleaseTimer >= Settings.ReleaseGraceTime)
+            {
+                EmitArbitrationLog($"[握手判定] 抓者【{_catchingParticipant.EntityId}】放開超過容許時間（{Settings.ReleaseGraceTime:F2}s）！雙方均已放開，握住結束，照累計連按次數判定比力氣！");
                 ResolveStrengthContest();
                 return;
             }
@@ -580,19 +637,24 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         }
 
         /// <summary>
-        /// Calculates the dynamic physical arm reach from both humanoid skeleton bone hierarchies.
+        /// Calculates the dynamic physical arm reach from both humanoid skeleton bone hierarchies plus compensation.
         /// </summary>
         public float GetEffectiveEscapeThreshold()
+        {
+            float totalReach = MeasureTotalArmReach();
+            float compensation = Settings != null ? Settings.EscapeDistanceCompensation : 0f;
+            return totalReach + compensation;
+        }
+
+        /// <summary>
+        /// Measures the combined physical arm reach from both participants' humanoid skeletons.
+        /// </summary>
+        public float MeasureTotalArmReach()
         {
             float totalReach = 0f;
             if (_participantA != null) totalReach += MeasureArmReach(_participantA);
             if (_participantB != null) totalReach += MeasureArmReach(_participantB);
-
-            if (totalReach > 1.0f)
-            {
-                return Mathf.Max(Settings.EscapeDistanceThreshold, totalReach);
-            }
-            return Settings.EscapeDistanceThreshold;
+            return totalReach > 0.5f ? totalReach : 1.80f;
         }
 
         private float MeasureArmReach(HandshakeParticipant p)
@@ -787,6 +849,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             _lastPranked = null;
             _aReleaseTimer = 0f;
             _bReleaseTimer = 0f;
+            _catchingReleaseTimer = 0f;
             _contestWinner = null;
             _contestLoser = null;
             _winnerPressCount = 0;
@@ -795,6 +858,10 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             _caughtParticipant = null;
             _participantA = null;
             _participantB = null;
+            foreach (var p in _participants)
+            {
+                if (p != null) p.ResetPressCount();
+            }
         }
 
         /// <summary>
@@ -802,6 +869,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         /// </summary>
         public void ResetAll()
         {
+            HandleGlobalReset();
             CombatEntity.ResetAllArenaEntities();
         }
     }

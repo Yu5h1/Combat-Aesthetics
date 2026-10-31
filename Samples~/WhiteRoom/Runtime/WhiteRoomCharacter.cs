@@ -76,6 +76,16 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             if (_entity == null) return;
 
             CombatActionIntent intent = OverrideIntent ? CustomIntent : PollIntent(_entity);
+            if (OverrideIntent)
+            {
+                var cleared = CustomIntent;
+                cleared.InteractDown = false;
+                cleared.InteractUp = false;
+                cleared.Attack = false;
+                cleared.Jump = false;
+                cleared.ParryTap = false;
+                CustomIntent = cleared;
+            }
             _entity.StepCombat(intent, _cameraTransform);
         }
 

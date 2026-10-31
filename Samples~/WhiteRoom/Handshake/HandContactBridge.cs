@@ -14,6 +14,25 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
         public event Action<HandContactBridge, HandContactBridge> OnTriggerContact;
 
+        private void Awake()
+        {
+            if (HandCollider == null)
+            {
+                HandCollider = GetComponent<Collider>();
+            }
+            if (Owner == null)
+            {
+                Owner = GetComponentInParent<HandshakeParticipant>();
+            }
+            if (HandCollider is SphereCollider sphere)
+            {
+                if (sphere.radius < 0.40f)
+                {
+                    sphere.radius = 0.40f;
+                }
+            }
+        }
+
         /// <summary>
         /// Configures this contact bridge with its owning participant and ensures a kinematic Rigidbody is present.
         /// </summary>
@@ -24,6 +43,13 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             if (HandCollider != null)
             {
                 HandCollider.isTrigger = true;
+            }
+            if (HandCollider is SphereCollider sphere)
+            {
+                if (sphere.radius < 0.40f)
+                {
+                    sphere.radius = 0.40f;
+                }
             }
 
             var rb = GetComponent<Rigidbody>();
@@ -53,12 +79,26 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             }
         }
 
+        private void Update()
+        {
+            CheckContactOverlaps();
+        }
+
         private void FixedUpdate()
         {
+            CheckContactOverlaps();
+        }
+
+        private void CheckContactOverlaps()
+        {
+            if (HandCollider == null)
+            {
+                HandCollider = GetComponent<Collider>();
+            }
             if (HandCollider is SphereCollider sphere)
             {
                 float effectiveRadius = sphere.radius * Mathf.Max(transform.lossyScale.x, Mathf.Max(transform.lossyScale.y, transform.lossyScale.z));
-                Collider[] overlaps = Physics.OverlapSphere(transform.position, effectiveRadius);
+                Collider[] overlaps = Physics.OverlapSphere(transform.position, effectiveRadius, ~0, QueryTriggerInteraction.Collide);
                 for (int i = 0; i < overlaps.Length; i++)
                 {
                     Collider col = overlaps[i];
