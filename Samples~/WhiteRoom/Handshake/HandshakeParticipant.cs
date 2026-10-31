@@ -34,8 +34,8 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
         public HandshakeSettings Settings => HandshakeArbitrator.Instance != null ? HandshakeArbitrator.Instance.Settings : null;
 
-        public float ReachDuration => GetClipLength(HandshakeState.Reaching, 0.50f);
-        public float WithdrawDuration => GetClipLength(HandshakeState.Withdrawing, 0.50f);
+        public float ReachDuration => GetClipLength(HandshakeState.Reaching);
+        public float WithdrawDuration => GetClipLength(HandshakeState.Withdrawing);
 
         public event Action<HandshakeParticipant, HandshakeState> OnStateChanged;
         public event Action<string> OnParticipantLog;
@@ -54,7 +54,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             if (_entity != null)
             {
                 _entity.EnableCombatActions = false;
-                _entity.SetColliderRadius(0.30f);
                 _entity.OnIntentStepped -= HandleIntentStepped;
                 _entity.OnIntentStepped += HandleIntentStepped;
                 _entity.OnEntityReset -= HandleEntityReset;
@@ -105,7 +104,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             {
                 _entity.InitializeSettings(id, team, 100f);
                 _entity.EnableCombatActions = false;
-                _entity.SetColliderRadius(0.30f);
             }
         }
 
@@ -208,7 +206,11 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             _stateTime += Time.deltaTime;
 
             AnimationClip currentClip = Settings != null ? Settings.GetClipForState(_state) : null;
-            float clipLength = currentClip != null ? currentClip.length : 0.50f;
+            if (currentClip == null && _state != HandshakeState.None)
+            {
+                Debug.LogError($"[HandshakeParticipant] Missing AnimationClip for state '{_state}' on '{name}'!");
+            }
+            float clipLength = currentClip != null ? currentClip.length : 0f;
             float normalizedTime = clipLength > 0f ? (_stateTime / clipLength) : 1.0f;
 
             switch (_state)
@@ -281,7 +283,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 case HandshakeState.Leap:
                     if (isInteractDown)
                     {
-                        bool underControl = Settings != null ? Settings.IsActionUnderControl(currentClip, normalizedTime) : (normalizedTime >= 0.667f);
+                        bool underControl = CheckActionUnderControl(currentClip, normalizedTime);
                         if (underControl && !_requireInteractRelease)
                         {
                             SetState(HandshakeState.Reaching);
@@ -301,7 +303,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 case HandshakeState.Withdrawing:
                     if (isInteractDown)
                     {
-                        bool underControl = Settings != null ? Settings.IsActionUnderControl(currentClip, normalizedTime) : (normalizedTime >= 0.667f);
+                        bool underControl = CheckActionUnderControl(currentClip, normalizedTime);
                         if (underControl && !_requireInteractRelease)
                         {
                             SetState(HandshakeState.Reaching);
@@ -340,7 +342,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 case HandshakeState.GraspEmpty:
                     if (isInteractDown)
                     {
-                        bool underControl = Settings != null ? Settings.IsActionUnderControl(currentClip, normalizedTime) : (normalizedTime >= 1.0f);
+                        bool underControl = CheckActionUnderControl(currentClip, normalizedTime);
                         if (underControl && !_requireInteractRelease)
                         {
                             SetState(HandshakeState.Reaching);
@@ -365,10 +367,25 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             }
         }
 
-        private float GetClipLength(HandshakeState state, float defaultLen)
+        private bool CheckActionUnderControl(AnimationClip clip, float normalizedTime)
+        {
+            if (Settings == null || clip == null)
+            {
+                Debug.LogError($"[HandshakeParticipant] Cannot evaluate action control for state '{_state}': Settings or clip is missing on '{name}'!");
+                return false;
+            }
+            return Settings.IsActionUnderControl(clip, normalizedTime);
+        }
+
+        private float GetClipLength(HandshakeState state)
         {
             AnimationClip clip = Settings != null ? Settings.GetClipForState(state) : null;
-            return clip != null ? clip.length : defaultLen;
+            if (clip == null)
+            {
+                Debug.LogError($"[HandshakeParticipant] AnimationClip for '{state}' is missing or Settings is null on '{name}'!");
+                return 0f;
+            }
+            return clip.length;
         }
 
         private void EmitLog(string message)

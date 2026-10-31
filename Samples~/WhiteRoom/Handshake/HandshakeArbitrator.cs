@@ -40,6 +40,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         private float _aReleaseTimer = 0f;
         private float _bReleaseTimer = 0f;
         private float _catchingReleaseTimer = 0f;
+        private bool _hasLoggedArmReachError = false;
         private HandshakeParticipant _contestWinner;
         private HandshakeParticipant _contestLoser;
         private int _winnerPressCount = 0;
@@ -100,7 +101,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
         public float EscapeDistanceThreshold
         {
-            get => Settings != null ? Settings.EscapeDistanceThreshold : 1.80f;
+            get => Settings != null ? Settings.EscapeDistanceThreshold : -1f;
             set { if (Settings != null) Settings.EscapeDistanceThreshold = value; }
         }
 
@@ -611,7 +612,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             float bodyDist = Vector3.Distance(_participantA.transform.position, _participantB.transform.position);
             float escapeThreshold = GetEffectiveEscapeThreshold();
 
-            if (bodyDist > escapeThreshold)
+            if (escapeThreshold > 0f && bodyDist > escapeThreshold)
             {
                 ResolveEscape(bodyDist, escapeThreshold);
             }
@@ -625,7 +626,11 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             float totalReach = MeasureTotalArmReach();
             if (totalReach <= 0f)
             {
-                Debug.LogError("[HandshakeArbitrator] Cannot calculate escape threshold: Total arm reach could not be measured from skeletons!");
+                if (!_hasLoggedArmReachError)
+                {
+                    _hasLoggedArmReachError = true;
+                    Debug.LogError("[HandshakeArbitrator] Cannot calculate escape threshold: Total arm reach could not be measured from skeletons!");
+                }
                 return -1f;
             }
             float compensation = Settings != null ? Settings.EscapeDistanceCompensation : 0f;
@@ -658,7 +663,11 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             Animator anim = p.GetComponentInChildren<Animator>();
             if (anim == null)
             {
-                Debug.LogError($"[HandshakeArbitrator] Cannot measure arm reach on '{p.name}': Animator not found!");
+                if (!_hasLoggedArmReachError)
+                {
+                    _hasLoggedArmReachError = true;
+                    Debug.LogError($"[HandshakeArbitrator] Cannot measure arm reach on '{p.name}': Animator not found!");
+                }
                 return -1f;
             }
 
@@ -669,7 +678,11 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
             if (shoulder == null || elbow == null || hand == null)
             {
-                Debug.LogError($"[HandshakeArbitrator] Cannot measure arm reach on '{p.name}': Required humanoid arm bones (RightUpperArm, RightLowerArm, RightHand) are missing!");
+                if (!_hasLoggedArmReachError)
+                {
+                    _hasLoggedArmReachError = true;
+                    Debug.LogError($"[HandshakeArbitrator] Cannot measure arm reach on '{p.name}': Required humanoid arm bones (RightUpperArm, RightLowerArm, RightHand) are missing!");
+                }
                 return -1f;
             }
 
@@ -825,6 +838,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             _catchingReleaseTimer = 0f;
             _contestWinner = null;
             _contestLoser = null;
+            _hasLoggedArmReachError = false;
             _winnerPressCount = 0;
             _loserPressCount = 0;
             _catchingParticipant = null;

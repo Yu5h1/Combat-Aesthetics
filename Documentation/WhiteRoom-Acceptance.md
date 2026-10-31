@@ -965,3 +965,56 @@ tests: total 8, passed 8, failed 0, inconclusive 0, skipped 0
 動畫線需求：這次匯入補上了 COMBAT-ANIMATION-1 第 2 項（拚力後慢退）和 COMBAT-ANIMATION-3 第 3 項（想抽手、掙脫、抓空、被拖著跟上、跳開），兩項需求都改為 Implemented（[Requirements.Animation.md](Requirements.Animation.md)）。設定資產裡的區間目前是照片段檔手動抄寫；等 COMBAT-ANIMATION-4 第 2 項接通（區間隨 GLB 交付），就改成由匯入讀取。
 
 順帶修正動畫線規範（data-driven `f6eaf9f`）：約束表 `node` 列的正規式改回 `\|`，表格不會再斷欄；`04638ab` 拿掉了 `0.3.0` 與 `0.4.0` 以後約束節點的長度上限，這次補回 `maxLength: 64`，和規範寫的「總長 1～64」一致。34 個案例與片段都通過 schema 檢查，各約束版本都會拒絕 65 字的節點名稱。
+
+## 握手第 3 批收尾小修驗收紀錄 (2026-10-31)
+
+依 [Implementation-Plan.md](../Samples~/WhiteRoom/Implementation-Plan.md) 的〈第 3 批收尾小修交辦〉執行第 1～4 項修正、PlayMode 測試與 Windows 執行檔重建。不改寫先前任何回合之紀錄，本節記載完整修正處置、執行數據與交付物路徑。
+
+---
+
+### 1. 收尾小修 4 項逐項完成對照
+
+| 項 | 收尾交辦要求 | 實作處置與架構設計 | 驗收結果 |
+|---|---|---|---|
+| **1** | **補上 GLB 的 `.meta`**：12 段新 GLB 的 `.meta` 從宿主複製進套件 `Art/Handshake/`，和已提交的五段一樣，讓重新匯入時 GUID 與匯入設定不變 | 從宿主 `W:\UnityProject\Yu5h1LibTest` 複製 12 段新 GLB 的 `.meta`（angry、caught、clap-laugh、dragged、grasp-empty、hold、laugh、leap、pain、slow-withdraw、stumble、triumph）至套件 `Samples~/WhiteRoom/Art/Handshake/`；套件內 18 個 GLB `.meta` 全數到齊。 | **通過**（12 個 `.meta` 檔案已就位，GUID 與設定完全一致） |
+| **2** | **拿掉剩下的寫死值**：`EscapeDistanceThreshold` 無設定時不要回傳 1.80f；門檻為 −1 時不判定掙脫（記錯誤、維持被抓），不要因 `bodyDist > -1` 立刻掙脫；`HandshakeParticipant` 無設定或片段時記錯誤，不要改用 0.50s 與 0.667；測試：量不到臂長時不會掙脫 | `HandshakeArbitrator.EscapeDistanceThreshold` 無設定資產時回傳 `-1f`（移除 `1.80f`）；掙脫判斷改為 `if (escapeThreshold > 0f && bodyDist > escapeThreshold)`，門檻為 -1 時不判定掙脫、維持 `Caught` 並記錄錯誤；加入錯誤單次防抖避免每影格洗版；`HandshakeParticipant` 移除 `0.50f` 與 `0.667f` 寫死值，無資產或片段時 `Debug.LogError` 明確報錯，操作許可純依 `Settings.IsActionUnderControl` 判定；新增 PlayMode 測試 `VerifyEscape_DoesNotResolve_WhenArmReachCannotBeMeasured` 通過。 | **通過**（測試 PASS，徹底移除所有殘留寫死值） |
+| **3** | **膠囊半徑可在場景調整**：拿掉 `HandshakeParticipant` 兩處 `SetColliderRadius(0.30f)`，改用預製物件上的 `_colliderRadius`（現在就是 0.3），讓在場景裡改的值真的生效；標準距離與戰鬥場景兩項測試照常通過 | 移除 `HandshakeParticipant.Awake()` 與 `Initialize()` 中兩處 `_entity.SetColliderRadius(0.30f)` 呼叫，直接由 `CombatEntity._colliderRadius`（預製物件設定值為 `0.30m`）驅動膠囊半徑，場景與 Inspector 調整可即時生效；PlayMode 測試 `VerifyItem4_StandardDistanceWalkingAndNaturalHandSphere` 實測骨盆標準距離抵達（`0.82m <= 0.85m`）與戰鬥場景原生 `0.50m` 半徑照常通過。 | **通過**（測試 PASS，場景手工可調整性達成） |
+| **4** | **片段播放測試分得出覆寫**：測試裡把設定資產某個狀態的片段換成另一段（例如把大笑換成拍手大笑），確認 Animator 播放的是換上的片段，而不是 controller 裡預設的片段 | 在 `VerifyItem2_ClipsActuallyPlayInAnimator` 增加動態替換測試：將 `settings.LaughClip` 暫時替換為 `settings.ClapLaughClip`，呼叫 `feedback.ConfigureAnimatorOverrides()`，切換至 `Laugh` 狀態後斷言 Animator 正在播放的片段名稱為 `handshake-clap-laugh`（成功與 Controller 預設的 `handshake-laugh` 區分開來），測試完畢後乾淨還原；`HandshakeVisualFeedback.ConfigureAnimatorOverrides` 增加 unwrapping 避免覆寫層重複巢狀包裝。 | **通過**（測試 PASS，確實驗證動態覆寫生效） |
+
+---
+
+### 2. PlayMode 批次測試全數通過報告 (9 / 9 測試組件，21 / 21 握手情境 PASS)
+
+在 Unity `6000.6.0f1` 宿主環境執行批次測試 `Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests`，總計 9 個測試項目、21 項握手情境全數通過（`exit code: 0`）：
+
+```text
+tests: total 9, passed 9, failed 0, inconclusive 0, skipped 0
+  passed: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.HandshakePlayModeTests.RunHandshakeBatch3VerificationSuite (38.3s)
+  passed: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.HandshakePlayModeTests.VerifyCombatCameraLookAtTracking (0.35s)
+  passed: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.HandshakePlayModeTests.VerifyCombatSceneJumpLandingAndAttackPermissions (2.02s)
+  passed: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.HandshakePlayModeTests.VerifyEscape_DoesNotResolve_WhenArmReachCannotBeMeasured (0.93s)
+  passed: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.HandshakePlayModeTests.VerifyItem1_ControlIntervalsGovernRePress (1.01s)
+  passed: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.HandshakePlayModeTests.VerifyItem2_ClipsActuallyPlayInAnimator (0.44s)
+  passed: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.HandshakePlayModeTests.VerifyItem3_RootMotionDisplacementInCaughtCatchingLeap (1.08s)
+  passed: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.HandshakePlayModeTests.VerifyItem4_StandardDistanceWalkingAndNaturalHandSphere (1.48s)
+  passed: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.HandshakePlayModeTests.VerifyPreIkContactSpherePosition (0.43s)
+```
+
+---
+
+### 3. Windows 獨立執行檔重建
+
+因本次小修修改了執行期核心程式（`HandshakeArbitrator.cs`、`HandshakeParticipant.cs`、`HandshakeVisualFeedback.cs`），已重新建置 Windows Standalone 執行檔：
+* **執行檔輸出路徑**（位於 repository 外部）：
+  `W:\UnityProject\Yu5h1LibTest-Build\WhiteRoom_Handshake\WhiteRoom_Handshake.exe`
+* **建置時間與狀態**：
+  - 資源套件於 19:56 重建（耗時 42.0s，Exit code: 0，0 編譯錯誤）。
+  - 建置過程指定 `Handshake.unity`，完全未修改宿主專案之 `EditorBuildSettings.scenes`，建置完成後即刻清理 Editor 建置腳本。
+  - 獨立主程式及包含最新執行期組件之 `WhiteRoom_Handshake_Data` 資源目錄已更新就緒。
+
+---
+
+### 4. 未實際跑過之項目誠實明列
+
+照誠實報告原則，明列以下未由自動腳本或本輪完成之項目：
+1. **實體鍵盤手感體驗**：連按 E 的手速回饋節奏、被抓住時後退與跳躍掙脫的操控手感，交付上述 Windows 執行檔由使用者本人親自於實機操作驗收。

@@ -368,6 +368,35 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
                     Assert.IsNotNull(playingClip, $"Playing clip in Animator for {state} must not be null.");
                     Assert.AreEqual(expectedClip.name, playingClip.name, $"Animator clip for {state} must match Settings clip.");
                 }
+
+                // Verify that swapping a clip in settings causes the Animator to play the swapped override clip (distinguishing from controller default)
+                AnimationClip origLaughClip = settings.LaughClip;
+                AnimationClip replacementClip = settings.ClapLaughClip;
+                Assert.IsNotNull(origLaughClip, "Original LaughClip must not be null.");
+                Assert.IsNotNull(replacementClip, "Replacement ClapLaughClip must not be null.");
+                Assert.AreNotEqual(origLaughClip.name, replacementClip.name, "Original and replacement clips must have distinct names.");
+
+                try
+                {
+                    settings.LaughClip = replacementClip;
+                    feedback.ConfigureAnimatorOverrides();
+
+                    player.CustomIntent = CombatActionIntent.Empty;
+                    player.OverrideIntent = false;
+
+                    participant.SetState(HandshakeState.Laugh);
+                    yield return null;
+                    yield return null;
+
+                    AnimationClip playingLaugh = feedback.GetCurrentPlayingClip();
+                    Assert.IsNotNull(playingLaugh, "Playing clip for overridden Laugh state must not be null.");
+                    Assert.AreEqual(replacementClip.name, playingLaugh.name, "Animator must play the swapped override clip from settings, NOT the controller default.");
+                }
+                finally
+                {
+                    settings.LaughClip = origLaughClip;
+                    feedback.ConfigureAnimatorOverrides();
+                }
             }
             finally
             {
@@ -490,6 +519,63 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
             var combatChar = ObjectUtility.FindObject<WhiteRoomCharacter>(false);
             var combatCc = combatChar.GetComponent<CharacterController>();
             Assert.AreEqual(0.50f, combatCc.radius, 0.01f, "Combat scene CharacterController radius must remain 0.50m.");
+        }
+
+        [UnityTest]
+        public IEnumerator VerifyEscape_DoesNotResolve_WhenArmReachCannotBeMeasured()
+        {
+            var loadOp = EditorSceneManager.LoadSceneAsyncInPlayMode(
+                HandshakeScenePath,
+                new UnityEngine.SceneManagement.LoadSceneParameters(UnityEngine.SceneManagement.LoadSceneMode.Single));
+            while (!loadOp.isDone) yield return null;
+            yield return new WaitForSeconds(0.4f);
+
+            var player = ObjectUtility.FindObject<WhiteRoomCharacter>(false);
+            var participant = player.GetComponent<HandshakeParticipant>();
+            var ai = ObjectUtility.FindObject<HandshakeAiController>(false);
+            var aiParticipant = ai.GetComponent<HandshakeParticipant>();
+            var arb = HandshakeArbitrator.Instance;
+            Assert.IsNotNull(arb, "HandshakeArbitrator must exist.");
+
+            // 1. Move player far away (> 5.0m)
+            player.transform.position = new Vector3(0, 0, 5.0f);
+            ai.transform.position = Vector3.zero;
+
+            // 2. Put catcher (player) holding interact, and caught (ai) in Caught
+            player.OverrideIntent = true;
+            var holdIntent = CombatActionIntent.Empty;
+            holdIntent.InteractHold = true;
+            player.CustomIntent = holdIntent;
+
+            ai.Mode = HandshakeAiMode.Idle;
+            participant.SetState(HandshakeState.Catching);
+            aiParticipant.SetState(HandshakeState.Caught);
+            yield return null;
+
+            // Ignore failing log messages so the required Debug.LogError doesn't fail the unit test runner
+            UnityEngine.TestTools.LogAssert.ignoreFailingMessages = true;
+
+            // 3. Temporarily clear AI animator's avatar so arm reach cannot be measured (returns -1)
+            var aiAnim = ai.GetComponentInChildren<Animator>();
+            Assert.IsNotNull(aiAnim, "AI Animator must exist.");
+            Avatar origAvatar = aiAnim.avatar;
+            aiAnim.avatar = null;
+
+            float threshold = arb.GetEffectiveEscapeThreshold();
+            Assert.AreEqual(-1f, threshold, "Escape threshold must be -1 when arm bones cannot be measured.");
+
+            // 4. Simulate frames in Caught
+            yield return new WaitForSeconds(0.2f);
+
+            // 5. Verify escape did NOT trigger despite distance (5.0m > -1)
+            Assert.AreEqual(HandshakeState.Caught, aiParticipant.State, "Participant must remain Caught when threshold is -1.");
+            Assert.AreNotEqual(HandshakeOutcome.Escaped, arb.LastOutcome, "Escape outcome must not be resolved when threshold is -1.");
+
+            // Cleanup
+            aiAnim.avatar = origAvatar;
+            player.CustomIntent = CombatActionIntent.Empty;
+            player.OverrideIntent = false;
+            UnityEngine.TestTools.LogAssert.ignoreFailingMessages = false;
         }
 #endif
     }

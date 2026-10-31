@@ -115,7 +115,13 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             var settings = arb != null ? arb.Settings : null;
             if (settings == null) return;
 
-            var overrideController = new AnimatorOverrideController(_animator.runtimeAnimatorController);
+            RuntimeAnimatorController baseController = _animator.runtimeAnimatorController;
+            if (baseController is AnimatorOverrideController existingAoc)
+            {
+                baseController = existingAoc.runtimeAnimatorController;
+            }
+
+            var overrideController = new AnimatorOverrideController(baseController);
             overrideController.name = "HandshakeAnimatorOverride";
 
             var overrides = new List<KeyValuePair<AnimationClip, AnimationClip>>();
