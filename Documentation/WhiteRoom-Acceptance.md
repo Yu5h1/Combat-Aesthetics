@@ -815,3 +815,27 @@ tests: total 4, passed 4, failed 0, inconclusive 0, skipped 0
 1. **實體鍵盤手感體驗**：連按 E 的手速回饋節奏、被抓住時後退與跳躍掙脫的操控手感，交付上述 Windows 執行檔由使用者本人親自於實機操作驗收。
 2. **正式動作片段製作**：大笑、生氣、拍手、得意、痛苦、慢退、踉蹌、抽手等動作片段等待動畫線交付（ANIMATION-LIMB-6 等）；本輪在 Animator Controller 與 Override Controller 中備齊狀態節點，未指派片段時於 HUD/日誌印出判定並以 Withdrawing 平滑回退，無虛構動畫檔案。
 
+
+## 握手第 3 批第二輪修正驗收
+
+對象：`c696749`，依據 [第 3 批第二輪修正交辦](../Samples~/WhiteRoom/Implementation-Plan.md#第-3-批第二輪修正交辦) 第 1～8 項。主 session 讀程式、場景與資產，比對宿主匯入副本（`Handshake/`、`Runtime/`、`Tests/`、`Prefabs/` 與套件一致，宿主根目錄已無殘留截圖與紀錄），確認執行檔存在於 `W:\UnityProject\Yu5h1LibTest-Build\WhiteRoom_Handshake\`。沒有重跑 Unity 測試，也沒有開執行檔操作。結論：**未通過**。上一節〈握手第 3 批第二輪修正驗收紀錄〉把第 1、2 項寫成通過，與程式不符，以本節為準。
+
+| 項 | 結果 | 依據 |
+|---|---|---|
+| 1 控制區間綁定動畫 | 未達成 | `HandshakeSettings.IsActionUnderControl`、`IsActionCancellable` 沒有任何地方呼叫；設定資產的 `_clipIntervalBindings` 是空的。伸手、收手仍由 `HandshakeParticipant._stateTimer` 倒數（`_reachDuration`、`_withdrawDuration` 取片段長度），反應另有固定的 `_reactionFallbackDuration` 0.5 秒。區間沒有參與任何操作判斷。 |
+| 2 片段播放 | 未達成 | `HandshakeVisualFeedback` 用 `overrideController["Laugh"]` 這類狀態名稱覆寫，但 `AnimatorOverrideController` 的索引是原始片段的名稱；新加的 Laugh、Angry、ClapLaugh、Hold、Triumph、Pain、SlowWithdraw、Stumble、GraspEmpty、Caught、Catching 狀態沒有片段（`m_Motion` 為 0），覆寫不會生效，片段放進設定資產也播不出來。第 1 批狀態能播，是因為 controller 本來就直接指到片段。場景已不覆寫設定資產（這部分達成）。 |
+| 3 抓住與掙脫 | 大致達成 | 被抓的一方用角色走路速度、抓的一方用慢步速度，起跳呼叫 `CombatEntity.Jump()`，都標了「暫代」，沒有另設速度或彈開參數。掙脫門檻是雙方骨架量出的手臂長度相加，加上補償，沒有取較大值。抓住期間的按鍵比照握住；被抓後重按回到握住有 Case 17。待修：量不到骨骼時改用寫死的 0.90 m／1.80 m，應該記錯誤而不是假裝量到。 |
+| 4 預製物件 | 達成 | `Prefabs/` 有玩家、AI、鏡頭三個預製物件，`Handshake.unity` 以預製物件實體放置。 |
+| 5 碰撞球與 IK | 達成 | `OnAnimatorIK` 在設定 IK 之前用 `GetIKPosition` 擺放碰撞球，位置來自動畫姿勢。測試把 IK 目標放在 10 m 外再檢查距離大於 5 m，太寬鬆，應改用手附近的目標。 |
+| 6 測試 | 達成（未重跑） | 放開順序比時間戳、累計次數從 2 加到 3、抓的一方追上、被抓的一方真的離地、戰鬥場景走出邊緣與鏡頭遮擋都有對應的 assert。 |
+| 7 畫面證據 | 達成 | 執行檔建置在 repo 以外，紀錄寫明路徑；宿主根目錄已清掉。執行檔裡第 2、3 批狀態沒有片段（見第 2 項），畫面只會看到收手。 |
+| 8 紀錄 | 部分達成 | 新一節更正了上一節的次數與截圖說明，README 已同步；但第 1、2 項寫成通過，與程式不符。 |
+
+## 交辦以外的發現
+
+1. **手的碰撞球被放大到半徑 0.40 m**：`HandContactBridge` 在程式裡強制半徑至少 0.40 m（場景改小也會被蓋掉）。紀錄說原因是角色膠囊半徑 0.5 m，兩人最近只能站到約 0.58 m 以外，0.25 m 的球碰不到。放大碰撞球等於雙手相距將近 0.8 m 就算碰到，偏離「右手碰撞體真的碰到」；真正的問題是兩人走不到片段製作的標準距離（骨盆中心相距 0.8 m，見 [握手動作片段〈製作規則〉](../../../data-driven/animation/Documentation/Handshake-Clips.md#製作規則)）。
+2. `Documentation/Screenshots/` 有 9 個未追蹤的 `Handshake_Batch3_*.png.meta`（Unity 匯入時產生），截圖本身仍在版本控制內。截圖已不作為證據，要不要刪由使用者決定；主 session 沒有動這些檔案。
+
+## 下一輪修正清單
+
+見 [第 3 批第三輪修正交辦](../Samples~/WhiteRoom/Implementation-Plan.md#第-3-批第三輪修正交辦)。
