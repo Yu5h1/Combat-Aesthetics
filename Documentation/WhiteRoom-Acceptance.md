@@ -394,3 +394,30 @@
 ### 6. 交付使用者鍵盤驗收
 
 第 2 批程式與設定已就緒，待使用者本人於宿主 `Yu5h1LibTest` 開啟 `Handshake.unity` 進行實體鍵盤操作驗收（使用情境面板按鈕 1～6 或以 WASD/E 鍵親自體驗惡作劇與同時收手的手感）。
+
+## 握手第 2 批驗收
+
+2026-10-31 對 `0d29bfb`（驗收時為提交前的 staged 內容，檔案相同）依 [第 2 批交辦](../Samples~/WhiteRoom/Implementation-Plan.md#第-2-批交辦惡作劇與同時收手) 驗收，由子 session 進行：讀程式碼、截圖、匯出紀錄，並比對宿主匯入副本；沒有啟動 Unity。判定邏輯正確；一項未達成、數項部分達成，修正列在 [第 3 批交辦](../Samples~/WhiteRoom/Implementation-Plan.md#第-3-批交辦比力氣) 第 1 項。上一節的「通過」以本節為準。
+
+| 項 | 結果 | 依據 |
+|---|---|---|
+| 1 第 1 批收尾：不存在的方法 | 通過 | 程式與文件都不再出現 `RegisterTriggerContact`；`HandshakeArbitrator` 訂閱 `HandContactBridge.OnTriggerContact`。 |
+| 1 第 1 批收尾：實際執行的截圖 | 未通過 | `HandshakeVerificationRunner.CaptureCameraToFile` 以 `cam.Render()` 截取，IMGUI 的 HUD 不會被拍進去；三張截圖都沒有 HUD，雙手被玩家身體擋住。上一節描述的 HUD 文字在圖上都不存在。惡作劇與同時收手兩張在碰到後約 0.6 秒才截取（握緊為 0.5 秒），結果已結束、雙方都站著。截圖確實來自實際執行，但看不出結果。 |
+| 1 第 1 批收尾：戰鬥場景鏡頭 | 部分 | `_shoulderOffset` 為零時仍用 `LookAt`，與原本相同；但 `VerifyCombatCameraLookAtTracking` 只檢查鏡頭存在、有目標、位置非零，沒有驗證跟拍。 |
+| 1 第 1 批收尾：`Yu5h1Lib.Runtime.dll` | 通過 | 位於 `UnityExtension/Packages/Core/Runtime/`（宿主的 `com.yu5h1.library`），測試組件已在宿主編譯。 |
+| 2 判定 | 通過 | 握緊期間只記下誰放開，握緊計時結束時三選一；紀錄中四次判定都在碰到後 0.50 秒。 |
+| 3 放開的手立刻收手 | 通過 | 放開當下就進入收手，判定照常繼續。 |
+| 4 反應片段的設定位置 | 部分 | 欄位放在執行時才建立的 `HandshakeArbitrator`，場景裡無法設定；`ConfigureBatch2Clips` 沒有被呼叫；Animator 沒有大笑、握拳生氣、拍手大笑三段。片段到了仍要改程式。片段未到時以收手代替、只在 HUD 與紀錄顯示，這部分正確。 |
+| 5 重新按下才發起 | 通過（程式） | 所有回到站姿的路徑都適用；測試只涵蓋成功之後。 |
+| 6 AI 測試設定 | 通過 | 有握緊期間放開與握緊後放開的設定；HUD 少了第 1 批「玩家發起 → AI 回應」的按鈕。 |
+| 7 驗收證據 | 部分 | 編譯晚於原始碼修改，10 個自動案例通過，69 筆紀錄與時間線一致；但截圖不合格，握緊後放開的案例沒有記下放開時間，先後放開的案例沒有檢查順序。 |
+
+交辦以外的發現：
+
+- `Runtime/CombatEntity.cs` 改寫了著地判定（新增 `_wasGrounded`、垂直速度低於 -2.5 才進入跳躍、所有角色 `minMoveDistance` 改為 0，另有空的 `OnControllerColliderHit`），會改變戰鬥場景跳躍狀態的切換、出招許可與著地紀錄；紀錄沒提，戰鬥場景也沒驗證，README 卻寫戰鬥「無退化」。
+- `HandContactBridge.FixedUpdate` 新增每個物理格的 `Physics.OverlapSphere`，成為第二條碰到的判定路徑，半徑沒有計入縮放，文件只寫觸發事件。
+- 手部碰撞半徑由 0.22 改為 0.25，並回頭把前兩輪紀錄中的 0.22 改成 0.25，改寫了舊回合的證據。
+- `HandshakeVisualFeedback.LateUpdate` 在 IK 之後擺放碰撞球，碰撞球位置含 IK 結果，目前成立只因碰到前 IK 權重為 0；README 寫「錨定於 IK 計算前」與現況不符。
+- 測試寫死 `C:/Users/Yu5h1/...` 絕對路徑，留有 `CASE2_DEBUG` 的除錯輸出；README「戰鬥驗證重啟」一行重複。
+
+規格補充：握緊期間放開的一方在判定結果與反應結束前能否再發起，規格原本沒寫；使用者 2026-10-31 決定在那之前仍屬收手與反應的不可控制區間，結束時間可調，已寫入計畫。
