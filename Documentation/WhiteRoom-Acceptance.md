@@ -650,3 +650,60 @@ tests: total 4, passed 4, failed 0, inconclusive 0, skipped 0
 | 10 驗收證據 | 部分 | 宿主測試 3/3 通過、組件晚於原始碼編譯；截圖無效，紀錄寫 99 筆、實際 127 筆。 |
 
 規格缺口由使用者 2026-10-31 決定並寫入計畫：抓住後回到握住次數累計；抓的一方也放開就是雙方都放開並比次數；成功後維持緊握姿勢、不搖手；走路速度指角色的走路速度，掙脫門檻從骨架量出。修正列在 [第 3 批修正交辦](../Samples~/WhiteRoom/Implementation-Plan.md#第-3-批修正交辦)。
+
+## 握手第 3 批修正驗收
+
+2026-10-31 由子 session 對 `f95b8f8`（第 3 批與修正一起提交，和 `701ef2d` 比較）依 [第 3 批修正交辦](../Samples~/WhiteRoom/Implementation-Plan.md#第-3-批修正交辦) 第 1～10 項驗收，規則以〈第一個交付的目標〉的「發起」「成功」「惡作劇」「握住」「比力氣」「抓住與掙脫」「動作合理性約束操控」各列與表下的判定說明為準。對照的修正前結論見〈握手第 3 批驗收〉。
+
+方法：讀程式、Animator Controller、設定資產與場景；用 Read 打開 9 張截圖，並以像素比對 HUD 以外的區域；逐筆讀事件紀錄；比對宿主匯入副本；讀宿主的測試結果。沒有啟動 Unity，沒有修改程式。
+
+宿主證據：`%LOCALAPPDATA%Low/DefaultCompany/Yu5h1libTest/TestResults.xml` 在 11:57:00–11:57:38 跑了 4 個測試，全部通過；三個 WhiteRoom 組件在 11:56:52 編譯，晚於最後一次原始碼修改（`HandshakeVerificationRunner.cs`，11:56:24）。宿主根目錄 `Screenshots/` 與 `WhiteRoom_Handshake_Logs.json` 和 repo 內的檔案逐位元組相同，事件紀錄 175 筆，與紀錄寫的筆數一致。宿主副本的程式與套件相同，只有 `README.md` 仍是修正前的版本（寫 15/15、2/2），`HandshakeSettings.asset` 多了 Unity 重新序列化的一行。
+
+結論：不通過。成功恢復為正式結果、抓的一方放開就比次數、回到握住次數累計、單一 HUD 與情境按鈕已達成；截圖仍沒有角色、片段沒有真的由 Animator 播放、不可控制區間仍是從判定才起算的計時器、抓住期間沒有真的跳、沒有預製物件。
+
+### 逐項結果
+
+| 項 | 結果 | 依據 |
+|---|---|---|
+| 1 截圖 | 未達成 | 9 張都用新檔名，舊回合的 `Handshake_PlayMode_Success／Prank／BothWithdraw.png` 與 `0d29bfb` 相同，沒有被覆寫。但 9 張在 HUD 以外的區域逐像素完全相同（最大差值 0），只有天空與地面，沒有角色和雙手。畫面上的「HUD」不是場景的 `WhiteRoomHUD`，而是測試自己建立的 Canvas（`HandshakeVerificationRunner.cs:1172-1233`），鏡頭在截圖時被移到固定位置（`:1132-1133`），不是握手鏡頭。HUD 數值與事件紀錄一致（AI 勝 0 比 5、玩家勝 3 比 0、平手 2 比 2、掙脫 1.80 m 等）。 |
+| 2 片段播放 | 未達成 | Animator 新增的 Laugh、Angry、ClapLaugh、Hold、Triumph、Pain、SlowWithdraw、Stumble、GraspEmpty 九個狀態的 `m_Motion` 都是空的（`HandshakeAnimator.controller:272-480`），沒有 Caught、Catching 狀態；`HandshakeVisualFeedback.PlayClipForState` 只播狀態名稱（`:112-182`），設定資產裡的片段從未交給 Animator（沒有 Override Controller）。片段放進設定後播的仍是空狀態。同一段片段有三個來源：設定資產、`HandshakeSceneBuilder` 的五個片段欄位（`:26-31`）與 Controller 的 motion，而且 `ConfigureClips` 在每次啟動時用場景欄位覆寫設定資產（`HandshakeSceneBuilder.cs:75,138`；`HandshakeArbitrator.cs:166-172`）。被抓的一方沒有片段時播收手並以 IK 0.95 拉向對方手，抓的一方停在握緊姿勢，有基本表現。 |
+| 3 不可控制區間 | 部分 | 同時收手的雙方現在也會鎖定（`HandshakeArbitrator.cs:378-380`）。但鎖定仍在握緊結束判定時才開始，長度是 `PrankReactionDuration` 固定 0.6 秒（`:392-393`；`HandshakeParticipant.cs:59-62,216-219`），不是從放開起算到反應結束，也和收手或反應片段的長度無關。沒有測試在鎖定期間嘗試再伸手。 |
+| 4 抓住與掙脫 | 部分 | 抓的一方放開就比次數（`HandshakeArbitrator.cs:566-570`，紀錄 17.97、28.53）；回到握住不歸零（`:640`）。未達成的部分：被抓的一方速度取自設定 2.2，等於守備慢步（`CombatEntity._guardSpeed`），不是角色走路速度 5.0（`HandshakeParticipant.cs:176`；`CombatEntity.cs:45-46`）。掙脫門檻是 `Max(設定 1.8, 量測值)`（`HandshakeArbitrator.cs:591-595`），HUD 與紀錄全程都是 1.80，量測值實際沒有作用。175 筆紀錄沒有任何「起跳！」或「著地」，兩次「跳躍往後彈開 0.60m」都只有另行計時 0.4 秒的 `cc.Move` 位移（`HandshakeParticipant.cs:85-96,317-334`），所以沒有真的跳起，彈開也不是跳躍的一部分（沒跳起的原因未在 Unity 確認）。兩個速度與彈開距離可在 HUD 調整。 |
+| 5 成功 | 達成（程式與紀錄） | 握緊結束時雙方按著即記 `Success`（`HandshakeArbitrator.cs:361`），進入握住，紀錄中成功之後沒有搖手；沒有握住片段時停在握緊姿勢。沒有可看到姿勢的截圖。 |
+| 6 手工調整 | 部分 | `Handshake.unity` 引用 `HandshakeSettings.asset`，欄位有 `[Inline]`、沒有 `[CreateAssetMenu]`，屬性寫入時 `SetDirty`，HUD 調整會保存到資產。但角色、AI 與鏡頭仍在執行時以 `new GameObject` 建立（`HandshakeSceneBuilder.cs:153,182`），`Samples~/WhiteRoom/Prefabs` 是空資料夾，沒有預製物件。 |
+| 7 HUD | 達成 | `HandshakeHUDCanvas` 已刪除，只剩 `WhiteRoomHUD`；紀錄沒有重複的條目；情境按鈕有握緊期間放開、握緊後放開、AI 惡作劇、同時收手與 AI 發起後取消。 |
+| 8 測試 | 部分 | 新增的案例都存在並通過，戰鬥場景有空中不能出招、著地後能出招的 assert。不足：先後放開只檢查兩個時間都大於 0，沒比順序（`HandshakeVerificationRunner.cs:526`）；握緊後放開記的是測試自己的時鐘，不是系統記下的放開時間，紀錄裡也沒有這次放開（`:593`）；被抓重按累計前後次數都是 0，檢查 `>=` 必然成立（`:953`，紀錄 26.78）；追上而沒掙脫與跳了沒掙脫，只要抓住期間任一格距離小於門檻就通過，被抓的玩家沒有往後走，也沒檢查有沒有跳起（`:1037-1047,1083-1097`）；戰鬥場景走出邊緣沒有 assert，事件紀錄只檢查筆數大於 0（`HandshakePlayModeTests.cs:154-170`）。 |
+| 9 碰撞球與 IK | 未達成 | `VerifyPreIkContactSpherePosition` 在站姿、IK 權重為 0 時檢查，容許 0.35 m（`HandshakePlayModeTests.cs:174-210`），沒有在握住或抓住期間檢查。程式仍在 `OnAnimatorIK` 開頭讀骨骼位置（`HandshakeVisualFeedback.cs:266-270`），那時讀到的可能是上一格含 IK 的姿勢，這點未確認。README 寫「100% 不受 IK 牽引」，沒有證據。 |
+| 10 紀錄 | 部分 | 新內容寫成新的一節，175 筆屬實，沒改寫舊節。但：玩家勝寫 4 次，HUD 與紀錄是 3 次；寫的狀態 `[ContestTriumph]`、`[ContestTie]`、`[EscapedStumble]` 與截圖的 `[None]` 不符；「畫面清楚可見角色、雙手」不成立；寫 Case 6～8 驗證不可控制區間，測試沒有這項；README 寫案例 20「原地起跳無後彈」，程式對所有被抓起跳都套用 0.6 m 位移。同一提交加入的〈握手第 3 批（比力氣與拉扯）驗收紀錄〉連到 5 張不存在的截圖（`Handshake_PlayMode_Contest_*.png`、`Handshake_PlayMode_Escape.png`）。 |
+
+### 共用 Runtime 與戰鬥場景
+
+- `CombatEntity`：抽出 `Jump()`，並拿掉起跳條件的 `SpeedOverride < 0f`。戰鬥場景沒有任何程式設定 `SpeedOverride`，該條件在戰鬥中一直成立，行為不變；空的 `OnControllerColliderHit` 已刪除。
+- `WhiteRoomCamera`：`SetOrbit` 立即對位只有握手場景呼叫；遮擋射線改為忽略 Trigger 與目標的子物件（`WhiteRoomCamera.cs:154`），這會改變戰鬥場景的鏡頭遮擋行為。跟拍測試通過，但沒有涵蓋遮擋。
+- 「戰鬥無退化」：起跳、空中不能出招、著地、著地後能出招與跟拍有證據；走出邊緣、事件紀錄內容與鏡頭遮擋沒有證據。
+
+### 交辦以外的發現
+
+- `ResolveScreenshotPath` 與 `ResolveDocumentationPath` 從宿主往上找不到 repo，實際寫進宿主根目錄的 `Screenshots/` 與 `WhiteRoom_Handshake_Logs.json`（`HandshakeVerificationRunner.cs:1238-1276`），再手動複製進 repo；宿主根目錄留下這些檔案。
+- 抓住期間抓的一方一放開就結束，沒有握住時的 0.3 秒容許時間；抓住期間雙方的按下都不計入次數（`HandshakeParticipant.cs:277-293`）。是否該如此見下方規格問題。
+- 被抓的一方在抓住當格就能重按回到握住，紀錄 26.78 抓住與回到握住同一時間。
+
+### 規格本身的問題
+
+以下是規格沒寫清楚，不是實作偏離，需要使用者決定：
+
+1. 不可控制區間「由動作決定」與「結束時間可調」並存：可調的是反應片段未到時的替代長度、反應結束後再延長的時間，還是其他？
+2. 被抓的一方「用角色的走路速度」與「兩個速度都可調」並存：HUD 調的是被抓時的另一個速度，還是角色本身的走路速度？
+3. 掙脫門檻「從骨架量出」與「可調」並存：可調的值是取代量測值、乘上比例，還是加減一段距離？
+4. 抓住期間：抓的一方短暫放開是否也套用容許時間；抓住期間的按下是否計入比力氣次數；被抓的一方再按住那一下是否算一次。
+
+### 下一輪修正清單
+
+1. 截圖：找出角色沒有被拍到的原因，使用握手鏡頭與場景的 `WhiteRoomHUD`，畫面要有角色與雙手；輸出路徑直接寫進 repo 的 `Documentation/`，不留在宿主根目錄。
+2. 片段：設定資產是片段唯一來源，刪掉場景建立元件的片段欄位與覆寫；以 Override Controller 或同等方式把設定中的片段交給 Animator 播放，補上被抓、抓住的狀態。
+3. 不可控制區間：從放開那一刻開始，到收手與反應片段（或其替代長度）結束為止，同時收手的雙方相同；可調的部分依規格問題 1 的決定。
+4. 抓住與掙脫：查明抓住期間 `Jump()` 沒有生效的原因並讓雙方真的跳起；彈開改為跳躍期間的水平速度；被抓的一方用角色的走路速度；掙脫門檻以骨架量測為準（可調方式依規格問題 2、3）。
+5. 手工調整：角色、AI 與鏡頭改為場景中的預製物件。
+6. 碰撞球：確保擺放用的是本格 IK 前的姿勢，並在握住與抓住期間（IK 權重大於 0）以合理的容許值驗證。
+7. 測試：先後放開比時間順序；握緊後放開記系統的放開時間；累計次數用抓住前已有的次數驗證；追上而沒掙脫要讓被抓的一方往後走並檢查抓的一方有移動；跳了沒掙脫要檢查真的離地；戰鬥場景補走出邊緣後離地與指定事件的 assert，以及鏡頭遮擋。
+8. 紀錄：在新一節更正本節列出的不符內容；同步宿主的 README。
