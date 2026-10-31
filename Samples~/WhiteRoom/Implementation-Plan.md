@@ -355,6 +355,8 @@ Sample 輔助程式不得靠宿主的 Assembly-CSharp 或特定機器絕對路�
 
 提交時指定路徑，不推送；新一節紀錄寫在驗收紀錄最後，不改寫舊回合。執行檔有改到執行期程式才需要重建，重建後寫明路徑。
 
+狀態：2026-10-31 由 `8895d9c` 完成，第 2 項剩下的部分由主 session 接手修改（[握手第 3 批收尾小修驗收](../../Documentation/WhiteRoom-Acceptance.md#握手第-3-批收尾小修驗收)）。修改尚未在 Unity 編譯與測試，等 Unity 空出後同步到宿主、跑 PlayMode 測試、重建執行檔。
+
 ### 並行交辦
 
 使用者 2026-10-31 要求把能並行的工作分給其他 agent，各自完成後提交，主 session 只負責驗收。下列兩項只寫新文件，不改程式、不啟動 Unity，可以和第 3 批實作、動畫線製作片段（[Requirements.Animation.md](../../Documentation/Requirements.Animation.md)）同時進行。共同限制：不安裝或下載套件；不改本計畫、`handoff.md`、驗收紀錄與其他 agent 的檔案；只提交自己新增的檔案（連同 Unity 的 `.meta`），提交時指定路徑，不推送。

@@ -1018,3 +1018,24 @@ tests: total 9, passed 9, failed 0, inconclusive 0, skipped 0
 
 照誠實報告原則，明列以下未由自動腳本或本輪完成之項目：
 1. **實體鍵盤手感體驗**：連按 E 的手速回饋節奏、被抓住時後退與跳躍掙脫的操控手感，交付上述 Windows 執行檔由使用者本人親自於實機操作驗收。
+
+## 握手第 3 批收尾小修驗收
+
+對象：`8895d9c`（收尾小修，實作 agent 的紀錄見上一節）。依據：[第 3 批收尾小修交辦](../Samples~/WhiteRoom/Implementation-Plan.md#第-3-批收尾小修交辦) 第 1～4 項。做法：讀程式、比對宿主複本；Unity 編輯器被使用者的其他 session 佔用，沒有重跑測試，測試結果引用 agent 的紀錄。
+
+結論：第 1、3、4 項**通過**，第 2 項**部分通過**。剩下的部分由主 session 接手修改（見下方〈接手修改〉），修改後**尚未編譯、也沒跑測試**。
+
+| 項 | 結果 | 依據 |
+|---|---|---|
+| 1 GLB 的 `.meta` | 通過 | 套件 `Art/Handshake/` 的 18 個 `.glb.meta` 和宿主逐位元組相同。 |
+| 2 拿掉剩下的寫死值 | 部分通過 | `EscapeDistanceThreshold` 沒有設定資產時回傳 −1；門檻 ≤ 0 時不判定掙脫；`HandshakeParticipant` 的 0.50 s 與 0.667 都已移除。沒做到的有三處：判定器還有 8 處片段長度用 0.50 s 當備用值（`GripDuration`、`ShakeDuration`、`ReachDuration`、`WithdrawDuration`，以及得意、痛苦、拚力後慢退、掙脫、抓空的表演時間）；參與者缺片段時每一格都記一次錯誤，會洗版；新測試 `VerifyEscape_DoesNotResolve_WhenArmReachCannotBeMeasured` 只直接設定雙方狀態，判定器沒有進入被抓流程（`_sessionState` 不是 `Catching`，`_catchingParticipant` 是 null），掙脫判斷根本不會執行，所以不管程式對不對都會通過。測試裡的 `LogAssert.ignoreFailingMessages` 也沒有放在 `finally` 裡，斷言失敗時不會還原。 |
+| 3 膠囊半徑可在場景調整 | 通過 | 兩處 `SetColliderRadius(0.30f)` 都已移除，半徑改由預製物件的 `_colliderRadius`（0.3）決定。 |
+| 4 片段播放測試分得出覆寫 | 通過 | 測試把大笑換成拍手大笑後，確認播放的是換上的片段，再還原。`ConfigureAnimatorOverrides` 重建時先取出底層 controller，避免覆寫一層層疊上去。 |
+
+### 接手修改
+
+- `HandshakeArbitrator`：新增 `ClipLength(clip, slot)`，取代 8 處 0.50 s 備用值。設定資產缺片段時，每個欄位只記一次錯誤，並回傳 0，讓表演立刻結束，不播一段編出來的時長。
+- `HandshakeParticipant`：缺片段的錯誤改成每次進入狀態只記一次。
+- 測試 `VerifyEscape_DoesNotResolve_WhenArmReachCannotBeMeasured`：用反射設定判定器的雙方參與者，再呼叫 `EnterCaughtState`，讓判定器真的進入被抓流程。先確認 `SessionState` 是 `Catching`，等 0.2 s 後確認仍在被抓、結果不是掙脫。預期中的錯誤改用 `LogAssert.Expect` 宣告，還原動作放在 `finally`。
+
+未驗證：上面的修改還沒在 Unity 編譯，9 項測試也沒重跑；宿主複本與 Windows 執行檔（19:56 重建）還是 `8895d9c` 的版本。Unity 空出後，要把套件的 `Handshake/` 與 `Tests/` 同步到宿主，跑 PlayMode 測試，再重建執行檔。

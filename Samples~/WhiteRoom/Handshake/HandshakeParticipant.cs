@@ -15,6 +15,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         private CombatEntity _entity;
         private HandshakeState _state = HandshakeState.None;
         private float _stateTime = 0f;
+        private bool _hasLoggedMissingClip = false;
         private bool _requireInteractRelease = false;
         private bool _prevInteractHold = false;
         private int _interactPressCount = 0;
@@ -148,6 +149,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             HandshakeState prev = _state;
             _state = newState;
             _stateTime = 0f;
+            _hasLoggedMissingClip = false;
 
             if (_state == HandshakeState.None && prev != HandshakeState.None)
             {
@@ -206,8 +208,9 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             _stateTime += Time.deltaTime;
 
             AnimationClip currentClip = Settings != null ? Settings.GetClipForState(_state) : null;
-            if (currentClip == null && _state != HandshakeState.None)
+            if (currentClip == null && _state != HandshakeState.None && !_hasLoggedMissingClip)
             {
+                _hasLoggedMissingClip = true;
                 Debug.LogError($"[HandshakeParticipant] Missing AnimationClip for state '{_state}' on '{name}'!");
             }
             float clipLength = currentClip != null ? currentClip.length : 0f;

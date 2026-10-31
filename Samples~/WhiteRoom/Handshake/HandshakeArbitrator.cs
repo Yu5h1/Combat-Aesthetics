@@ -41,6 +41,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         private float _bReleaseTimer = 0f;
         private float _catchingReleaseTimer = 0f;
         private bool _hasLoggedArmReachError = false;
+        private readonly HashSet<string> _loggedMissingClips = new HashSet<string>();
         private HandshakeParticipant _contestWinner;
         private HandshakeParticipant _contestLoser;
         private int _winnerPressCount = 0;
@@ -127,10 +128,24 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         public AnimationClip CaughtPullClip => Settings.CaughtPullClip;
         public AnimationClip CatchingHoldClip => Settings.CatchingHoldClip;
 
-        public float GripDuration => GripClip != null ? GripClip.length : 0.50f;
-        public float ShakeDuration => ShakeClip != null ? ShakeClip.length : 0.50f;
-        public float ReachDuration => ReachClip != null ? ReachClip.length : 0.50f;
-        public float WithdrawDuration => WithdrawClip != null ? WithdrawClip.length : 0.50f;
+        public float GripDuration => ClipLength(GripClip, nameof(GripClip));
+        public float ShakeDuration => ClipLength(ShakeClip, nameof(ShakeClip));
+        public float ReachDuration => ClipLength(ReachClip, nameof(ReachClip));
+        public float WithdrawDuration => ClipLength(WithdrawClip, nameof(WithdrawClip));
+
+        /// <summary>
+        /// Returns the clip length, or 0 with a one-time error per slot when the settings asset has no clip assigned,
+        /// so a missing clip ends the presentation immediately instead of playing a made-up duration.
+        /// </summary>
+        private float ClipLength(AnimationClip clip, string slot)
+        {
+            if (clip != null) return clip.length;
+            if (_loggedMissingClips.Add(slot))
+            {
+                Debug.LogError($"[HandshakeArbitrator] Settings has no clip assigned for '{slot}'.");
+            }
+            return 0f;
+        }
 
         public event Action<string> OnArbitrationLog;
         public event Action<HandshakeOutcome> OnHandshakeFinished;
@@ -549,8 +564,8 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             AnimationClip triumph = TriumphClip;
             AnimationClip pain = PainClip;
 
-            float tLen = triumph != null ? triumph.length : 0.50f;
-            float pLen = pain != null ? pain.length : 0.50f;
+            float tLen = ClipLength(triumph, nameof(TriumphClip));
+            float pLen = ClipLength(pain, nameof(PainClip));
 
             winner.SetState(HandshakeState.ContestTriumph, tLen);
             loser.SetState(HandshakeState.ContestPain, pLen);
@@ -562,7 +577,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         private void TriggerContestTiePresentation()
         {
             AnimationClip slowClip = SlowWithdrawClip;
-            float len = slowClip != null ? slowClip.length : 0.50f;
+            float len = ClipLength(slowClip, nameof(SlowWithdrawClip));
             _participantA.SetState(HandshakeState.ContestTie, len);
             _participantB.SetState(HandshakeState.ContestTie, len);
             _sessionState = HandshakeState.ContestTie;
@@ -711,8 +726,8 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             AnimationClip stumble = StumbleClip;
             AnimationClip graspEmpty = GraspEmptyClip;
 
-            float sLen = stumble != null ? stumble.length : 0.50f;
-            float gLen = graspEmpty != null ? graspEmpty.length : 0.50f;
+            float sLen = ClipLength(stumble, nameof(StumbleClip));
+            float gLen = ClipLength(graspEmpty, nameof(GraspEmptyClip));
 
             _caughtParticipant.SetState(HandshakeState.EscapedStumble, sLen);
             _catchingParticipant.SetState(HandshakeState.GraspEmpty, gLen);

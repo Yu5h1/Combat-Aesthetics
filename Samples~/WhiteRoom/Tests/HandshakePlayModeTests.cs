@@ -541,41 +541,42 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
             player.transform.position = new Vector3(0, 0, 5.0f);
             ai.transform.position = Vector3.zero;
 
-            // 2. Put catcher (player) holding interact, and caught (ai) in Caught
             player.OverrideIntent = true;
             var holdIntent = CombatActionIntent.Empty;
             holdIntent.InteractHold = true;
             player.CustomIntent = holdIntent;
-
             ai.Mode = HandshakeAiMode.Idle;
-            participant.SetState(HandshakeState.Catching);
-            aiParticipant.SetState(HandshakeState.Caught);
-            yield return null;
 
-            // Ignore failing log messages so the required Debug.LogError doesn't fail the unit test runner
-            UnityEngine.TestTools.LogAssert.ignoreFailingMessages = true;
-
-            // 3. Temporarily clear AI animator's avatar so arm reach cannot be measured (returns -1)
             var aiAnim = ai.GetComponentInChildren<Animator>();
             Assert.IsNotNull(aiAnim, "AI Animator must exist.");
             Avatar origAvatar = aiAnim.avatar;
-            aiAnim.avatar = null;
 
-            float threshold = arb.GetEffectiveEscapeThreshold();
-            Assert.AreEqual(-1f, threshold, "Escape threshold must be -1 when arm bones cannot be measured.");
+            var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var arbType = typeof(HandshakeArbitrator);
+            try
+            {
+                arbType.GetField("_participantA", flags).SetValue(arb, participant);
+                arbType.GetField("_participantB", flags).SetValue(arb, aiParticipant);
+                aiAnim.avatar = null;
 
-            // 4. Simulate frames in Caught
-            yield return new WaitForSeconds(0.2f);
+                LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("Cannot measure arm reach"));
+                arbType.GetMethod("EnterCaughtState", flags).Invoke(arb, new object[] { participant, aiParticipant });
 
-            // 5. Verify escape did NOT trigger despite distance (5.0m > -1)
-            Assert.AreEqual(HandshakeState.Caught, aiParticipant.State, "Participant must remain Caught when threshold is -1.");
-            Assert.AreNotEqual(HandshakeOutcome.Escaped, arb.LastOutcome, "Escape outcome must not be resolved when threshold is -1.");
+                Assert.AreEqual(HandshakeState.Catching, arb.SessionState, "Arbitrator must be in the catching session so the escape check actually runs.");
+                Assert.AreEqual(-1f, arb.GetEffectiveEscapeThreshold(), "Escape threshold must be -1 when arm bones cannot be measured.");
 
-            // Cleanup
-            aiAnim.avatar = origAvatar;
-            player.CustomIntent = CombatActionIntent.Empty;
-            player.OverrideIntent = false;
-            UnityEngine.TestTools.LogAssert.ignoreFailingMessages = false;
+                yield return new WaitForSeconds(0.2f);
+
+                Assert.AreEqual(HandshakeState.Catching, arb.SessionState, "Session must stay in catching when the threshold cannot be measured.");
+                Assert.AreEqual(HandshakeState.Caught, aiParticipant.State, "Participant must remain Caught when threshold is -1.");
+                Assert.AreNotEqual(HandshakeOutcome.Escaped, arb.LastOutcome, "Escape outcome must not be resolved when threshold is -1.");
+            }
+            finally
+            {
+                aiAnim.avatar = origAvatar;
+                player.CustomIntent = CombatActionIntent.Empty;
+                player.OverrideIntent = false;
+            }
         }
 #endif
     }
