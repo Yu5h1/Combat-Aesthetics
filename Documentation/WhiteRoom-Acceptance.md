@@ -945,3 +945,23 @@ tests: total 8, passed 8, failed 0, inconclusive 0, skipped 0
 照誠實報告原則，明列以下未由自動腳本或本輪完成之項目：
 1. **實體鍵盤手感體驗**：連按 E 的手速回饋節奏、被抓住時後退與跳躍掙脫的操控手感，交付上述 Windows 執行檔由使用者本人親自於實機操作驗收。
 
+
+## 握手第 3 批第三輪修正驗收
+
+對象：`c9b215c`（第三輪修正，實作 agent 的紀錄見上一節）。依據：[第 3 批第三輪修正交辦](../Samples~/WhiteRoom/Implementation-Plan.md#第-3-批第三輪修正交辦) 第 1～7 項。做法：讀程式、設定資產、controller 與匯入的人形片段，逐段比對動畫線片段檔（`W:\Yu5h1Lib\AnimationEditor` 的 17 段 `*.anim.json`，格式 `0.5.0`），檢查宿主複本與執行檔的時間；沒有重跑 Unity 測試，測試結果引用 agent 的紀錄。
+
+結論：**通過**，留 4 項收尾小修（[第 3 批收尾小修交辦](../Samples~/WhiteRoom/Implementation-Plan.md#第-3-批收尾小修交辦)），不影響規則與播放。鍵盤手感仍待使用者用執行檔驗收。
+
+| 項 | 結果 | 依據 |
+|---|---|---|
+| 1 控制區間決定操作 | 通過 | 握手狀態不再有倒數計時器（`_stateTimer`、`_reachDuration`、`_withdrawDuration`、`_reactionFallbackDuration` 都已移除；`CombatEntity` 的 `_stateTimer` 屬戰鬥出招，不在範圍內）。收手、跳開與 8 種反應在重按時呼叫 `HandshakeSettings.IsActionUnderControl`，狀態看片段長度播完才結束。設定資產填了 13 段片段的區間，逐段和片段檔的 `intervals` 相符：收手 10/15 影格、大笑／握拳生氣／拍手大笑／拚力後慢退 30/45、痛苦／得意／掙脫／跳開 20/30、抓空 15/30，想抽手、被拖著跟上、用力握整段不可控制。伸手、搖一下、握緊、等待在片段檔裡本來就沒有區間。測試 `VerifyItem1_ControlIntervalsGovernRePress` 檢查收手的不可控制區間內重按不會伸手，進入可控制區間後重按會伸手。 |
+| 2 片段播得出來 | 通過 | controller 的 17 個狀態都有自己的片段，GUID 逐一對到設定資產指定的片段（例如抓住對方的 `Catching` 對到 `handshake-dragged`）。`ConfigureAnimatorOverrides` 以原始片段為索引建立覆寫。測試 `VerifyItem2_ClipsActuallyPlayInAnimator` 逐一切換 17 個狀態，比對 Animator 正在播放的片段名稱。小缺口：controller 預設的片段和設定資產相同，所以測試分不出播的是覆寫還是預設（收尾小修第 4 項）。 |
+| 3 接上動畫線的片段 | 通過 | 17 段 GLB 與人形片段都放在 `Art/Handshake/`，第 1 批五段也換成新版。人形片段帶手指肌肉曲線：抓空的右手食指從 −0.74 到 0.67（由握到張），拚力後慢退從 −0.04 到 0.67（慢慢鬆開），被拖著跟上維持在 −0.04（一直握著）。根位移曲線 `RootT.z`：想抽手每循環 −0.20 m，被拖著跟上 +0.20 m，跳開 −0.42 m，最高點升起 0.33 m。被抓、抓的一方、跳開三個狀態打開 `applyRootMotion`，由 `OnAnimatorMove` 移動角色，不再用速度暫代；跳開期間暫停重力。測試 `VerifyItem3_RootMotionDisplacementInCaughtCatchingLeap` 通過，但門檻偏鬆（0.02～0.04 m）。小缺口：12 段新 GLB 的 `.meta` 沒有進套件（宿主有 18 個），重新匯入會產生新的 GUID 與預設匯入設定（收尾小修第 1 項）。 |
+| 4 兩人走得到標準距離 | 通過 | 程式強制的最小半徑 0.40 m 已移除，兩份預製物件的碰撞球半徑是 0.18 m。握手角色的膠囊半徑改為 0.30 m，雙方能走到骨盆中心相距 0.82 m。戰鬥場景的角色沒有用這兩份預製物件，仍是預設的 0.50 m，有測試確認。小缺口：0.30 m 寫死在 `HandshakeParticipant`（兩處 `SetColliderRadius(0.30f)`），會蓋掉預製物件上的值，在場景裡改了也沒有作用（收尾小修第 3 項）。 |
+| 5 量不到骨骼不要假裝 | 大致通過 | `MeasureArmReach` 量不到手臂骨骼時呼叫 `Debug.LogError` 並回傳 −1，0.90 m 的 fallback 已移除，臂長量測值 1.06 m。殘留三處：`HandshakeArbitrator.EscapeDistanceThreshold` 在沒有設定資產時仍回傳 1.80f；門檻回傳 −1 時，`bodyDist > -1` 永遠成立，會在記錯誤的同時立刻判掙脫；`HandshakeParticipant` 在沒有設定資產或片段時，改用寫死的片段長度 0.50 s 和分界 0.667（收尾小修第 2 項）。 |
+| 6 測試 | 通過 | 碰撞球與 IK 的測試把 IK 目標放在手腕旁 0.20 m。第 1～4 項各有一個案例，紀錄顯示 8 項測試、21 個情境全數通過。沒有寫死的絕對路徑，`Debug.Log` 只用來輸出報告。 |
+| 7 紀錄與執行檔 | 通過 | 新一節更正了上一節第 1、2 項的「通過」，舊節沒有改動。執行檔 `W:\UnityProject\Yu5h1LibTest-Build\WhiteRoom_Handshake\WhiteRoom_Handshake.exe`：exe 檔本身沒有變（14:51），但 `WhiteRoom_Handshake_Data` 裡的 `level0`、`resources.assets` 和握手組件都在 18:46 重建，晚於宿主原始碼最後一次修改（18:41）。事件紀錄 218 筆。宿主複本的 `Handshake/`、`Runtime/`、`Tests/`、`Prefabs/`、`Art/Handshake/` 和套件內容一致（不比較 `.meta`）。 |
+
+動畫線需求：這次匯入補上了 COMBAT-ANIMATION-1 第 2 項（拚力後慢退）和 COMBAT-ANIMATION-3 第 3 項（想抽手、掙脫、抓空、被拖著跟上、跳開），兩項需求都改為 Implemented（[Requirements.Animation.md](Requirements.Animation.md)）。設定資產裡的區間目前是照片段檔手動抄寫；等 COMBAT-ANIMATION-4 第 2 項接通（區間隨 GLB 交付），就改成由匯入讀取。
+
+順帶修正動畫線規範（data-driven `f6eaf9f`）：約束表 `node` 列的正規式改回 `\|`，表格不會再斷欄；`04638ab` 拿掉了 `0.3.0` 與 `0.4.0` 以後約束節點的長度上限，這次補回 `maxLength: 64`，和規範寫的「總長 1～64」一致。34 個案例與片段都通過 schema 檢查，各約束版本都會拒絕 65 字的節點名稱。

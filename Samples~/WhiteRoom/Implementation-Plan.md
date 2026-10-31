@@ -344,6 +344,17 @@ Sample 輔助程式不得靠宿主的 Assembly-CSharp 或特定機器絕對路�
 6. **測試**：碰撞球與 IK 的測試改用手附近的 IK 目標；第 1～4 項各補對應案例。
 7. **紀錄**：新一節更正上一節第 1、2 項的「通過」；更新 Windows 執行檔並寫明路徑；沒實跑的項目明列，不改寫舊回合。
 
+### 第 3 批收尾小修交辦
+
+第三輪修正已通過（[握手第 3 批第三輪修正驗收](../../Documentation/WhiteRoom-Acceptance.md#握手第-3-批第三輪修正驗收)），只剩下面四項小修。規則與播放都不用改，也不用重做片段。
+
+1. **補上 GLB 的 `.meta`**：12 段新 GLB（angry、caught、clap-laugh、dragged、grasp-empty、hold、laugh、leap、pain、slow-withdraw、stumble、triumph）的 `.meta` 從宿主複製進套件 `Art/Handshake/`，和已提交的五段一樣，讓重新匯入時 GUID 與匯入設定不變。
+2. **拿掉剩下的寫死值**：`HandshakeArbitrator.EscapeDistanceThreshold` 沒有設定資產時不要回傳 1.80f。量不到臂長、門檻是 −1 時，不判定掙脫（記錯誤、維持被抓），不要因為 `bodyDist > -1` 就立刻掙脫。`HandshakeParticipant` 沒有設定資產或片段時記錯誤，不要改用寫死的片段長度 0.50 s 與分界 0.667。測試：量不到臂長時不會掙脫。
+3. **膠囊半徑可在場景調整**：拿掉 `HandshakeParticipant` 兩處 `SetColliderRadius(0.30f)`，改用預製物件上的 `_colliderRadius`（現在就是 0.3），讓在場景裡改的值真的生效。標準距離與戰鬥場景兩項測試照常通過。
+4. **片段播放測試分得出覆寫**：測試裡把設定資產某個狀態的片段換成另一段（例如把大笑換成拍手大笑），確認 Animator 播放的是換上的片段，而不是 controller 裡預設的片段。
+
+提交時指定路徑，不推送；新一節紀錄寫在驗收紀錄最後，不改寫舊回合。執行檔有改到執行期程式才需要重建，重建後寫明路徑。
+
 ### 並行交辦
 
 使用者 2026-10-31 要求把能並行的工作分給其他 agent，各自完成後提交，主 session 只負責驗收。下列兩項只寫新文件，不改程式、不啟動 Unity，可以和第 3 批實作、動畫線製作片段（[Requirements.Animation.md](../../Documentation/Requirements.Animation.md)）同時進行。共同限制：不安裝或下載套件；不改本計畫、`handoff.md`、驗收紀錄與其他 agent 的檔案；只提交自己新增的檔案（連同 Unity 的 `.meta`），提交時指定路徑，不推送。
