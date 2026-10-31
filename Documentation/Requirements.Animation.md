@@ -1,6 +1,6 @@
 # Combat Aesthetics 對 Animation 的需求
 
-目標：data-driven/animation（動畫線，[握手動作片段](../../../data-driven/animation/Documentation/Handshake-Clips.md)）。提出端：Combat-Aesthetics 的 WhiteRoom Sample。接用方式：動畫線以動畫編輯器製作握手片段，經角色建造器匯出動作 GLB，再由 UnityExtension 的人形匯入器（LIMB-ANIM-1）轉成人形片段給 WhiteRoom 播放；互動規則由 [WhiteRoom 計畫〈第一個交付的目標〉](../Samples~/WhiteRoom/Implementation-Plan.md#第一個交付的目標) 擁有。提出日期：2026-10-31。未結需求：2。
+目標：data-driven/animation（動畫線，[握手動作片段](../../../data-driven/animation/Documentation/Handshake-Clips.md)）。提出端：Combat-Aesthetics 的 WhiteRoom Sample。接用方式：動畫線以動畫編輯器製作握手片段，經角色建造器匯出動作 GLB，再由 UnityExtension 的人形匯入器（LIMB-ANIM-1）轉成人形片段給 WhiteRoom 播放；互動規則由 [WhiteRoom 計畫〈第一個交付的目標〉](../Samples~/WhiteRoom/Implementation-Plan.md#第一個交付的目標) 擁有。提出日期：2026-10-31。未結需求：3。
 
 ## 比力氣的拚力後慢退（COMBAT-ANIMATION-1）
 
@@ -29,8 +29,19 @@
 | 欄位 | 內容 |
 |---|---|
 | Status | Outstanding，提出 2026-10-31。2026-10-31 驗收交付（data-driven `c51cee3`、AnimationEditor `d7bbf16`）：第 1 項通過，清單第 3 批列出想抽手（1 秒循環，`caught` 30 影格）、掙脫（約 1 秒，`stumble` 30 影格）、抓空（約 1 秒，`grasp-empty` 30 影格），掙脫與抓空結束和收手起點相同（銜接測試通過）。第 2 項通過：`caught` 只有身體與手臂軌道，沒有手的接觸約束；清單製作規則也寫明手由執行時 IK 處理。第 3 項未通過：片段以沒有手指的角色製作，「抓空」的抓手只靠 `fist_r` 的縮放表現，人形匯入不帶骨骼縮放，到 WhiteRoom 會消失，也不符合清單「角色要有手指」的製作規則。待動畫線在有手指的角色（ANIMATION-LIMB-6）提交後，以手指重做抓空。 |
-| Requirement | 握手片段第 3 批加三段：「想抽手」（循環，被抓住的一方身體往後拉、想把手抽回）、「掙脫」（掙脫的一方往後踉蹌、甩甩手，結束能接收手）、「抓空」（抓的一方手抓空，結束能接收手）。 |
-| Evidence | 使用者 2026-10-31 定下抓住與掙脫的規則（WhiteRoom 計畫〈第一個交付的目標〉的「抓住與掙脫」列）：握住期間一方放開、另一方還按著，就是抓住不放；被抓住期間雙方都能慢步移動，身體拉開超過門檻就掙脫；掙脫的一方往後踉蹌、甩甩手，抓的一方抓空，再各自收手。目前片段清單沒有這三段。 |
+| Requirement | 握手片段第 3 批加三段：「想抽手」（循環，被抓住的一方身體往後拉、想把手抽回）、「掙脫」（掙脫的一方往後踉蹌、甩甩手，結束能接收手）、「抓空」（抓的一方手抓空，結束能接收手）。 2026-10-31 補充：「想抽手」要帶往後的根位移（被抓的一方往後拉時的移動由它決定）；另加「被拖著跟上」（抓的一方被拉著往前跟的循環，帶根位移）與「跳開」（被抓的一方跳起往後彈開，帶根位移）。 |
+| Evidence | 使用者 2026-10-31 定下抓住與掙脫的規則（WhiteRoom 計畫〈第一個交付的目標〉的「抓住與掙脫」列）：握住期間一方放開、另一方還按著，就是抓住不放；被抓住期間雙方都能慢步移動，身體拉開超過門檻就掙脫；掙脫的一方往後踉蹌、甩甩手，抓的一方抓空，再各自收手。目前片段清單沒有這三段。 使用者 2026-10-31 另定「動作驅動位移」：位移由專屬動畫的根位移決定，不另設速度與距離參數（WhiteRoom 計畫〈第一個交付的目標〉的「動作驅動位移」列）。 |
 | Acceptance | 1. 片段清單第 3 批列出這三段，長度依製作規則訂定。2. 「想抽手」只做身體，手的位置由 WhiteRoom 在執行時以人形 IK 黏在對方手上，片段不必對準對方的手。3. 片段做出後，可經人形匯入給 WhiteRoom 使用。 |
 | Impact | WhiteRoom 第 3 批（[第 3 批交辦](../Samples~/WhiteRoom/Implementation-Plan.md#第-3-批交辦比力氣)）播放這三段；和第 3 批其他片段一樣，要等有手指的角色（ANIMATION-LIMB-6）。 |
 | Workaround | 片段到之前，WhiteRoom 只在 HUD 與事件紀錄顯示抓住與掙脫，手的 IK 照常表現被拉住，雙方用收手回到站姿。 |
+
+## 片段標出控制區間（COMBAT-ANIMATION-4）
+
+| 欄位 | 內容 |
+|---|---|
+| Status | Outstanding，提出 2026-10-31。 |
+| Requirement | 握手片段能帶具名的控制區間標記（例如可取消、不可控制、可控制），隨片段交付給 WhiteRoom；標記的格式由動畫線訂定。 |
+| Evidence | 使用者 2026-10-31 定下「動作合理性約束操控」：每個狀態綁定一段參考動畫，由動畫時間軸上標出的具名區間決定接不接受操作，區間順序依動作而定，調整分界就是調整操控手感（WhiteRoom 計畫〈第一個交付的目標〉的同名列）。目前片段只有姿勢與長度，沒有區間資料。 |
+| Acceptance | 1. 片段格式能標出具名區間，在動畫編輯器裡可以看到並修改。2. 區間標記隨動作 GLB 交付，人形匯入後 WhiteRoom 讀得到。3. 至少收手、大笑、握拳生氣、拍手大笑標好區間。 |
+| Impact | WhiteRoom 依區間決定放開的一方何時能再伸手；之後的出招、受擊也用同一套區間。 |
+| Workaround | 標記到之前，WhiteRoom 在 Unity 端為片段設定區間，片段帶標記後改讀片段的資料。 |
