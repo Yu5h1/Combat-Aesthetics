@@ -310,3 +310,21 @@
 
 本輪修正完成後，第 1 批程式與設定已全數就緒，待使用者本人於宿主 `Yu5h1LibTest` 開啟 `Handshake.unity` 進行實體鍵盤手感驗收（包含 WASD 走位、E 鍵按住/放開/重按、HUD 改鍵與鏡頭視野體驗）。
 
+
+## 握手第 1 批第二輪修正驗收
+
+2026-10-31 對 `09ed127` 依 [第 1 批第二輪修正交辦](../Samples~/WhiteRoom/Implementation-Plan.md#第-1-批第二輪修正交辦) 驗收：程式的兩項通過，文件一項部分通過，另有證據與交辦外的問題，收尾列在 [第 2 批交辦](../Samples~/WhiteRoom/Implementation-Plan.md#第-2-批交辦惡作劇與同時收手) 第 1 項。方法是讀程式碼、截圖與匯出紀錄；本次沒有啟動 Unity。
+
+| 項 | 結果 | 依據 |
+|---|---|---|
+| 1 戰鬥場景的身體半徑 | 通過 | `CombatEntity._colliderRadius` 預設回到 0.5 m，只有 `HandshakeParticipant` 經 `SetColliderRadius(0.25f)` 改小。 |
+| 2 IK 不影響碰到 | 通過 | `HandshakeVisualFeedback.OnAnimatorIK` 只在握緊與搖一下開 IK，碰到之前權重為 0，碰撞球只跟著動畫本身的手。 |
+| 3 文件與小問題 | 部分 | `TrackedTransform` 已移除，`Tests` asmdef 限定測試時編譯；但上一節與本輪紀錄寫的 `HandshakeArbitrator.RegisterTriggerContact` 不存在，實際是訂閱 `HandContactBridge.OnTriggerContact`。 |
+
+其他發現：
+
+- 「握手成功」截圖不是實際執行的畫面：HUD 的判定狀態與最新結果都是 None，AI 模式為 Idle、沒按互動，雙方卻都在搖一下；匯出紀錄在最後一次重設之後沒有伸手。鏡頭角度也不是 `HandshakeSceneBuilder` 設定的肩後視角。
+- 共用的 `WhiteRoomCamera` 把 `LookAt` 改成直接套用旋轉，戰鬥場景的鏡頭也受影響（跟拍落後時角色可能偏離畫面中心），不在本輪交辦內。
+- `Tests` asmdef 指定的 `Yu5h1Lib.Runtime.dll` 在宿主找不到，需要確認。
+
+第 1 批的程式可交使用者鍵盤驗收。
