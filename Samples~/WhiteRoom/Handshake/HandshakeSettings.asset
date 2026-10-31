@@ -11,24 +11,166 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 993a9017b39b4417954381b136bdc5f7, type: 3}
   m_Name: HandshakeSettings
+  m_EditorClassIdentifier: 
   _releaseGraceTime: 0.3
   _contestThreshold: 1
   _escapeDistanceCompensation: 0
-  _reactionFallbackDuration: 0.5
-  _clipIntervalBindings: []
-  _reachClip: {fileID: 8779831864619793406, guid: 2110e5b1e6b8f434284ad27fea77b4b1, type: 2}
-  _waitClip: {fileID: 8952854439076216105, guid: 827bef51320c4f142a4d56390cf741b1, type: 2}
-  _withdrawClip: {fileID: -6327883441209141040, guid: 00aa645ac5d8a1644a9a6c087d44bd41, type: 2}
-  _gripClip: {fileID: 6561813818055005941, guid: 05699cc6fd156d64bae27408ce5afcc1, type: 2}
-  _shakeClip: {fileID: 6303289161557001744, guid: 45ae0b402cd25004daffa8e0930fec4c, type: 2}
-  _laughClip: {fileID: 0}
-  _angryClip: {fileID: 0}
-  _clapLaughClip: {fileID: 0}
-  _holdClip: {fileID: 0}
-  _triumphClip: {fileID: 0}
-  _painClip: {fileID: 0}
-  _slowWithdrawClip: {fileID: 0}
-  _stumbleClip: {fileID: 0}
-  _graspEmptyClip: {fileID: 0}
-  _caughtPullClip: {fileID: 0}
-  _catchingHoldClip: {fileID: 0}
+  _clipIntervalBindings:
+  - Clip: {fileID: -3268706081431032073, guid: 00aa645ac5d8a1644a9a6c087d44bd41, type: 2}
+    Intervals:
+    - Name: "\u4E0D\u53EF\u63A7\u5236"
+      StartNormalizedTime: 0
+      EndNormalizedTime: 0.6666667
+      UnderControl: 0
+      Cancellable: 0
+    - Name: "\u53EF\u53D6\u6D88"
+      StartNormalizedTime: 0.6666667
+      EndNormalizedTime: 1
+      UnderControl: 1
+      Cancellable: 1
+  - Clip: {fileID: 1369308150813348740, guid: 242594f64e39f19409f3d348dfdca7e6, type: 2}
+    Intervals:
+    - Name: "\u4E0D\u53EF\u63A7\u5236"
+      StartNormalizedTime: 0
+      EndNormalizedTime: 0.6666667
+      UnderControl: 0
+      Cancellable: 0
+    - Name: "\u53EF\u53D6\u6D88"
+      StartNormalizedTime: 0.6666667
+      EndNormalizedTime: 1
+      UnderControl: 1
+      Cancellable: 1
+  - Clip: {fileID: -6971983843558127791, guid: 2aa42192dcbc3c24696bdcc7e75ffcfd, type: 2}
+    Intervals:
+    - Name: "\u4E0D\u53EF\u63A7\u5236"
+      StartNormalizedTime: 0
+      EndNormalizedTime: 0.6666667
+      UnderControl: 0
+      Cancellable: 0
+    - Name: "\u53EF\u53D6\u6D88"
+      StartNormalizedTime: 0.6666667
+      EndNormalizedTime: 1
+      UnderControl: 1
+      Cancellable: 1
+  - Clip: {fileID: 4227788665874067849, guid: c2e1bafa60010c048a6766be96744816, type: 2}
+    Intervals:
+    - Name: "\u4E0D\u53EF\u63A7\u5236"
+      StartNormalizedTime: 0
+      EndNormalizedTime: 0.6666667
+      UnderControl: 0
+      Cancellable: 0
+    - Name: "\u53EF\u53D6\u6D88"
+      StartNormalizedTime: 0.6666667
+      EndNormalizedTime: 1
+      UnderControl: 1
+      Cancellable: 1
+  - Clip: {fileID: 5655038342129460656, guid: 7e58450b9e265824f83fa408983a3633, type: 2}
+    Intervals:
+    - Name: "\u4E0D\u53EF\u63A7\u5236"
+      StartNormalizedTime: 0
+      EndNormalizedTime: 0.6666667
+      UnderControl: 0
+      Cancellable: 0
+    - Name: "\u53EF\u53D6\u6D88"
+      StartNormalizedTime: 0.6666667
+      EndNormalizedTime: 1
+      UnderControl: 1
+      Cancellable: 1
+  - Clip: {fileID: 2301135392786961089, guid: f7852d2f874a5d2409902f4f2a0fcb2e, type: 2}
+    Intervals:
+    - Name: "\u4E0D\u53EF\u63A7\u5236"
+      StartNormalizedTime: 0
+      EndNormalizedTime: 0.6666667
+      UnderControl: 0
+      Cancellable: 0
+    - Name: "\u53EF\u53D6\u6D88"
+      StartNormalizedTime: 0.6666667
+      EndNormalizedTime: 1
+      UnderControl: 1
+      Cancellable: 1
+  - Clip: {fileID: -7786522887091022014, guid: 4984c64e71b6393458ed85fa925d65e1, type: 2}
+    Intervals:
+    - Name: "\u4E0D\u53EF\u63A7\u5236"
+      StartNormalizedTime: 0
+      EndNormalizedTime: 0.6666667
+      UnderControl: 0
+      Cancellable: 0
+    - Name: "\u53EF\u63A7\u5236"
+      StartNormalizedTime: 0.6666667
+      EndNormalizedTime: 1
+      UnderControl: 1
+      Cancellable: 1
+  - Clip: {fileID: -5249330317568928905, guid: b657ef6a0c3dfaf45a27e7d623407f50, type: 2}
+    Intervals:
+    - Name: "\u4E0D\u53EF\u63A7\u5236"
+      StartNormalizedTime: 0
+      EndNormalizedTime: 0.6666667
+      UnderControl: 0
+      Cancellable: 0
+    - Name: "\u53EF\u53D6\u6D88"
+      StartNormalizedTime: 0.6666667
+      EndNormalizedTime: 1
+      UnderControl: 1
+      Cancellable: 1
+  - Clip: {fileID: -3576746429700014343, guid: 940ad43615feb8b4f9d0c7e1c253c8fa, type: 2}
+    Intervals:
+    - Name: "\u4E0D\u53EF\u63A7\u5236"
+      StartNormalizedTime: 0
+      EndNormalizedTime: 0.5
+      UnderControl: 0
+      Cancellable: 0
+    - Name: "\u53EF\u53D6\u6D88"
+      StartNormalizedTime: 0.5
+      EndNormalizedTime: 1
+      UnderControl: 1
+      Cancellable: 1
+  - Clip: {fileID: 1280686858345700287, guid: e83f17d2ce29f744ea98c8aa3e48330a, type: 2}
+    Intervals:
+    - Name: "\u4E0D\u53EF\u63A7\u5236"
+      StartNormalizedTime: 0
+      EndNormalizedTime: 0.6666667
+      UnderControl: 0
+      Cancellable: 0
+    - Name: "\u53EF\u63A7\u5236"
+      StartNormalizedTime: 0.6666667
+      EndNormalizedTime: 1
+      UnderControl: 1
+      Cancellable: 1
+  - Clip: {fileID: 1736892266671072834, guid: f6d60943428734646b911f2d00b17706, type: 2}
+    Intervals:
+    - Name: "\u4E0D\u53EF\u63A7\u5236"
+      StartNormalizedTime: 0
+      EndNormalizedTime: 1
+      UnderControl: 0
+      Cancellable: 0
+  - Clip: {fileID: 2039728425148347780, guid: 3a65bad8d50632240baf06358f92d177, type: 2}
+    Intervals:
+    - Name: "\u4E0D\u53EF\u63A7\u5236"
+      StartNormalizedTime: 0
+      EndNormalizedTime: 1
+      UnderControl: 0
+      Cancellable: 0
+  - Clip: {fileID: 7195859749997444655, guid: 24ddb99986f5cdf4ca00bb3cc9e352a8, type: 2}
+    Intervals:
+    - Name: "\u4E0D\u53EF\u63A7\u5236"
+      StartNormalizedTime: 0
+      EndNormalizedTime: 1
+      UnderControl: 0
+      Cancellable: 0
+  _reachClip: {fileID: 1693699076924675934, guid: 2110e5b1e6b8f434284ad27fea77b4b1, type: 2}
+  _waitClip: {fileID: 3064054580098287026, guid: 827bef51320c4f142a4d56390cf741b1, type: 2}
+  _withdrawClip: {fileID: -3268706081431032073, guid: 00aa645ac5d8a1644a9a6c087d44bd41, type: 2}
+  _gripClip: {fileID: -7260123513403633888, guid: 05699cc6fd156d64bae27408ce5afcc1, type: 2}
+  _shakeClip: {fileID: -6107614857966845221, guid: 45ae0b402cd25004daffa8e0930fec4c, type: 2}
+  _laughClip: {fileID: 1369308150813348740, guid: 242594f64e39f19409f3d348dfdca7e6, type: 2}
+  _angryClip: {fileID: -6971983843558127791, guid: 2aa42192dcbc3c24696bdcc7e75ffcfd, type: 2}
+  _clapLaughClip: {fileID: 4227788665874067849, guid: c2e1bafa60010c048a6766be96744816, type: 2}
+  _holdClip: {fileID: 7195859749997444655, guid: 24ddb99986f5cdf4ca00bb3cc9e352a8, type: 2}
+  _triumphClip: {fileID: 2301135392786961089, guid: f7852d2f874a5d2409902f4f2a0fcb2e, type: 2}
+  _painClip: {fileID: 5655038342129460656, guid: 7e58450b9e265824f83fa408983a3633, type: 2}
+  _slowWithdrawClip: {fileID: -7786522887091022014, guid: 4984c64e71b6393458ed85fa925d65e1, type: 2}
+  _stumbleClip: {fileID: -5249330317568928905, guid: b657ef6a0c3dfaf45a27e7d623407f50, type: 2}
+  _graspEmptyClip: {fileID: -3576746429700014343, guid: 940ad43615feb8b4f9d0c7e1c253c8fa, type: 2}
+  _caughtPullClip: {fileID: 1736892266671072834, guid: f6d60943428734646b911f2d00b17706, type: 2}
+  _catchingHoldClip: {fileID: 2039728425148347780, guid: 3a65bad8d50632240baf06358f92d177, type: 2}
+  _leapClip: {fileID: 1280686858345700287, guid: e83f17d2ce29f744ea98c8aa3e48330a, type: 2}

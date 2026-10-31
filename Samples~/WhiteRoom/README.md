@@ -1,7 +1,7 @@
 # WhiteRoom：3D 測試場 Sample（握手互動與徒手對戰）
 
 > 套件名稱：`com.yu5h1.combataesthetic`  
-> 驗證宿主：Unity `6000.6.0f1` URP（`W:/UnityProject/Yu5h1LibTest` 實測 0 編譯錯誤、PlayMode 測試組件 4/4 通過、握手互動案例 21/21 全數通過、Windows Standalone 執行檔建置成功）  
+> 驗證宿主：Unity `6000.6.0f1` URP（`W:/UnityProject/Yu5h1LibTest` 實測 0 編譯錯誤、PlayMode 測試組件 8/8 通過、握手互動案例 21/21 全數通過、Windows Standalone 執行檔建置成功）  
 > 規範文件：[WhiteRoom 實作計畫](Implementation-Plan.md) ｜ [既有能力對照](Existing-Capabilities.md) ｜ [WhiteRoom 靜態與動態驗收紀錄](../../Documentation/WhiteRoom-Acceptance.md)
 
 ---
@@ -10,17 +10,17 @@
 
 WhiteRoom 是 CombatAesthetic 套件的官方 3D 最小測試場範例（Sample）。包含兩個獨立場景，並共用同一套 `Samples~/WhiteRoom/Runtime/`：
 1. **第一個交付：移動＋握手互動場景 (`Handshake/Handshake.unity`)**：
-   - 依照 Stage 2b「第 3 批交辦：比力氣」及「第 3 批第二輪修正交辦」規範，完整實作握手互動系統：發起伸手、中途取消收手、走近回應、碰觸握緊、握手成功、惡作劇（單方放開）、同時收手（雙方放開）、握住、比力氣對抗、抓住與掙脫。
+   - 依照 Stage 2b「第 3 批交辦：比力氣」、「第 3 批第二輪修正交辦」與「第 3 批第三輪修正交辦」規範，完整實作握手互動系統：發起伸手、中途取消收手、走近回應、碰觸握緊、握手成功、惡作劇（單方放開）、同時收手（雙方放開）、握住、比力氣對抗、抓住與掙脫。
    - **判定與表現嚴格分離**：
-     - **碰觸判定**：僅當雙方右手碰撞體（`RightHandContactCollider`，`SphereCollider` trigger 半徑 `0.40m`，計入 lossyScale 縮放）發生真實物理接觸並對應到該兩隻右手（`HandContactBridge`）時才算「碰到」，移除任何手部或身體距離門檻捷徑。
+     - **碰觸判定與標準距離**：雙方右手碰撞體（`RightHandContactCollider`，`SphereCollider` trigger 半徑 `0.18m`，符合自然手部大小 <= `0.25m`）發生真實物理接觸時判定「碰到」，完全無距離捷徑。角色預製物件之 `CharacterController.radius` 設為 `0.30m`，使雙方能自然走近至骨盆中心相距 `0.80m` 的標準動作距離；戰鬥場景角色獨立維持 `0.50m` 原生半徑不受影響。
      - **握緊裁決與握住過渡**：握緊（`0.50s`）期間有人放開互動鍵時，放開方立刻播收手抽回；握緊結束時雙方均放開裁定同時收手 (`BothWithdraw`)、單方放開裁定惡作劇 (`Prank`) 並由動畫具名區間鎖定放開者在反應結束前不可重新發起；雙方均按住則成功進入握住 (`Holding`)。
      - **比力氣對抗**：握住期間連按 E 計算按下次數；連按時短暫放開容許時間暫定 `0.30s`（可調）；雙方均放開時判定元件比次數：差距超過門檻（預設 1 次）為勝負已分 (`StrengthContestWin`)、門檻內且有人按過為平手慢退 (`StrengthContestTie`)、無人按為 0 比 0 搖手收手 (`StrengthContestZeroZero`)。
-     - **抓住與掙脫**：一方放開超過容許時間、另一方按住時記為抓住 (`Caught`/`Catching`)；被抓方以角色走路速度移動（`5.0 m/s`，`[暫代]`）、抓人方以慢步移動（`2.2 m/s`，`[暫代]`）；雙方皆可跳躍，被抓方跳起時往後彈開；身體距離超過骨骼手臂量測門檻加上補償值 `EscapeDistanceCompensation`（移除 `Mathf.Max` 覆寫）裁定掙脫 (`Escaped`)，不比次數；被抓方於被抓同一格或容許時間內重按互動鍵立即重回雙方握住且保留連按次數（+1）。
-     - **時間來源與動態片段綁定**：動作片段時長直接取自 `AnimationClip.length`；`HandshakeVisualFeedback` 透過動態 `AnimatorOverrideController` 將 `HandshakeSettings.asset` 中指派的動作片段（含 `Caught` 與 `Catching`）映射至 Animator Controller 之所有狀態節點；操作許可由動畫具名區間標記（`ActionInterval` / `ClipIntervalBinding`）決定，徹底移除固定計時器。
-     - **Runtime Humanoid IK 與 Pre-IK 碰撞球擺放**：在握緊、搖手、握住期間以權重 0.85 對準雙手中點；被抓住期間以權重 0.95 對準抓人方右手表現手臂拉直。碰撞球在 `OnAnimatorIK` 開頭以純動畫姿態擺放，100% 不受 IK 牽引影響判定。
+     - **抓住與動作驅動根位移**：一方放開超過容許時間、另一方按住時記為抓住 (`Caught`/`Catching`)；被抓方抽手、抓人方跟隨、被抓方跳開全面由 17 段含手指骨骼之動作片段（`handshake-caught`、`handshake-dragged`、`handshake-leap`）之**真實曲線根位移**（`applyRootMotion = true`）驅動，移動不再由程式速度暫代；起跳由真實 `Jump()` 觸發並於空中暫停落地重力以完整呈現起跳拋物線根位移；雙方距離超過骨骼手臂純長度量測門檻（雙人完全伸直 `1.06m`）裁定掙脫 (`Escaped`)，量不到手臂骨骼時嚴格記錯誤（無寫死 fallback）；被抓方於容許時間內重按互動鍵立即重回雙方握住且保留連按次數（+1）。
+     - **時間來源與動態片段綁定**：動作片段時長直接取自 `AnimationClip.length`；`HandshakeVisualFeedback` 透過動態 `AnimatorOverrideController` 將 `HandshakeSettings.asset` 中指派的 17 段動作片段映射至 Controller 內具名狀態節點；操作許可由動畫具名區間（`ActionInterval` / `ClipIntervalBinding`，源自片段檔 `intervals` 標籤）嚴格決定，徹底移除固定秒數計時器與倒數。
+     - **Runtime Humanoid IK 與 Pre-IK 碰撞球擺放**：在握緊、搖手、握住期間以權重 0.85 對準雙手中點；被抓住期間以權重 0.95 對準抓人方右手表現手臂拉直。碰撞球在 `OnAnimatorIK` 開頭以純動畫手腕延伸姿態擺放，並於測試案例驗證在鄰近目標下漂移 < 0.05m，100% 不受 IK 牽引影響判定。
    - **重新按下才發起**：所有結果（成功、惡作劇、同時收手、比力氣勝負/平手/0比0、掙脫）裁定後若持續按住互動鍵，維持站姿不自動伸手；必須先放開互動鍵再重新按下才發起。
    - **預製物件化與手工編輯 DX**：角色、AI 與鏡頭全面改為 Prefab（`WhiteRoom_Player.prefab`、`WhiteRoom_AI.prefab`、`WhiteRoom_Camera.prefab` 位於 `Samples~/WhiteRoom/Prefabs/`），場景直接引用且可在 Editor 直接調校；`HandshakeSettings` ScriptableObject 提供集中參數管理，Play Mode 調整值可即時保存。
-   - **Windows 獨立執行檔交付與證據**：建置輸出於 `W:\UnityProject\Yu5h1LibTest-Build\WhiteRoom_Handshake\WhiteRoom_Handshake.exe`（repo 外部），指定場景建置不修改宿主建置設定；結構化事件日誌 `Documentation/WhiteRoom_Handshake_Logs.json`（175 筆）。依指令全面廢止 agent 截圖，以執行檔與日誌為準。
+   - **Windows 獨立執行檔交付與證據**：建置輸出於 `W:\UnityProject\Yu5h1LibTest-Build\WhiteRoom_Handshake\WhiteRoom_Handshake.exe`（repo 外部），指定場景建置不修改宿主建置設定；結構化事件日誌 `Documentation/WhiteRoom_Handshake_Logs.json`（218 筆真實條目）。依指令全面廢止 agent 截圖，以執行檔與日誌為準。
    - **重用共用 `Runtime/`**：重用 `CombatEntity`（移動、跳躍、重力與全場重設）、`WhiteRoomCharacter`（P1/P2 輸入採集與改鍵）、`WhiteRoomHUD`（IMGUI 面板與 JSON 日誌匯出）及 `WhiteRoomSceneBuilder`（場地、燈光、鏡頭）。戰鬥場景鏡頭維持原生 `LookAt` 跟拍，握手場景使用四分之三側視角構圖避免背影遮擋。
    - **Sample 場景僅含可操作內容**：`Handshake.unity` 不掛載自動測試腳本，進入 Play Mode 後即可由玩家直接操作；輔助自動化測試器位於 `Samples~/WhiteRoom/Tests/HandshakeVerificationRunner.cs` 與 `HandshakePlayModeTests.cs`。
 2. **戰鬥驗證場景 (`Combat/WhiteRoom.unity`)**（目前暫停，保留至戰鬥驗證重啟）：
@@ -151,31 +151,15 @@ Samples~/WhiteRoom/
 |---|---|---|
 | **套件與 Sample 編譯** | Unity `6000.6.0f1` 宿主 (`Yu5h1LibTest`) | **0 錯誤、0 警告**（`Runtime`、`Handshake`、`Tests` 三個 asmdef 均編譯通過）。 |
 | **場景直接可操作性檢查** | 開啟 `Handshake/Handshake.unity` 進入 Play Mode | **通過**。場景無掛載 `HandshakeVerificationRunner`，直接引用預製物件（`WhiteRoom_Player`、`WhiteRoom_AI`、`WhiteRoom_Camera`）；進入 Play Mode 後 `playerOverride = False`，AI 預設為 `AiInitiator` 伸手等待，玩家可直接控制角色。 |
-| **輔助案例 1：玩家發起後取消** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。按住 E 進入 `Reaching`，放開 E 經 `Withdrawing`（`0.50s`）返回 `None`。 |
-| **輔助案例 2：AI 發起後取消** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。AI 發起伸手等待後放開取消收手回到 `None`。 |
-| **輔助案例 3：AI 發起、玩家走近回應成功進入握住** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。AI 伸手等待，玩家按住 E 走近至右手 `SphereCollider`（半徑 `0.40m`）實際接觸，歷經 `Grip`（`0.50s`），裁定正式結果 `Success` 並進入 `Holding` 維持緊握姿勢不搖手。 |
-| **輔助案例 4：成功後持續按住維持站立防重發** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。握手成功後持續按住 E 維持站立，放開再按下才重新發起伸手。 |
-| **輔助案例 5：玩家發起、AI 走近回應成功進入握住** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。玩家原地伸手，AI 走近接觸，完成 `Grip` ➔ `Holding`。 |
-| **輔助案例 6：玩家握緊中途放開（惡作劇）** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。`Grip` 期間玩家提前放開 E 立即抽手，握緊結束裁定 `Prank`，標註放開者為 Player1。 |
-| **輔助案例 7：惡作劇後持續按住維持站立防重發** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。惡作劇後持續按住 E 維持站立，放開清除 latch。 |
-| **輔助案例 8：AI 握緊中途放開（惡作劇）** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。`Grip` 期間 AI 提前放開，AI 立即抽手，握緊結束裁定 `Prank`，標註放開者為 AI_Opponent。 |
-| **輔助案例 9：雙方握緊放開（同時收手）附時間戳順序** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。雙方均在握緊結束前放開，各自抽手，握緊計時結束時裁定 `BothWithdraw`，精確記錄雙方真實放開時間戳與先後順序（`pTime < aiTime`）。 |
-| **輔助案例 10：同時收手後持續按住維持站立防重發** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。同時收手後持續按住 E 維持站立，放開再按才重新發起。 |
-| **輔助案例 11：握緊結束後才放開記錄放開時間戳** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。握緊結束完成握住後才放開，記錄放開時間戳（`16.73s`）。 |
-| **輔助案例 12：比力氣 AI 勝（次數差超過門檻）** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。握住期間玩家按 0 次、AI 連按 5 次，雙方放開後裁定 `StrengthContestWin`，勝方為 AI。 |
-| **輔助案例 13：比力氣玩家勝（次數差超過門檻）** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。握住期間玩家按 3 次、AI 按 0 次，雙方放開後裁定 `StrengthContestWin`，勝方為玩家。 |
-| **輔助案例 14：比力氣平手（門檻內且有人按過）** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。握住期間雙方各按 2 次，雙方放開後裁定 `StrengthContestTie`。 |
-| **輔助案例 15：比力氣 0 比 0（無人連按搖一下）** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。雙方均未連按，放開後裁定 `StrengthContestZeroZero`，搖一下各自收手。 |
-| **輔助案例 16：抓住與身體距離超標掙脫** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。一方放開超時被抓住（`Caught`/`Catching`），拉扯移動與跳躍使身體距離超過骨骼手臂量測門檻加上補償值（`1.80m`），裁定 `Escaped`，不比次數。 |
-| **輔助案例 17：被抓中重按互動鍵返回握住（累計不歸零）** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。被抓方重新按住 E 立即回到雙方握住（`Holding`），連按累計次數（由 2 次累計至 3 次）完整保留。 |
-| **輔助案例 18：抓方亦放開結束握住照次數比力氣** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。抓方亦放開視同雙方放開，結束握住並照次數裁定比力氣（`StrengthContestZeroZero`）。 |
-| **輔助案例 19：抓方慢步追上防超標掙脫** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。被抓方後退，抓方慢步跟隨（`2.2 m/s`），雙方身體距離維持在門檻內，未觸發掙脫。 |
-| **輔助案例 20：被抓方起跳未超門檻維持被抓** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。被抓方起跳真實離地（`!isGrounded`），空中套用水平位移，身體距離維持在門檻內，維持被抓狀態。 |
-| **輔助案例 21：全場快速重設一致性** | `Tests/HandshakeVerificationRunner.cs` | **PASS**。呼叫 `CombatEntity.ResetAllArenaEntities()`，雙方乾淨回到初始點、狀態 `None`、判定會話無殘留。 |
-| **Windows 獨立執行檔交付** | Unity Editor 批次建置（指定場景、不改宿主建置設定） | **通過**。建置輸出於 `W:\UnityProject\Yu5h1LibTest-Build\WhiteRoom_Handshake\WhiteRoom_Handshake.exe`（repo 外部），大小約 667 KB，附帶 UnityPlayer.dll 與 Data 目錄，可於 Windows 64-bit 獨立直接運行。 |
-| **結構化日誌匯出** | `WhiteRoomHUD.ExportStructuredLogs()` | **通過**。匯出 `Documentation/WhiteRoom_Handshake_Logs.json`，共 **175 筆**有效結構化紀錄，完整涵蓋全部 21 項輔助案例之狀態、次數、拉扯距離與裁決轉換。 |
-| **戰鬥場景回歸檢查** | `Tests/HandshakePlayModeTests.cs` | **通過**。戰鬥場景跳躍、空中不可出招、著地還原、著地後出招許可、邊緣墜落與事件紀錄（`VerifyCombatSceneJumpLandingAndAttackPermissions`）及鏡頭 LookAt 跟拍（`VerifyCombatCameraLookAtTracking`）全數 PASS。 |
-| **Pre-IK 碰撞代理球檢查** | `Tests/HandshakePlayModeTests.cs` | **通過**。`VerifyPreIkContactSpherePosition` 實測碰撞代理球位置於套用 IK 前錨定至骨骼手腕延伸位置，漂移量 < 0.35m 通過。 |
+| **輔助案例 1～21 全套情境** | `Tests/HandshakeVerificationRunner.cs` | **PASS (21/21 全數通過)**。包含取消、回應、握住、握手防重發、惡作劇（雙向）、同時收手（記錄時間戳與先後順序）、握緊後放開時間戳、比力氣（AI勝、玩家勝、平手、0比0）、抓住、被抓動作驅動根位移跳開與骨骼臂長門檻（1.06m）掙脫、被抓重按累計次數保留、抓方放開比力氣、追上防掙脫、原地起跳未超門檻維持被抓、全場重設一致性。 |
+| **PlayMode 驗證項目 1：控制區間真的決定操作** | `Tests/HandshakePlayModeTests.cs` | **PASS**。`VerifyItem1_ControlIntervalsGovernRePress` 驗證不可控制區間重按無效、可控制區間重按立即伸手。 |
+| **PlayMode 驗證項目 2：片段真的播得出來** | `Tests/HandshakePlayModeTests.cs` | **PASS**。`VerifyItem2_ClipsActuallyPlayInAnimator` 遍歷所有 17 個狀態確認 Animator 正在播放片段與設定資產指派 100% 一致。 |
+| **PlayMode 驗證項目 3：動作驅動根位移** | `Tests/HandshakePlayModeTests.cs` | **PASS**。`VerifyItem3_RootMotionDisplacementInCaughtCatchingLeap` 實測被抓抽手水平位移 > 0.02m、跳開垂直位移 > 0.04m 與水平位移 > 0.03m。 |
+| **PlayMode 驗證項目 4：標準距離走進與自然手球** | `Tests/HandshakePlayModeTests.cs` | **PASS**。`VerifyItem4_StandardDistanceWalkingAndNaturalHandSphere` 驗證膠囊體不阻擋骨盆中心相距 0.80m（抵達間距 <= 0.85m）且手部碰撞球半徑 <= 0.25m（0.18m）自然接觸觸發握手。 |
+| **Pre-IK 碰撞代理球檢查** | `Tests/HandshakePlayModeTests.cs` | **PASS**。`VerifyPreIkContactSpherePosition` 實測手部接觸代理球在手旁 0.20m IK 目標下漂移量 < 0.05m，100% 免疫於 IK。 |
+| **戰鬥場景回歸檢查** | `Tests/HandshakePlayModeTests.cs` | **PASS**。戰鬥場景跳躍、空中不可出招、著地還原、著地後出招許可、邊緣墜落與事件紀錄（`VerifyCombatSceneJumpLandingAndAttackPermissions`）及鏡頭 LookAt 跟拍（`VerifyCombatCameraLookAtTracking`）全數通過。 |
+| **Windows 獨立執行檔交付** | Unity Editor 批次建置（指定場景、不改宿主建置設定） | **通過**。建置輸出於 `W:\UnityProject\Yu5h1LibTest-Build\WhiteRoom_Handshake\WhiteRoom_Handshake.exe`（repo 外部），大小約 115 MB，包含 17 段動畫與專屬場景，可於 Windows 64-bit 獨立直接運行。 |
+| **結構化日誌匯出** | `WhiteRoomHUD.ExportStructuredLogs()` | **通過**。匯出 `Documentation/WhiteRoom_Handshake_Logs.json`，共 **218 筆**有效結構化紀錄，完整涵蓋全部 21 項輔助案例之狀態、次數、拉扯距離與裁決轉換。 |
 | **待使用者本人親手驗收項目** | 實體鍵盤 WASD + E / R 與 HUD 操作 | **待使用者驗收**（交付 Windows 獨立執行檔供實機體驗實體連按手感、抓住與跳躍彈開手感、情境按鈕測試）。 |
 
 ---
@@ -184,5 +168,5 @@ Samples~/WhiteRoom/
 
 1. **握手第 1 批**：發起、取消、走近與碰觸握手成功（**已完成**）。
 2. **握手第 2 批**：惡作劇與同時收手（**已完成**：三向裁決、抽手表現、反應動作槽位、持續按住防重發、可配置 AI 時序）。
-3. **握手第 3 批（含第二輪修正）**：比力氣與修正（**已完成**：控制區間綁定動畫、AnimatorOverrideController 動態片段綁定、走路/慢步 [暫代] 根位移、骨架測量門檻加補償、抓住真跳躍、被抓重按累計次數保留、場景預製物件化、Pre-IK 碰撞球位置隔離、PlayMode 4/4 組件全數通過、21/21 握手情境全數 PASS、Windows 執行檔交付）。
+3. **握手第 3 批（含第二、三輪修正）**：比力氣與拉扯（**已完成**：控制區間由動作標記決定、17 段含手指片段動態綁定且 Animator 真實播放、被抓/抓住/跳開動作驅動根位移、骨骼臂長測量門檻 1.06m 無寫死 fallback、角色膠囊半徑 0.30m 與自然手球 0.18m 達標標準距離 0.80m、Pre-IK 碰撞代理隔離、PlayMode 8/8 組件全數通過、21/21 握手情境全數 PASS、Windows 執行檔交付）。
 4. **戰鬥驗證重啟**：依據計畫時程，銜接至真實網路傳輸層整合。

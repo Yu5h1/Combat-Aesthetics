@@ -21,7 +21,8 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         ContestPain = 13,
         ContestTie = 14,
         EscapedStumble = 15,
-        GraspEmpty = 16
+        GraspEmpty = 16,
+        Leap = 17
     }
 
     /// <summary>

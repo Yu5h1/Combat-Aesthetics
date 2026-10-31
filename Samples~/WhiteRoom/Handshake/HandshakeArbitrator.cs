@@ -72,6 +72,13 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         public float ParticipantAReleaseTimestamp => _participantAReleaseTimestamp;
         public float ParticipantBReleaseTimestamp => _participantBReleaseTimestamp;
 
+        public float GetParticipantReleaseTimestamp(HandshakeParticipant p)
+        {
+            if (p == _participantA) return _participantAReleaseTimestamp;
+            if (p == _participantB) return _participantBReleaseTimestamp;
+            return -1f;
+        }
+
         public HandshakeParticipant ContestWinner => _contestWinner;
         public HandshakeParticipant ContestLoser => _contestLoser;
         public HandshakeParticipant LastContestWinner => _contestWinner;
@@ -212,9 +219,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
         private void ApplyClipDurationsToParticipant(HandshakeParticipant participant)
         {
-            if (participant == null) return;
-            if (ReachDuration > 0f) participant.ReachDuration = ReachDuration;
-            if (WithdrawDuration > 0f) participant.WithdrawDuration = WithdrawDuration;
+            // HandshakeParticipant dynamically evaluates durations and intervals from Settings clips.
         }
 
         /// <summary>
@@ -497,7 +502,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
         private void ResolveStrengthContest()
         {
-            float fallbackDuration = Settings.ReactionFallbackDuration;
             int countA = _participantA.InteractPressCount;
             int countB = _participantB.InteractPressCount;
             int diff = Mathf.Abs(countA - countB);
@@ -524,7 +528,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 _loserPressCount = Mathf.Min(countA, countB);
 
                 EmitArbitrationLog($"[握手判定] 比力氣結果：勝負已分！勝方【{winner.EntityId}】({_winnerPressCount}次)，敗方【{loser.EntityId}】({_loserPressCount}次)，差距 {diff} 次超過門檻（{threshold}次）。");
-                TriggerContestWinPresentation(winner, loser, fallbackDuration);
+                TriggerContestWinPresentation(winner, loser);
             }
             else
             {
@@ -535,56 +539,33 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 _loserPressCount = countB;
 
                 EmitArbitrationLog($"[握手判定] 比力氣結果：門檻內平手！雙方次數 [{countA} vs {countB}]，差距 {diff} 次在門檻（{threshold}次）內，拚力後慢慢鬆開退開再收手。");
-                TriggerContestTiePresentation(fallbackDuration);
+                TriggerContestTiePresentation();
             }
         }
 
-        private void TriggerContestWinPresentation(HandshakeParticipant winner, HandshakeParticipant loser, float fallbackLen)
+        private void TriggerContestWinPresentation(HandshakeParticipant winner, HandshakeParticipant loser)
         {
             AnimationClip triumph = TriumphClip;
             AnimationClip pain = PainClip;
 
-            if (triumph != null || pain != null)
-            {
-                float tLen = triumph != null ? triumph.length : fallbackLen;
-                float pLen = pain != null ? pain.length : fallbackLen;
+            float tLen = triumph != null ? triumph.length : 0.50f;
+            float pLen = pain != null ? pain.length : 0.50f;
 
-                if (triumph != null) winner.SetState(HandshakeState.ContestTriumph, tLen);
-                else winner.SetState(HandshakeState.Withdrawing, fallbackLen);
+            winner.SetState(HandshakeState.ContestTriumph, tLen);
+            loser.SetState(HandshakeState.ContestPain, pLen);
 
-                if (pain != null) loser.SetState(HandshakeState.ContestPain, pLen);
-                else loser.SetState(HandshakeState.Withdrawing, fallbackLen);
-
-                _sessionState = HandshakeState.ContestTriumph;
-                _sessionTimer = Mathf.Max(tLen, pLen);
-            }
-            else
-            {
-                winner.SetState(HandshakeState.Withdrawing, fallbackLen);
-                loser.SetState(HandshakeState.Withdrawing, fallbackLen);
-                _sessionState = HandshakeState.None;
-                OnHandshakeFinished?.Invoke(_lastOutcome);
-            }
+            _sessionState = HandshakeState.ContestTriumph;
+            _sessionTimer = Mathf.Max(tLen, pLen);
         }
 
-        private void TriggerContestTiePresentation(float fallbackLen)
+        private void TriggerContestTiePresentation()
         {
             AnimationClip slowClip = SlowWithdrawClip;
-            if (slowClip != null)
-            {
-                float len = slowClip.length;
-                _participantA.SetState(HandshakeState.ContestTie, len);
-                _participantB.SetState(HandshakeState.ContestTie, len);
-                _sessionState = HandshakeState.ContestTie;
-                _sessionTimer = len;
-            }
-            else
-            {
-                _participantA.SetState(HandshakeState.Withdrawing, fallbackLen);
-                _participantB.SetState(HandshakeState.Withdrawing, fallbackLen);
-                _sessionState = HandshakeState.None;
-                OnHandshakeFinished?.Invoke(_lastOutcome);
-            }
+            float len = slowClip != null ? slowClip.length : 0.50f;
+            _participantA.SetState(HandshakeState.ContestTie, len);
+            _participantB.SetState(HandshakeState.ContestTie, len);
+            _sessionState = HandshakeState.ContestTie;
+            _sessionTimer = len;
         }
 
         private void EnterCaughtState(HandshakeParticipant catching, HandshakeParticipant caught)
@@ -642,6 +623,11 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         public float GetEffectiveEscapeThreshold()
         {
             float totalReach = MeasureTotalArmReach();
+            if (totalReach <= 0f)
+            {
+                Debug.LogError("[HandshakeArbitrator] Cannot calculate escape threshold: Total arm reach could not be measured from skeletons!");
+                return -1f;
+            }
             float compensation = Settings != null ? Settings.EscapeDistanceCompensation : 0f;
             return totalReach + compensation;
         }
@@ -652,42 +638,43 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         public float MeasureTotalArmReach()
         {
             float totalReach = 0f;
-            if (_participantA != null) totalReach += MeasureArmReach(_participantA);
-            if (_participantB != null) totalReach += MeasureArmReach(_participantB);
-            return totalReach > 0.5f ? totalReach : 1.80f;
+            if (_participantA != null)
+            {
+                float reachA = MeasureArmReach(_participantA);
+                if (reachA <= 0f) return -1f;
+                totalReach += reachA;
+            }
+            if (_participantB != null)
+            {
+                float reachB = MeasureArmReach(_participantB);
+                if (reachB <= 0f) return -1f;
+                totalReach += reachB;
+            }
+            return totalReach;
         }
 
         private float MeasureArmReach(HandshakeParticipant p)
         {
             Animator anim = p.GetComponentInChildren<Animator>();
-            if (anim == null) return 0.90f;
+            if (anim == null)
+            {
+                Debug.LogError($"[HandshakeArbitrator] Cannot measure arm reach on '{p.name}': Animator not found!");
+                return -1f;
+            }
 
             Transform shoulder = anim.GetBoneTransform(HumanBodyBones.RightUpperArm);
             Transform elbow = anim.GetBoneTransform(HumanBodyBones.RightLowerArm);
             Transform hand = anim.GetBoneTransform(HumanBodyBones.RightHand);
             Transform chest = anim.GetBoneTransform(HumanBodyBones.Chest) ?? anim.GetBoneTransform(HumanBodyBones.Spine);
 
-            float armLength = 0f;
-            if (shoulder != null && elbow != null)
+            if (shoulder == null || elbow == null || hand == null)
             {
-                armLength += Vector3.Distance(shoulder.position, elbow.position);
-            }
-            if (elbow != null && hand != null)
-            {
-                armLength += Vector3.Distance(elbow.position, hand.position);
+                Debug.LogError($"[HandshakeArbitrator] Cannot measure arm reach on '{p.name}': Required humanoid arm bones (RightUpperArm, RightLowerArm, RightHand) are missing!");
+                return -1f;
             }
 
-            float chestOffset = 0.25f;
-            if (chest != null && shoulder != null)
-            {
-                chestOffset = Vector3.Distance(chest.position, shoulder.position);
-            }
-
-            if (armLength > 0.3f)
-            {
-                return armLength + chestOffset;
-            }
-            return 0.90f;
+            float armLength = Vector3.Distance(shoulder.position, elbow.position) + Vector3.Distance(elbow.position, hand.position);
+            return armLength;
         }
 
         /// <summary>
@@ -705,34 +692,20 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
         private void ResolveEscape(float currentDistance, float threshold)
         {
-            float fallbackDuration = Settings.ReactionFallbackDuration;
             _lastOutcome = HandshakeOutcome.Escaped;
             EmitArbitrationLog($"[握手判定] 雙方身體距離（{currentDistance:F2}m）超過骨架掙脫門檻（{threshold:F2}m）！【{_caughtParticipant.EntityId}】成功掙脫，不比次數！");
 
             AnimationClip stumble = StumbleClip;
             AnimationClip graspEmpty = GraspEmptyClip;
 
-            if (stumble != null || graspEmpty != null)
-            {
-                float sLen = stumble != null ? stumble.length : fallbackDuration;
-                float gLen = graspEmpty != null ? graspEmpty.length : fallbackDuration;
+            float sLen = stumble != null ? stumble.length : 0.50f;
+            float gLen = graspEmpty != null ? graspEmpty.length : 0.50f;
 
-                if (stumble != null) _caughtParticipant.SetState(HandshakeState.EscapedStumble, sLen);
-                else _caughtParticipant.SetState(HandshakeState.Withdrawing, fallbackDuration);
+            _caughtParticipant.SetState(HandshakeState.EscapedStumble, sLen);
+            _catchingParticipant.SetState(HandshakeState.GraspEmpty, gLen);
 
-                if (graspEmpty != null) _catchingParticipant.SetState(HandshakeState.GraspEmpty, gLen);
-                else _catchingParticipant.SetState(HandshakeState.Withdrawing, fallbackDuration);
-
-                _sessionState = HandshakeState.EscapedStumble;
-                _sessionTimer = Mathf.Max(sLen, gLen);
-            }
-            else
-            {
-                _caughtParticipant.SetState(HandshakeState.Withdrawing, fallbackDuration);
-                _catchingParticipant.SetState(HandshakeState.Withdrawing, fallbackDuration);
-                _sessionState = HandshakeState.None;
-                OnHandshakeFinished?.Invoke(_lastOutcome);
-            }
+            _sessionState = HandshakeState.EscapedStumble;
+            _sessionTimer = Mathf.Max(sLen, gLen);
         }
 
         private void TriggerBothWithdrawPresentation(float fallbackWithdrawLen)

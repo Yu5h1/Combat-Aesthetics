@@ -1,882 +1,878 @@
 {
-    "sessionTimestamp": "2026-10-31 14:49:29",
+    "sessionTimestamp": "2026-10-31 18:44:54",
     "unityVersion": "6000.6.0f1",
     "scenario": "Handshake_Stage2b_Batch3",
     "logs": [
         {
-            "timestamp": 0.1717565953731537,
+            "timestamp": 0.3748649060726166,
             "message": "【WhiteRoom 握手互動系統就緒 (第 3 批：比力氣與拉扯)】單一 HUD 運作，可使用 WASD 與互動鍵操作。"
         },
         {
-            "timestamp": 0.7670885920524597,
-            "message": "[AI_Opponent] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 0.9729236960411072,
+            "message": "[AI_Dummy1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 0.8721134662628174,
+            "timestamp": 1.0749363899230957,
             "message": "[Player1] 狀態重設完成"
         },
         {
-            "timestamp": 0.8721134662628174,
-            "message": "[AI_Opponent] 狀態重設完成"
+            "timestamp": 1.0749363899230957,
+            "message": "[AI_Dummy1] 狀態重設完成"
         },
         {
-            "timestamp": 0.8721134662628174,
+            "timestamp": 1.0749363899230957,
             "message": "【全場統一重設】角色狀態、位置、AI 設定及佇列已還原。"
         },
         {
-            "timestamp": 0.972378671169281,
-            "message": "[Player1] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 1.1753041744232178,
+            "message": "[Player1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 1.222642183303833,
-            "message": "[Player1] 放開互動鍵，收手取消（0.50s）"
+            "timestamp": 1.4254239797592163,
+            "message": "[Player1] 放開互動鍵，收手取消"
         },
         {
-            "timestamp": 1.8725650310516357,
+            "timestamp": 2.075589895248413,
             "message": "[Player1] 狀態重設完成"
         },
         {
-            "timestamp": 1.8725650310516357,
-            "message": "[AI_Opponent] 狀態重設完成"
+            "timestamp": 2.075589895248413,
+            "message": "[AI_Dummy1] 狀態重設完成"
         },
         {
-            "timestamp": 1.8725650310516357,
+            "timestamp": 2.075589895248413,
             "message": "【全場統一重設】角色狀態、位置、AI 設定及佇列已還原。"
         },
         {
-            "timestamp": 2.4725966453552246,
-            "message": "[AI_Opponent] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 2.675734043121338,
+            "message": "[AI_Dummy1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 2.97273588180542,
-            "message": "[AI_Opponent] 伸手就緒，等待對方走近接觸"
+            "timestamp": 3.1759824752807617,
+            "message": "[AI_Dummy1] 伸手就緒，等待對方走近接觸"
         },
         {
-            "timestamp": 3.672457218170166,
-            "message": "[AI_Opponent] 放開互動鍵，等待中止並收手（0.50s）"
+            "timestamp": 3.8771657943725586,
+            "message": "[AI_Dummy1] 放開互動鍵，等待中止並收手"
         },
         {
-            "timestamp": 3.8729867935180664,
+            "timestamp": 4.0760979652404785,
             "message": "[Player1] 狀態重設完成"
         },
         {
-            "timestamp": 3.8729867935180664,
-            "message": "[AI_Opponent] 狀態重設完成"
+            "timestamp": 4.0760979652404785,
+            "message": "[AI_Dummy1] 狀態重設完成"
         },
         {
-            "timestamp": 3.8729867935180664,
+            "timestamp": 4.0760979652404785,
             "message": "【全場統一重設】角色狀態、位置、AI 設定及佇列已還原。"
         },
         {
-            "timestamp": 4.473090171813965,
-            "message": "[AI_Opponent] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 4.676318645477295,
+            "message": "[AI_Dummy1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 4.973210334777832,
-            "message": "[AI_Opponent] 伸手就緒，等待對方走近接觸"
+            "timestamp": 5.1765217781066895,
+            "message": "[AI_Dummy1] 伸手就緒，等待對方走近接觸"
         },
         {
-            "timestamp": 4.974308013916016,
-            "message": "[Player1] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 5.177669525146484,
+            "message": "[Player1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 5.474345684051514,
+            "timestamp": 5.677924156188965,
             "message": "[Player1] 伸手就緒，等待對方走近接觸"
         },
         {
-            "timestamp": 5.718998432159424,
-            "message": "[握手判定] [Player1] 與 [AI_Opponent] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
+            "timestamp": 5.685416221618652,
+            "message": "[握手判定] [Player1] 與 [AI_Dummy1] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
         },
         {
-            "timestamp": 6.219244003295898,
+            "timestamp": 6.185444355010986,
             "message": "[握手判定] 握手成功 (Success)！握緊結束時雙方均按著互動鍵，正式成立握手成功。雙方進入握住，維持緊握姿勢（不搖手）。"
         },
         {
-            "timestamp": 6.219244003295898,
+            "timestamp": 6.185444355010986,
             "message": "[握手判定] 進入雙方握住 (Holding)！累計次數: [P1:0 vs AI:0]。連按互動鍵比力氣，雙方均放開結束比次數。"
         },
         {
-            "timestamp": 6.220609664916992,
-            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 6.22s)！開始計算容許時間。"
+            "timestamp": 6.186892986297607,
+            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 6.19s)！開始計算容許時間。"
         },
         {
-            "timestamp": 6.220609664916992,
-            "message": "[握手判定] [AI_Opponent] 於握住 (Holding) 期間放開互動鍵 (時間: 6.22s)！開始計算容許時間。"
+            "timestamp": 6.186892986297607,
+            "message": "[握手判定] [AI_Dummy1] 於握住 (Holding) 期間放開互動鍵 (時間: 6.19s)！開始計算容許時間。"
         },
         {
-            "timestamp": 6.52008581161499,
+            "timestamp": 6.486423015594482,
             "message": "[握手判定] 握住結束：雙方次數為 0 比 0（無人連按），搖一下再各自收手。"
         },
         {
-            "timestamp": 7.020214080810547,
+            "timestamp": 6.986679553985596,
             "message": "[握手判定] 搖一下結束，雙方各自收手（0.50s）。"
         },
         {
-            "timestamp": 8.020851135253906,
-            "message": "[Player1] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 6.987093925476074,
+            "message": "[Player1] 在收手不可控制區間（t=0.00）重按互動鍵無效"
         },
         {
-            "timestamp": 8.170771598815918,
+            "timestamp": 7.987400054931641,
+            "message": "[Player1] 按下互動鍵發起伸手（片段長度: 0.50s）"
+        },
+        {
+            "timestamp": 8.13735580444336,
             "message": "[Player1] 狀態重設完成"
         },
         {
-            "timestamp": 8.170771598815918,
-            "message": "[AI_Opponent] 狀態重設完成"
+            "timestamp": 8.13735580444336,
+            "message": "[AI_Dummy1] 狀態重設完成"
         },
         {
-            "timestamp": 8.170771598815918,
+            "timestamp": 8.13735580444336,
             "message": "【全場統一重設】角色狀態、位置、AI 設定及佇列已還原。"
         },
         {
-            "timestamp": 8.371299743652344,
-            "message": "[Player1] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 8.337836265563965,
+            "message": "[Player1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 8.371299743652344,
-            "message": "[AI_Opponent] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 8.337836265563965,
+            "message": "[AI_Dummy1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 8.871499061584473,
+            "timestamp": 8.838007926940918,
             "message": "[Player1] 伸手就緒，等待對方走近接觸"
         },
         {
-            "timestamp": 8.871499061584473,
-            "message": "[AI_Opponent] 伸手就緒，等待對方走近接觸"
+            "timestamp": 8.838007926940918,
+            "message": "[AI_Dummy1] 伸手就緒，等待對方走近接觸"
         },
         {
-            "timestamp": 9.115911483764648,
-            "message": "[握手判定] [AI_Opponent] 與 [Player1] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
+            "timestamp": 8.846414566040039,
+            "message": "[握手判定] [AI_Dummy1] 與 [Player1] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
         },
         {
-            "timestamp": 9.616134643554688,
+            "timestamp": 9.346452713012695,
             "message": "[握手判定] 握手成功 (Success)！握緊結束時雙方均按著互動鍵，正式成立握手成功。雙方進入握住，維持緊握姿勢（不搖手）。"
         },
         {
-            "timestamp": 9.616134643554688,
+            "timestamp": 9.346452713012695,
             "message": "[握手判定] 進入雙方握住 (Holding)！累計次數: [P1:0 vs AI:0]。連按互動鍵比力氣，雙方均放開結束比次數。"
         },
         {
-            "timestamp": 9.616134643554688,
+            "timestamp": 9.346452713012695,
             "message": "[Player1] 狀態重設完成"
         },
         {
-            "timestamp": 9.616134643554688,
-            "message": "[AI_Opponent] 狀態重設完成"
+            "timestamp": 9.346452713012695,
+            "message": "[AI_Dummy1] 狀態重設完成"
         },
         {
-            "timestamp": 9.616134643554688,
+            "timestamp": 9.346452713012695,
             "message": "【全場統一重設】角色狀態、位置、AI 設定及佇列已還原。"
         },
         {
-            "timestamp": 9.816657066345215,
-            "message": "[Player1] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 9.547072410583496,
+            "message": "[Player1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 10.216297149658203,
-            "message": "[AI_Opponent] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 9.946480751037598,
+            "message": "[AI_Dummy1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 10.31673812866211,
+            "timestamp": 10.0472412109375,
             "message": "[Player1] 伸手就緒，等待對方走近接觸"
         },
         {
-            "timestamp": 10.562827110290527,
-            "message": "[握手判定] [Player1] 與 [AI_Opponent] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
+            "timestamp": 10.179996490478516,
+            "message": "[握手判定] [Player1] 與 [AI_Dummy1] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
         },
         {
-            "timestamp": 10.713715553283691,
-            "message": "[握手判定] [Player1] 於握緊期間放開互動鍵 (時間: 10.71s)！先行抽回收手（0.50s），持續判定至握緊結束。"
+            "timestamp": 10.331470489501953,
+            "message": "[握手判定] [Player1] 於握緊期間放開互動鍵 (時間: 10.33s)！先行抽回收手（0.50s），持續判定至握緊結束。"
         },
         {
-            "timestamp": 11.063063621520996,
-            "message": "[握手判定] 判定結果：惡作劇 (Prank)！放開者為【Player1】，被惡作劇者為【AI_Opponent】。動作綁定收手與反應片段，區間結束前不可重新發起伸手。"
+            "timestamp": 10.67994213104248,
+            "message": "[握手判定] 判定結果：惡作劇 (Prank)！放開者為【Player1】，被惡作劇者為【AI_Dummy1】。動作綁定收手與反應片段，區間結束前不可重新發起伸手。"
         },
         {
-            "timestamp": 11.716979026794434,
+            "timestamp": 10.681074142456055,
+            "message": "[Player1] 在反應動作不可控制區間（t=0.00）重按互動鍵無效"
+        },
+        {
+            "timestamp": 12.680280685424805,
             "message": "[Player1] 狀態重設完成"
         },
         {
-            "timestamp": 11.716979026794434,
-            "message": "[AI_Opponent] 狀態重設完成"
+            "timestamp": 12.680280685424805,
+            "message": "[AI_Dummy1] 狀態重設完成"
         },
         {
-            "timestamp": 11.716979026794434,
+            "timestamp": 12.680280685424805,
             "message": "【全場統一重設】角色狀態、位置、AI 設定及佇列已還原。"
         },
         {
-            "timestamp": 11.917525291442871,
-            "message": "[Player1] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 12.880827903747559,
+            "message": "[Player1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 12.317209243774414,
-            "message": "[AI_Opponent] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 13.28053092956543,
+            "message": "[AI_Dummy1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 12.417762756347656,
+            "timestamp": 13.380859375,
             "message": "[Player1] 伸手就緒，等待對方走近接觸"
         },
         {
-            "timestamp": 12.663641929626465,
-            "message": "[握手判定] [Player1] 與 [AI_Opponent] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
+            "timestamp": 13.512399673461914,
+            "message": "[握手判定] [AI_Dummy1] 與 [Player1] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
         },
         {
-            "timestamp": 12.843908309936523,
-            "message": "[握手判定] [AI_Opponent] 於握緊期間放開互動鍵 (時間: 12.84s)！先行抽回收手（0.50s），持續判定至握緊結束。"
+            "timestamp": 13.692744255065918,
+            "message": "[握手判定] [AI_Dummy1] 於握緊期間放開互動鍵 (時間: 13.69s)！先行抽回收手（0.50s），持續判定至握緊結束。"
         },
         {
-            "timestamp": 13.163885116577148,
-            "message": "[握手判定] 判定結果：惡作劇 (Prank)！放開者為【AI_Opponent】，被惡作劇者為【Player1】。動作綁定收手與反應片段，區間結束前不可重新發起伸手。"
+            "timestamp": 14.012656211853027,
+            "message": "[握手判定] 判定結果：惡作劇 (Prank)！放開者為【AI_Dummy1】，被惡作劇者為【Player1】。動作綁定收手與反應片段，區間結束前不可重新發起伸手。"
         },
         {
-            "timestamp": 13.163885116577148,
+            "timestamp": 14.012656211853027,
             "message": "[Player1] 狀態重設完成"
         },
         {
-            "timestamp": 13.163885116577148,
-            "message": "[AI_Opponent] 狀態重設完成"
+            "timestamp": 14.012656211853027,
+            "message": "[AI_Dummy1] 狀態重設完成"
         },
         {
-            "timestamp": 13.163885116577148,
+            "timestamp": 14.012656211853027,
             "message": "【全場統一重設】角色狀態、位置、AI 設定及佇列已還原。"
         },
         {
-            "timestamp": 13.36426067352295,
-            "message": "[Player1] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 14.21301555633545,
+            "message": "[Player1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 13.764155387878418,
-            "message": "[AI_Opponent] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 14.612723350524902,
+            "message": "[AI_Dummy1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 13.864521026611328,
+            "timestamp": 14.713106155395508,
             "message": "[Player1] 伸手就緒，等待對方走近接觸"
         },
         {
-            "timestamp": 14.110788345336914,
-            "message": "[握手判定] [Player1] 與 [AI_Opponent] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
+            "timestamp": 14.840180397033691,
+            "message": "[握手判定] [Player1] 與 [AI_Dummy1] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
         },
         {
-            "timestamp": 14.26168441772461,
-            "message": "[握手判定] [Player1] 於握緊期間放開互動鍵 (時間: 14.26s)！先行抽回收手（0.50s），持續判定至握緊結束。"
+            "timestamp": 14.991500854492188,
+            "message": "[握手判定] [Player1] 於握緊期間放開互動鍵 (時間: 14.99s)！先行抽回收手（0.50s），持續判定至握緊結束。"
         },
         {
-            "timestamp": 14.36117172241211,
-            "message": "[握手判定] [AI_Opponent] 於握緊期間放開互動鍵 (時間: 14.36s)！先行抽回收手（0.50s），持續判定至握緊結束。"
+            "timestamp": 15.090479850769043,
+            "message": "[握手判定] [AI_Dummy1] 於握緊期間放開互動鍵 (時間: 15.09s)！先行抽回收手（0.50s），持續判定至握緊結束。"
         },
         {
-            "timestamp": 14.610830307006836,
-            "message": "[握手判定] 判定結果：同時收手 (BothWithdraw)！雙方均在握緊結束前放開 (先放開者: Player1 (14.26s)，後放開者: AI_Opponent (14.36s))。"
+            "timestamp": 15.340585708618164,
+            "message": "[握手判定] 判定結果：同時收手 (BothWithdraw)！雙方均在握緊結束前放開 (先放開者: Player1 (14.99s)，後放開者: AI_Dummy1 (15.09s))。"
         },
         {
-            "timestamp": 15.261845588684082,
+            "timestamp": 15.341593742370605,
+            "message": "[Player1] 在反應動作不可控制區間（t=0.00）重按互動鍵無效"
+        },
+        {
+            "timestamp": 17.340816497802734,
             "message": "[Player1] 狀態重設完成"
         },
         {
-            "timestamp": 15.261845588684082,
-            "message": "[AI_Opponent] 狀態重設完成"
+            "timestamp": 17.340816497802734,
+            "message": "[AI_Dummy1] 狀態重設完成"
         },
         {
-            "timestamp": 15.261845588684082,
+            "timestamp": 17.340816497802734,
             "message": "【全場統一重設】角色狀態、位置、AI 設定及佇列已還原。"
         },
         {
-            "timestamp": 15.462122917175293,
-            "message": "[Player1] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 17.541311264038086,
+            "message": "[Player1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 15.861940383911133,
-            "message": "[AI_Opponent] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 17.941022872924805,
+            "message": "[AI_Dummy1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 15.962189674377441,
+            "timestamp": 18.041378021240234,
             "message": "[Player1] 伸手就緒，等待對方走近接觸"
         },
         {
-            "timestamp": 16.20855712890625,
-            "message": "[握手判定] [Player1] 與 [AI_Opponent] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
+            "timestamp": 18.173295974731445,
+            "message": "[握手判定] [AI_Dummy1] 與 [Player1] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
         },
         {
-            "timestamp": 16.708688735961914,
+            "timestamp": 18.673316955566406,
             "message": "[握手判定] 握手成功 (Success)！握緊結束時雙方均按著互動鍵，正式成立握手成功。雙方進入握住，維持緊握姿勢（不搖手）。"
         },
         {
-            "timestamp": 16.708688735961914,
+            "timestamp": 18.673316955566406,
             "message": "[握手判定] 進入雙方握住 (Holding)！累計次數: [P1:0 vs AI:0]。連按互動鍵比力氣，雙方均放開結束比次數。"
         },
         {
-            "timestamp": 16.909788131713867,
-            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 16.91s)！開始計算容許時間。"
+            "timestamp": 18.874479293823242,
+            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 18.87s)！開始計算容許時間。"
         },
         {
-            "timestamp": 17.0092830657959,
+            "timestamp": 18.973901748657227,
             "message": "[Player1] 狀態重設完成"
         },
         {
-            "timestamp": 17.0092830657959,
-            "message": "[AI_Opponent] 狀態重設完成"
+            "timestamp": 18.973901748657227,
+            "message": "[AI_Dummy1] 狀態重設完成"
         },
         {
-            "timestamp": 17.0092830657959,
+            "timestamp": 18.973901748657227,
             "message": "【全場統一重設】角色狀態、位置、AI 設定及佇列已還原。"
         },
         {
-            "timestamp": 17.20979881286621,
-            "message": "[Player1] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 19.17427635192871,
+            "message": "[Player1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 17.20979881286621,
-            "message": "[AI_Opponent] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 19.17427635192871,
+            "message": "[AI_Dummy1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 17.58625030517578,
-            "message": "[握手判定] [Player1] 與 [AI_Opponent] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
+            "timestamp": 19.47492027282715,
+            "message": "[握手判定] [Player1] 與 [AI_Dummy1] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
         },
         {
-            "timestamp": 18.086341857910156,
+            "timestamp": 19.975078582763672,
             "message": "[握手判定] 握手成功 (Success)！握緊結束時雙方均按著互動鍵，正式成立握手成功。雙方進入握住，維持緊握姿勢（不搖手）。"
         },
         {
-            "timestamp": 18.086341857910156,
+            "timestamp": 19.975078582763672,
             "message": "[握手判定] 進入雙方握住 (Holding)！累計次數: [P1:0 vs AI:0]。連按互動鍵比力氣，雙方均放開結束比次數。"
         },
         {
-            "timestamp": 18.166458129882813,
-            "message": "[握手判定] [AI_Opponent] 於握住 (Holding) 期間放開互動鍵 (時間: 18.17s)！開始計算容許時間。"
+            "timestamp": 20.055217742919922,
+            "message": "[握手判定] [AI_Dummy1] 於握住 (Holding) 期間放開互動鍵 (時間: 20.06s)！開始計算容許時間。"
         },
         {
-            "timestamp": 18.166458129882813,
-            "message": "[AI_Opponent] 握住中比力氣連按互動鍵！累計: 1 次"
+            "timestamp": 20.055217742919922,
+            "message": "[AI_Dummy1] 握住中比力氣連按互動鍵！累計: 1 次"
         },
         {
-            "timestamp": 18.24678611755371,
-            "message": "[握手判定] [AI_Opponent] 於握住 (Holding) 期間放開互動鍵 (時間: 18.25s)！開始計算容許時間。"
+            "timestamp": 20.135583877563477,
+            "message": "[握手判定] [AI_Dummy1] 於握住 (Holding) 期間放開互動鍵 (時間: 20.14s)！開始計算容許時間。"
         },
         {
-            "timestamp": 18.24678611755371,
-            "message": "[AI_Opponent] 握住中比力氣連按互動鍵！累計: 2 次"
+            "timestamp": 20.135583877563477,
+            "message": "[AI_Dummy1] 握住中比力氣連按互動鍵！累計: 2 次"
         },
         {
-            "timestamp": 18.327260971069336,
-            "message": "[握手判定] [AI_Opponent] 於握住 (Holding) 期間放開互動鍵 (時間: 18.33s)！開始計算容許時間。"
+            "timestamp": 20.21588897705078,
+            "message": "[握手判定] [AI_Dummy1] 於握住 (Holding) 期間放開互動鍵 (時間: 20.22s)！開始計算容許時間。"
         },
         {
-            "timestamp": 18.327260971069336,
-            "message": "[AI_Opponent] 握住中比力氣連按互動鍵！累計: 3 次"
+            "timestamp": 20.21588897705078,
+            "message": "[AI_Dummy1] 握住中比力氣連按互動鍵！累計: 3 次"
         },
         {
-            "timestamp": 18.407703399658203,
-            "message": "[握手判定] [AI_Opponent] 於握住 (Holding) 期間放開互動鍵 (時間: 18.41s)！開始計算容許時間。"
+            "timestamp": 20.29644012451172,
+            "message": "[握手判定] [AI_Dummy1] 於握住 (Holding) 期間放開互動鍵 (時間: 20.30s)！開始計算容許時間。"
         },
         {
-            "timestamp": 18.407703399658203,
-            "message": "[AI_Opponent] 握住中比力氣連按互動鍵！累計: 4 次"
+            "timestamp": 20.29644012451172,
+            "message": "[AI_Dummy1] 握住中比力氣連按互動鍵！累計: 4 次"
         },
         {
-            "timestamp": 18.48807716369629,
-            "message": "[握手判定] [AI_Opponent] 於握住 (Holding) 期間放開互動鍵 (時間: 18.49s)！開始計算容許時間。"
+            "timestamp": 20.376781463623047,
+            "message": "[握手判定] [AI_Dummy1] 於握住 (Holding) 期間放開互動鍵 (時間: 20.38s)！開始計算容許時間。"
         },
         {
-            "timestamp": 18.48807716369629,
-            "message": "[AI_Opponent] 握住中比力氣連按互動鍵！累計: 5 次"
+            "timestamp": 20.376781463623047,
+            "message": "[AI_Dummy1] 握住中比力氣連按互動鍵！累計: 5 次"
         },
         {
-            "timestamp": 19.03728675842285,
-            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 19.04s)！開始計算容許時間。"
+            "timestamp": 20.92613410949707,
+            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 20.93s)！開始計算容許時間。"
         },
         {
-            "timestamp": 19.288408279418945,
-            "message": "[握手判定] [AI_Opponent] 於握住 (Holding) 期間放開互動鍵 (時間: 19.29s)！開始計算容許時間。"
+            "timestamp": 21.177156448364258,
+            "message": "[握手判定] [AI_Dummy1] 於握住 (Holding) 期間放開互動鍵 (時間: 21.18s)！開始計算容許時間。"
         },
         {
-            "timestamp": 19.588333129882813,
-            "message": "[握手判定] 比力氣結果：勝負已分！勝方【AI_Opponent】(5次)，敗方【Player1】(0次)，差距 5 次超過門檻（1次）。"
+            "timestamp": 21.47715187072754,
+            "message": "[握手判定] 比力氣結果：勝負已分！勝方【AI_Dummy1】(5次)，敗方【Player1】(0次)，差距 5 次超過門檻（1次）。"
         },
         {
-            "timestamp": 19.588333129882813,
+            "timestamp": 21.47715187072754,
             "message": "[Player1] 狀態重設完成"
         },
         {
-            "timestamp": 19.588333129882813,
-            "message": "[AI_Opponent] 狀態重設完成"
+            "timestamp": 21.47715187072754,
+            "message": "[AI_Dummy1] 狀態重設完成"
         },
         {
-            "timestamp": 19.588333129882813,
+            "timestamp": 21.47715187072754,
             "message": "【全場統一重設】角色狀態、位置、AI 設定及佇列已還原。"
         },
         {
-            "timestamp": 19.78867530822754,
-            "message": "[Player1] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 21.67790985107422,
+            "message": "[Player1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 19.78867530822754,
-            "message": "[AI_Opponent] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 21.67790985107422,
+            "message": "[AI_Dummy1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 20.16429901123047,
-            "message": "[握手判定] [Player1] 與 [AI_Opponent] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
+            "timestamp": 21.979991912841797,
+            "message": "[握手判定] [Player1] 與 [AI_Dummy1] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
         },
         {
-            "timestamp": 20.664440155029297,
+            "timestamp": 22.48020362854004,
             "message": "[握手判定] 握手成功 (Success)！握緊結束時雙方均按著互動鍵，正式成立握手成功。雙方進入握住，維持緊握姿勢（不搖手）。"
         },
         {
-            "timestamp": 20.664440155029297,
+            "timestamp": 22.48020362854004,
             "message": "[握手判定] 進入雙方握住 (Holding)！累計次數: [P1:0 vs AI:0]。連按互動鍵比力氣，雙方均放開結束比次數。"
         },
         {
-            "timestamp": 20.665019989013672,
+            "timestamp": 22.48100471496582,
             "message": "[Player1] 握住中比力氣連按互動鍵！累計: 1 次"
         },
         {
-            "timestamp": 20.745271682739258,
-            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 20.75s)！開始計算容許時間。"
+            "timestamp": 22.56139373779297,
+            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 22.56s)！開始計算容許時間。"
         },
         {
-            "timestamp": 20.82516098022461,
+            "timestamp": 22.641252517700195,
             "message": "[Player1] 握住中比力氣連按互動鍵！累計: 2 次"
         },
         {
-            "timestamp": 20.905466079711914,
-            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 20.91s)！開始計算容許時間。"
+            "timestamp": 22.721790313720703,
+            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 22.72s)！開始計算容許時間。"
         },
         {
-            "timestamp": 20.985305786132813,
+            "timestamp": 22.80156135559082,
             "message": "[Player1] 握住中比力氣連按互動鍵！累計: 3 次"
         },
         {
-            "timestamp": 21.065597534179688,
-            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 21.07s)！開始計算容許時間。"
+            "timestamp": 22.881885528564453,
+            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 22.88s)！開始計算容許時間。"
         },
         {
-            "timestamp": 21.145381927490234,
+            "timestamp": 22.961692810058594,
             "message": "[Player1] 握住中比力氣連按互動鍵！累計: 4 次"
         },
         {
-            "timestamp": 21.225833892822266,
-            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 21.23s)！開始計算容許時間。"
+            "timestamp": 23.04221534729004,
+            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 23.04s)！開始計算容許時間。"
         },
         {
-            "timestamp": 21.46445083618164,
-            "message": "[握手判定] [AI_Opponent] 於握住 (Holding) 期間放開互動鍵 (時間: 21.46s)！開始計算容許時間。"
+            "timestamp": 23.280559539794922,
+            "message": "[握手判定] [AI_Dummy1] 於握住 (Holding) 期間放開互動鍵 (時間: 23.28s)！開始計算容許時間。"
         },
         {
-            "timestamp": 21.764331817626953,
-            "message": "[握手判定] 比力氣結果：勝負已分！勝方【Player1】(4次)，敗方【AI_Opponent】(0次)，差距 4 次超過門檻（1次）。"
+            "timestamp": 23.58016014099121,
+            "message": "[握手判定] 比力氣結果：勝負已分！勝方【Player1】(4次)，敗方【AI_Dummy1】(0次)，差距 4 次超過門檻（1次）。"
         },
         {
-            "timestamp": 21.764331817626953,
+            "timestamp": 23.58016014099121,
             "message": "[Player1] 狀態重設完成"
         },
         {
-            "timestamp": 21.764331817626953,
-            "message": "[AI_Opponent] 狀態重設完成"
+            "timestamp": 23.58016014099121,
+            "message": "[AI_Dummy1] 狀態重設完成"
         },
         {
-            "timestamp": 21.764331817626953,
+            "timestamp": 23.58016014099121,
             "message": "【全場統一重設】角色狀態、位置、AI 設定及佇列已還原。"
         },
         {
-            "timestamp": 21.96479606628418,
-            "message": "[Player1] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 23.780759811401367,
+            "message": "[Player1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 21.96479606628418,
-            "message": "[AI_Opponent] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 23.780759811401367,
+            "message": "[AI_Dummy1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 22.33999252319336,
-            "message": "[握手判定] [Player1] 與 [AI_Opponent] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
+            "timestamp": 24.079992294311523,
+            "message": "[握手判定] [Player1] 與 [AI_Dummy1] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
         },
         {
-            "timestamp": 22.840150833129883,
+            "timestamp": 24.57976531982422,
             "message": "[握手判定] 握手成功 (Success)！握緊結束時雙方均按著互動鍵，正式成立握手成功。雙方進入握住，維持緊握姿勢（不搖手）。"
         },
         {
-            "timestamp": 22.840150833129883,
+            "timestamp": 24.57976531982422,
             "message": "[握手判定] 進入雙方握住 (Holding)！累計次數: [P1:0 vs AI:0]。連按互動鍵比力氣，雙方均放開結束比次數。"
         },
         {
-            "timestamp": 22.840890884399414,
+            "timestamp": 24.580612182617188,
             "message": "[Player1] 握住中比力氣連按互動鍵！累計: 1 次"
         },
         {
-            "timestamp": 22.941207885742188,
-            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 22.94s)！開始計算容許時間。"
+            "timestamp": 24.681079864501953,
+            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 24.68s)！開始計算容許時間。"
         },
         {
-            "timestamp": 22.960369110107422,
-            "message": "[握手判定] [AI_Opponent] 於握住 (Holding) 期間放開互動鍵 (時間: 22.96s)！開始計算容許時間。"
+            "timestamp": 24.69974708557129,
+            "message": "[握手判定] [AI_Dummy1] 於握住 (Holding) 期間放開互動鍵 (時間: 24.70s)！開始計算容許時間。"
         },
         {
-            "timestamp": 22.960369110107422,
-            "message": "[AI_Opponent] 握住中比力氣連按互動鍵！累計: 1 次"
+            "timestamp": 24.69974708557129,
+            "message": "[AI_Dummy1] 握住中比力氣連按互動鍵！累計: 1 次"
         },
         {
-            "timestamp": 23.040985107421875,
+            "timestamp": 24.781082153320313,
             "message": "[Player1] 握住中比力氣連按互動鍵！累計: 2 次"
         },
         {
-            "timestamp": 23.080724716186523,
-            "message": "[握手判定] [AI_Opponent] 於握住 (Holding) 期間放開互動鍵 (時間: 23.08s)！開始計算容許時間。"
+            "timestamp": 24.820411682128906,
+            "message": "[握手判定] [AI_Dummy1] 於握住 (Holding) 期間放開互動鍵 (時間: 24.82s)！開始計算容許時間。"
         },
         {
-            "timestamp": 23.080724716186523,
-            "message": "[AI_Opponent] 握住中比力氣連按互動鍵！累計: 2 次"
+            "timestamp": 24.820411682128906,
+            "message": "[AI_Dummy1] 握住中比力氣連按互動鍵！累計: 2 次"
         },
         {
-            "timestamp": 23.141332626342773,
-            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 23.14s)！開始計算容許時間。"
+            "timestamp": 24.881427764892578,
+            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 24.88s)！開始計算容許時間。"
         },
         {
-            "timestamp": 23.241230010986328,
+            "timestamp": 24.981279373168945,
             "message": "[Player1] 握住中比力氣連按互動鍵！累計: 3 次"
         },
         {
-            "timestamp": 23.641592025756836,
-            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 23.64s)！開始計算容許時間。"
+            "timestamp": 25.381732940673828,
+            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 25.38s)！開始計算容許時間。"
         },
         {
-            "timestamp": 23.881040573120117,
-            "message": "[握手判定] [AI_Opponent] 於握住 (Holding) 期間放開互動鍵 (時間: 23.88s)！開始計算容許時間。"
+            "timestamp": 25.62095832824707,
+            "message": "[握手判定] [AI_Dummy1] 於握住 (Holding) 期間放開互動鍵 (時間: 25.62s)！開始計算容許時間。"
         },
         {
-            "timestamp": 24.18091583251953,
+            "timestamp": 25.920692443847656,
             "message": "[握手判定] 比力氣結果：門檻內平手！雙方次數 [3 vs 2]，差距 1 次在門檻（1次）內，拚力後慢慢鬆開退開再收手。"
         },
         {
-            "timestamp": 24.18091583251953,
+            "timestamp": 25.920692443847656,
             "message": "[Player1] 狀態重設完成"
         },
         {
-            "timestamp": 24.18091583251953,
-            "message": "[AI_Opponent] 狀態重設完成"
+            "timestamp": 25.920692443847656,
+            "message": "[AI_Dummy1] 狀態重設完成"
         },
         {
-            "timestamp": 24.18091583251953,
+            "timestamp": 25.920692443847656,
             "message": "【全場統一重設】角色狀態、位置、AI 設定及佇列已還原。"
         },
         {
-            "timestamp": 24.381290435791016,
-            "message": "[Player1] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 26.121417999267578,
+            "message": "[Player1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 24.381290435791016,
-            "message": "[AI_Opponent] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 26.121417999267578,
+            "message": "[AI_Dummy1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 24.759990692138672,
-            "message": "[握手判定] [Player1] 與 [AI_Opponent] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
+            "timestamp": 26.41999053955078,
+            "message": "[握手判定] [Player1] 與 [AI_Dummy1] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
         },
         {
-            "timestamp": 25.260173797607422,
+            "timestamp": 26.91986846923828,
             "message": "[握手判定] 握手成功 (Success)！握緊結束時雙方均按著互動鍵，正式成立握手成功。雙方進入握住，維持緊握姿勢（不搖手）。"
         },
         {
-            "timestamp": 25.260173797607422,
+            "timestamp": 26.91986846923828,
             "message": "[握手判定] 進入雙方握住 (Holding)！累計次數: [P1:0 vs AI:0]。連按互動鍵比力氣，雙方均放開結束比次數。"
         },
         {
-            "timestamp": 25.361167907714844,
-            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 25.36s)！開始計算容許時間。"
+            "timestamp": 27.021087646484375,
+            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 27.02s)！開始計算容許時間。"
         },
         {
-            "timestamp": 25.410354614257813,
-            "message": "[握手判定] [AI_Opponent] 於握住 (Holding) 期間放開互動鍵 (時間: 25.41s)！開始計算容許時間。"
+            "timestamp": 27.070158004760742,
+            "message": "[握手判定] [AI_Dummy1] 於握住 (Holding) 期間放開互動鍵 (時間: 27.07s)！開始計算容許時間。"
         },
         {
-            "timestamp": 25.710269927978516,
+            "timestamp": 27.370014190673828,
             "message": "[握手判定] 握住結束：雙方次數為 0 比 0（無人連按），搖一下再各自收手。"
         },
         {
-            "timestamp": 25.710269927978516,
+            "timestamp": 27.370014190673828,
             "message": "[Player1] 狀態重設完成"
         },
         {
-            "timestamp": 25.710269927978516,
-            "message": "[AI_Opponent] 狀態重設完成"
+            "timestamp": 27.370014190673828,
+            "message": "[AI_Dummy1] 狀態重設完成"
         },
         {
-            "timestamp": 25.710269927978516,
+            "timestamp": 27.370014190673828,
             "message": "【全場統一重設】角色狀態、位置、AI 設定及佇列已還原。"
         },
         {
-            "timestamp": 25.910585403442383,
-            "message": "[Player1] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 27.570537567138672,
+            "message": "[Player1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 25.910585403442383,
-            "message": "[AI_Opponent] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 27.570537567138672,
+            "message": "[AI_Dummy1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 26.287996292114258,
-            "message": "[握手判定] [Player1] 與 [AI_Opponent] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
+            "timestamp": 27.867328643798828,
+            "message": "[握手判定] [Player1] 與 [AI_Dummy1] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
         },
         {
-            "timestamp": 26.78826332092285,
+            "timestamp": 28.367507934570313,
             "message": "[握手判定] 握手成功 (Success)！握緊結束時雙方均按著互動鍵，正式成立握手成功。雙方進入握住，維持緊握姿勢（不搖手）。"
         },
         {
-            "timestamp": 26.78826332092285,
+            "timestamp": 28.367507934570313,
             "message": "[握手判定] 進入雙方握住 (Holding)！累計次數: [P1:0 vs AI:0]。連按互動鍵比力氣，雙方均放開結束比次數。"
         },
         {
-            "timestamp": 26.838279724121094,
-            "message": "[握手判定] [AI_Opponent] 於握住 (Holding) 期間放開互動鍵 (時間: 26.84s)！開始計算容許時間。"
+            "timestamp": 28.41769027709961,
+            "message": "[握手判定] [AI_Dummy1] 於握住 (Holding) 期間放開互動鍵 (時間: 28.42s)！開始計算容許時間。"
         },
         {
-            "timestamp": 27.13820457458496,
-            "message": "[握手判定] 【AI_Opponent】放開超過容許時間，【Player1】按著抓住不放！進入拉扯狀態（骨架掙脫門檻: 1.50m）。"
+            "timestamp": 28.71750259399414,
+            "message": "[握手判定] 【AI_Dummy1】放開超過容許時間，【Player1】按著抓住不放！進入拉扯狀態（骨架掙脫門檻: 1.06m）。"
         },
         {
-            "timestamp": 27.238065719604492,
-            "message": "[AI_Opponent] 起跳！"
+            "timestamp": 28.81716537475586,
+            "message": "[AI_Dummy1] 被抓住時起跳（播放 handshake-leap 根位移跳開）"
         },
         {
-            "timestamp": 27.238065719604492,
-            "message": "[AI_Opponent] [暫代] 被抓住時起跳（以角色跳躍暫代根位移跳開）"
+            "timestamp": 28.849424362182617,
+            "message": "[握手判定] 雙方身體距離（1.09m）超過骨架掙脫門檻（1.09m）！【AI_Dummy1】成功掙脫，不比次數！"
         },
         {
-            "timestamp": 27.290674209594727,
-            "message": "[握手判定] 雙方身體距離（1.55m）超過骨架掙脫門檻（1.55m）！【AI_Opponent】成功掙脫，不比次數！"
-        },
-        {
-            "timestamp": 27.291221618652344,
+            "timestamp": 28.849971771240234,
             "message": "[Player1] 狀態重設完成"
         },
         {
-            "timestamp": 27.291221618652344,
-            "message": "[AI_Opponent] 狀態重設完成"
+            "timestamp": 28.849971771240234,
+            "message": "[AI_Dummy1] 狀態重設完成"
         },
         {
-            "timestamp": 27.291221618652344,
+            "timestamp": 28.849971771240234,
             "message": "【全場統一重設】角色狀態、位置、AI 設定及佇列已還原。"
         },
         {
-            "timestamp": 27.491579055786133,
-            "message": "[Player1] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 29.05049705505371,
+            "message": "[Player1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 27.491579055786133,
-            "message": "[AI_Opponent] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 29.05049705505371,
+            "message": "[AI_Dummy1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 27.870119094848633,
-            "message": "[握手判定] [Player1] 與 [AI_Opponent] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
+            "timestamp": 29.347078323364258,
+            "message": "[握手判定] [Player1] 與 [AI_Dummy1] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
         },
         {
-            "timestamp": 28.37025260925293,
+            "timestamp": 29.84720230102539,
             "message": "[握手判定] 握手成功 (Success)！握緊結束時雙方均按著互動鍵，正式成立握手成功。雙方進入握住，維持緊握姿勢（不搖手）。"
         },
         {
-            "timestamp": 28.37025260925293,
+            "timestamp": 29.84720230102539,
             "message": "[握手判定] 進入雙方握住 (Holding)！累計次數: [P1:0 vs AI:0]。連按互動鍵比力氣，雙方均放開結束比次數。"
         },
         {
-            "timestamp": 28.37087631225586,
+            "timestamp": 29.847858428955078,
             "message": "[Player1] 握住中比力氣連按互動鍵！累計: 1 次"
         },
         {
-            "timestamp": 28.431255340576172,
-            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 28.43s)！開始計算容許時間。"
+            "timestamp": 29.908203125,
+            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 29.91s)！開始計算容許時間。"
         },
         {
-            "timestamp": 28.4912052154541,
+            "timestamp": 29.967926025390625,
             "message": "[Player1] 握住中比力氣連按互動鍵！累計: 2 次"
         },
         {
-            "timestamp": 28.5515079498291,
-            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 28.55s)！開始計算容許時間。"
+            "timestamp": 30.028465270996094,
+            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 30.03s)！開始計算容許時間。"
         },
         {
-            "timestamp": 28.85150909423828,
-            "message": "[握手判定] 【Player1】放開超過容許時間，【AI_Opponent】按著抓住不放！進入拉扯狀態（骨架掙脫門檻: 1.50m）。"
+            "timestamp": 30.328262329101563,
+            "message": "[握手判定] 【Player1】放開超過容許時間，【AI_Dummy1】按著抓住不放！進入拉扯狀態（骨架掙脫門檻: 1.06m）。"
         },
         {
-            "timestamp": 28.852148056030273,
+            "timestamp": 30.328941345214844,
             "message": "[Player1] 被抓住時連按互動鍵重按！累計: 3 次"
         },
         {
-            "timestamp": 28.852148056030273,
+            "timestamp": 30.328941345214844,
             "message": "[握手判定] 【Player1】重新按住互動鍵，拉扯結束，重回雙方握住 (Holding)！累計次數維持不歸零 [P1:3 vs AI:0]。"
         },
         {
-            "timestamp": 28.852148056030273,
+            "timestamp": 30.328941345214844,
             "message": "[握手判定] 進入雙方握住 (Holding)！累計次數: [P1:3 vs AI:0]。連按互動鍵比力氣，雙方均放開結束比次數。"
         },
         {
-            "timestamp": 28.972190856933594,
+            "timestamp": 30.44921875,
             "message": "[Player1] 握住中比力氣連按互動鍵！累計: 4 次"
         },
         {
-            "timestamp": 29.03257942199707,
-            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 29.03s)！開始計算容許時間。"
+            "timestamp": 30.509397506713867,
+            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 30.51s)！開始計算容許時間。"
         },
         {
-            "timestamp": 29.092376708984375,
+            "timestamp": 30.569198608398438,
             "message": "[Player1] 握住中比力氣連按互動鍵！累計: 5 次"
         },
         {
-            "timestamp": 29.15286636352539,
-            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 29.15s)！開始計算容許時間。"
+            "timestamp": 30.629671096801758,
+            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 30.63s)！開始計算容許時間。"
         },
         {
-            "timestamp": 29.212371826171875,
+            "timestamp": 30.68914222717285,
             "message": "[Player1] 狀態重設完成"
         },
         {
-            "timestamp": 29.212371826171875,
-            "message": "[AI_Opponent] 狀態重設完成"
+            "timestamp": 30.68914222717285,
+            "message": "[AI_Dummy1] 狀態重設完成"
         },
         {
-            "timestamp": 29.212371826171875,
+            "timestamp": 30.68914222717285,
             "message": "【全場統一重設】角色狀態、位置、AI 設定及佇列已還原。"
         },
         {
-            "timestamp": 29.412919998168945,
-            "message": "[Player1] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 30.889604568481445,
+            "message": "[Player1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 29.412919998168945,
-            "message": "[AI_Opponent] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 30.889604568481445,
+            "message": "[AI_Dummy1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 29.792673110961914,
-            "message": "[握手判定] [Player1] 與 [AI_Opponent] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
+            "timestamp": 31.18538475036621,
+            "message": "[握手判定] [Player1] 與 [AI_Dummy1] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
         },
         {
-            "timestamp": 30.295209884643555,
+            "timestamp": 31.685590744018555,
             "message": "[握手判定] 握手成功 (Success)！握緊結束時雙方均按著互動鍵，正式成立握手成功。雙方進入握住，維持緊握姿勢（不搖手）。"
         },
         {
-            "timestamp": 30.295209884643555,
+            "timestamp": 31.685590744018555,
             "message": "[握手判定] 進入雙方握住 (Holding)！累計次數: [P1:0 vs AI:0]。連按互動鍵比力氣，雙方均放開結束比次數。"
         },
         {
-            "timestamp": 30.396141052246094,
-            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 30.40s)！開始計算容許時間。"
+            "timestamp": 31.786876678466797,
+            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 31.79s)！開始計算容許時間。"
         },
         {
-            "timestamp": 30.696056365966797,
-            "message": "[握手判定] 【Player1】放開超過容許時間，【AI_Opponent】按著抓住不放！進入拉扯狀態（骨架掙脫門檻: 1.50m）。"
+            "timestamp": 32.08657455444336,
+            "message": "[握手判定] 【Player1】放開超過容許時間，【AI_Dummy1】按著抓住不放！進入拉扯狀態（骨架掙脫門檻: 1.06m）。"
         },
         {
-            "timestamp": 31.246110916137695,
-            "message": "[握手判定] 抓者【AI_Opponent】放開超過容許時間（0.30s）！雙方均已放開，握住結束，照累計連按次數判定比力氣！"
+            "timestamp": 32.63655090332031,
+            "message": "[握手判定] 抓者【AI_Dummy1】放開超過容許時間（0.30s）！雙方均已放開，握住結束，照累計連按次數判定比力氣！"
         },
         {
-            "timestamp": 31.246110916137695,
+            "timestamp": 32.63655090332031,
             "message": "[握手判定] 握住結束：雙方次數為 0 比 0（無人連按），搖一下再各自收手。"
         },
         {
-            "timestamp": 31.246110916137695,
+            "timestamp": 32.63655090332031,
             "message": "[Player1] 狀態重設完成"
         },
         {
-            "timestamp": 31.246110916137695,
-            "message": "[AI_Opponent] 狀態重設完成"
+            "timestamp": 32.63655090332031,
+            "message": "[AI_Dummy1] 狀態重設完成"
         },
         {
-            "timestamp": 31.246110916137695,
+            "timestamp": 32.63655090332031,
             "message": "【全場統一重設】角色狀態、位置、AI 設定及佇列已還原。"
         },
         {
-            "timestamp": 31.44647789001465,
-            "message": "[Player1] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 32.83686447143555,
+            "message": "[Player1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 31.44647789001465,
-            "message": "[AI_Opponent] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 32.83686447143555,
+            "message": "[AI_Dummy1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 31.819988250732422,
-            "message": "[握手判定] [Player1] 與 [AI_Opponent] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
+            "timestamp": 33.13998794555664,
+            "message": "[握手判定] [Player1] 與 [AI_Dummy1] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
         },
         {
-            "timestamp": 32.320068359375,
+            "timestamp": 33.64014434814453,
             "message": "[握手判定] 握手成功 (Success)！握緊結束時雙方均按著互動鍵，正式成立握手成功。雙方進入握住，維持緊握姿勢（不搖手）。"
         },
         {
-            "timestamp": 32.320068359375,
+            "timestamp": 33.64014434814453,
             "message": "[握手判定] 進入雙方握住 (Holding)！累計次數: [P1:0 vs AI:0]。連按互動鍵比力氣，雙方均放開結束比次數。"
         },
         {
-            "timestamp": 32.32101058959961,
-            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 32.32s)！開始計算容許時間。"
+            "timestamp": 33.641212463378906,
+            "message": "[握手判定] [Player1] 於握住 (Holding) 期間放開互動鍵 (時間: 33.64s)！開始計算容許時間。"
         },
         {
-            "timestamp": 32.620933532714844,
-            "message": "[握手判定] 【Player1】放開超過容許時間，【AI_Opponent】按著抓住不放！進入拉扯狀態（骨架掙脫門檻: 1.50m）。"
+            "timestamp": 33.94108200073242,
+            "message": "[握手判定] 【Player1】放開超過容許時間，【AI_Dummy1】按著抓住不放！進入拉扯狀態（骨架掙脫門檻: 1.06m）。"
         },
         {
-            "timestamp": 32.904205322265625,
-            "message": "[握手判定] 雙方身體距離（1.55m）超過骨架掙脫門檻（1.55m）！【Player1】成功掙脫，不比次數！"
-        },
-        {
-            "timestamp": 33.820556640625,
+            "timestamp": 35.14072799682617,
             "message": "[Player1] 狀態重設完成"
         },
         {
-            "timestamp": 33.820556640625,
-            "message": "[AI_Opponent] 狀態重設完成"
+            "timestamp": 35.14072799682617,
+            "message": "[AI_Dummy1] 狀態重設完成"
         },
         {
-            "timestamp": 33.820556640625,
+            "timestamp": 35.14072799682617,
             "message": "【全場統一重設】角色狀態、位置、AI 設定及佇列已還原。"
         },
         {
-            "timestamp": 34.020851135253906,
-            "message": "[Player1] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 35.34137725830078,
+            "message": "[Player1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 34.020851135253906,
-            "message": "[AI_Opponent] 按下互動鍵發起伸手（0.50s）"
+            "timestamp": 35.34137725830078,
+            "message": "[AI_Dummy1] 按下互動鍵發起伸手（片段長度: 0.50s）"
         },
         {
-            "timestamp": 34.399986267089844,
-            "message": "[握手判定] [Player1] 與 [AI_Opponent] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
+            "timestamp": 35.63998794555664,
+            "message": "[握手判定] [Player1] 與 [AI_Dummy1] 右手碰撞體接觸（碰到）！開始播握緊（0.50s）"
         },
         {
-            "timestamp": 34.89996337890625,
+            "timestamp": 36.13993453979492,
             "message": "[握手判定] 握手成功 (Success)！握緊結束時雙方均按著互動鍵，正式成立握手成功。雙方進入握住，維持緊握姿勢（不搖手）。"
         },
         {
-            "timestamp": 34.89996337890625,
+            "timestamp": 36.13993453979492,
             "message": "[握手判定] 進入雙方握住 (Holding)！累計次數: [P1:0 vs AI:0]。連按互動鍵比力氣，雙方均放開結束比次數。"
         },
         {
-            "timestamp": 34.95014572143555,
-            "message": "[握手判定] [AI_Opponent] 於握住 (Holding) 期間放開互動鍵 (時間: 34.95s)！開始計算容許時間。"
+            "timestamp": 36.19009017944336,
+            "message": "[握手判定] [AI_Dummy1] 於握住 (Holding) 期間放開互動鍵 (時間: 36.19s)！開始計算容許時間。"
         },
         {
-            "timestamp": 35.25007629394531,
-            "message": "[握手判定] 【AI_Opponent】放開超過容許時間，【Player1】按著抓住不放！進入拉扯狀態（骨架掙脫門檻: 1.50m）。"
+            "timestamp": 36.48995590209961,
+            "message": "[握手判定] 【AI_Dummy1】放開超過容許時間，【Player1】按著抓住不放！進入拉扯狀態（骨架掙脫門檻: 1.06m）。"
         },
         {
-            "timestamp": 35.349849700927734,
-            "message": "[AI_Opponent] 起跳！"
+            "timestamp": 36.58980178833008,
+            "message": "[AI_Dummy1] 被抓住時起跳（播放 handshake-leap 根位移跳開）"
         },
         {
-            "timestamp": 35.349849700927734,
-            "message": "[AI_Opponent] [暫代] 被抓住時起跳（以角色跳躍暫代根位移跳開）"
+            "timestamp": 36.62357711791992,
+            "message": "[握手判定] 雙方身體距離（1.09m）超過骨架掙脫門檻（1.09m）！【AI_Dummy1】成功掙脫，不比次數！"
         },
         {
-            "timestamp": 35.62105178833008,
-            "message": "[握手判定] 雙方身體距離（1.55m）超過骨架掙脫門檻（1.55m）！【AI_Opponent】成功掙脫，不比次數！"
-        },
-        {
-            "timestamp": 36.12406921386719,
-            "message": "[AI_Opponent] 著地"
-        },
-        {
-            "timestamp": 36.400325775146484,
+            "timestamp": 37.64067077636719,
             "message": "[Player1] 狀態重設完成"
         },
         {
-            "timestamp": 36.400325775146484,
-            "message": "[AI_Opponent] 狀態重設完成"
+            "timestamp": 37.64067077636719,
+            "message": "[AI_Dummy1] 狀態重設完成"
         },
         {
-            "timestamp": 36.400325775146484,
+            "timestamp": 37.64067077636719,
             "message": "【全場統一重設】角色狀態、位置、AI 設定及佇列已還原。"
         }
     ]

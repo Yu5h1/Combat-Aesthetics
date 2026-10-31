@@ -62,9 +62,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         [Tooltip("Distance compensation added to skeleton measured arm reach (adjustable, default 0.0m).")]
         [SerializeField] private float _escapeDistanceCompensation = 0.0f;
 
-        [Tooltip("Fallback duration for reaction presentations when humanoid reaction animation clips are null (default 0.50s).")]
-        [SerializeField] private float _reactionFallbackDuration = 0.50f;
-
         [Header("Action Rationality Constraints & Intervals")]
         [Tooltip("Custom action intervals bound to animation clips. Adjusting boundaries tunes control feel without arbitrary fixed timers.")]
         [SerializeField] private ClipIntervalBinding[] _clipIntervalBindings;
@@ -90,6 +87,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         [SerializeField] private AnimationClip _graspEmptyClip;
         [SerializeField] private AnimationClip _caughtPullClip;
         [SerializeField] private AnimationClip _catchingHoldClip;
+        [SerializeField] private AnimationClip _leapClip;
 
         public float ReleaseGraceTime
         {
@@ -123,22 +121,19 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
         public float EscapeDistanceThreshold
         {
-            get => HandshakeArbitrator.Instance != null ? HandshakeArbitrator.Instance.GetEffectiveEscapeThreshold() : (1.80f + _escapeDistanceCompensation);
+            get => HandshakeArbitrator.Instance != null ? HandshakeArbitrator.Instance.GetEffectiveEscapeThreshold() : -1f;
             set
             {
-                float reach = HandshakeArbitrator.Instance != null ? HandshakeArbitrator.Instance.MeasureTotalArmReach() : 1.80f;
-                _escapeDistanceCompensation = value - reach;
-                MarkDirty();
-            }
-        }
-
-        public float ReactionFallbackDuration
-        {
-            get => _reactionFallbackDuration;
-            set
-            {
-                _reactionFallbackDuration = value;
-                MarkDirty();
+                float reach = HandshakeArbitrator.Instance != null ? HandshakeArbitrator.Instance.MeasureTotalArmReach() : -1f;
+                if (reach > 0f)
+                {
+                    _escapeDistanceCompensation = value - reach;
+                    MarkDirty();
+                }
+                else
+                {
+                    Debug.LogError("[HandshakeSettings] Cannot set EscapeDistanceThreshold: Skeleton arm reach could not be measured from participants.");
+                }
             }
         }
 
@@ -149,6 +144,34 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             {
                 _clipIntervalBindings = value;
                 MarkDirty();
+            }
+        }
+
+        /// <summary>
+        /// Maps a <see cref="HandshakeState"/> to its assigned <see cref="AnimationClip"/>.
+        /// </summary>
+        public AnimationClip GetClipForState(HandshakeState state)
+        {
+            switch (state)
+            {
+                case HandshakeState.Reaching: return _reachClip;
+                case HandshakeState.Waiting: return _waitClip;
+                case HandshakeState.Withdrawing: return _withdrawClip;
+                case HandshakeState.Grip: return _gripClip;
+                case HandshakeState.Shaking: return _shakeClip;
+                case HandshakeState.Laugh: return _laughClip;
+                case HandshakeState.Angry: return _angryClip;
+                case HandshakeState.ClapLaugh: return _clapLaughClip;
+                case HandshakeState.Holding: return _holdClip;
+                case HandshakeState.ContestTriumph: return _triumphClip;
+                case HandshakeState.ContestPain: return _painClip;
+                case HandshakeState.ContestTie: return _slowWithdrawClip;
+                case HandshakeState.EscapedStumble: return _stumbleClip;
+                case HandshakeState.GraspEmpty: return _graspEmptyClip;
+                case HandshakeState.Caught: return _caughtPullClip;
+                case HandshakeState.Catching: return _catchingHoldClip;
+                case HandshakeState.Leap: return _leapClip;
+                default: return null;
             }
         }
 
@@ -225,6 +248,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         public AnimationClip GraspEmptyClip { get => _graspEmptyClip; set { _graspEmptyClip = value; MarkDirty(); } }
         public AnimationClip CaughtPullClip { get => _caughtPullClip; set { _caughtPullClip = value; MarkDirty(); } }
         public AnimationClip CatchingHoldClip { get => _catchingHoldClip; set { _catchingHoldClip = value; MarkDirty(); } }
+        public AnimationClip LeapClip { get => _leapClip; set { _leapClip = value; MarkDirty(); } }
 
         private void MarkDirty()
         {

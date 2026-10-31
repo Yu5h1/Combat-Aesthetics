@@ -5,6 +5,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 {
     /// <summary>
     /// Trigger collider bridge attached to a participant's right hand to report exact hand-to-hand physical contact.
+    /// Hand sphere radius respects natural anatomical size configured in scene/prefab.
     /// </summary>
     [RequireComponent(typeof(Collider))]
     public class HandContactBridge : MonoBehaviour
@@ -24,13 +25,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             {
                 Owner = GetComponentInParent<HandshakeParticipant>();
             }
-            if (HandCollider is SphereCollider sphere)
-            {
-                if (sphere.radius < 0.40f)
-                {
-                    sphere.radius = 0.40f;
-                }
-            }
         }
 
         /// <summary>
@@ -43,13 +37,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             if (HandCollider != null)
             {
                 HandCollider.isTrigger = true;
-            }
-            if (HandCollider is SphereCollider sphere)
-            {
-                if (sphere.radius < 0.40f)
-                {
-                    sphere.radius = 0.40f;
-                }
             }
 
             var rb = GetComponent<Rigidbody>();
@@ -98,17 +85,14 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             if (HandCollider is SphereCollider sphere)
             {
                 float effectiveRadius = sphere.radius * Mathf.Max(transform.lossyScale.x, Mathf.Max(transform.lossyScale.y, transform.lossyScale.z));
-                Collider[] overlaps = Physics.OverlapSphere(transform.position, effectiveRadius, ~0, QueryTriggerInteraction.Collide);
-                for (int i = 0; i < overlaps.Length; i++)
+                Collider[] hits = Physics.OverlapSphere(transform.position, effectiveRadius, Physics.AllLayers, QueryTriggerInteraction.Collide);
+                foreach (var hit in hits)
                 {
-                    Collider col = overlaps[i];
-                    if (col == HandCollider) continue;
-
-                    var otherBridge = col.GetComponent<HandContactBridge>();
+                    if (hit == HandCollider) continue;
+                    var otherBridge = hit.GetComponent<HandContactBridge>();
                     if (otherBridge != null && otherBridge.Owner != null && Owner != null && otherBridge.Owner != Owner)
                     {
                         OnTriggerContact?.Invoke(this, otherBridge);
-                        break;
                     }
                 }
             }

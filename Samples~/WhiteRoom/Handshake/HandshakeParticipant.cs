@@ -6,17 +6,15 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 {
     /// <summary>
     /// Handshake interaction state component that shares <see cref="CombatEntity"/> locomotion, jump, and arena reset.
+    /// Governed by action rationality constraints and animation clip intervals rather than arbitrary countdown timers.
     /// Enforces the re-press rule requiring the interact key to be released after completion before re-initiating.
     /// </summary>
     [RequireComponent(typeof(CombatEntity))]
     public class HandshakeParticipant : MonoBehaviour
     {
-        [SerializeField] private float _reachDuration = 0.50f;
-        [SerializeField] private float _withdrawDuration = 0.50f;
-
         private CombatEntity _entity;
         private HandshakeState _state = HandshakeState.None;
-        private float _stateTimer = 0f;
+        private float _stateTime = 0f;
         private bool _requireInteractRelease = false;
         private bool _prevInteractHold = false;
         private int _interactPressCount = 0;
@@ -25,7 +23,8 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         public string EntityId => _entity != null ? _entity.EntityId : name;
         public int TeamId => _entity != null ? _entity.TeamId : 0;
         public HandshakeState State => _state;
-        public float StateTimer => _stateTimer;
+        public float StateTime => _stateTime;
+        public float StateTimer => _stateTime; // Backward compatibility property
         public CombatActionIntent CurrentIntent => _entity != null ? _entity.CurrentIntent : CombatActionIntent.Empty;
         public bool RequiresInteractRelease => _requireInteractRelease;
         public int InteractPressCount => _interactPressCount;
@@ -33,8 +32,10 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         public Transform RightHandTransform { get; set; }
         public HandContactBridge ContactBridge { get; set; }
 
-        public float ReachDuration { get => _reachDuration; set => _reachDuration = value; }
-        public float WithdrawDuration { get => _withdrawDuration; set => _withdrawDuration = value; }
+        public HandshakeSettings Settings => HandshakeArbitrator.Instance != null ? HandshakeArbitrator.Instance.Settings : null;
+
+        public float ReachDuration => GetClipLength(HandshakeState.Reaching, 0.50f);
+        public float WithdrawDuration => GetClipLength(HandshakeState.Withdrawing, 0.50f);
 
         public event Action<HandshakeParticipant, HandshakeState> OnStateChanged;
         public event Action<string> OnParticipantLog;
@@ -53,7 +54,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             if (_entity != null)
             {
                 _entity.EnableCombatActions = false;
-                _entity.SetColliderRadius(0.25f);
+                _entity.SetColliderRadius(0.30f);
                 _entity.OnIntentStepped -= HandleIntentStepped;
                 _entity.OnIntentStepped += HandleIntentStepped;
                 _entity.OnEntityReset -= HandleEntityReset;
@@ -94,7 +95,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             }
         }
 
-
         /// <summary>
         /// Initializes the underlying <see cref="CombatEntity"/> identity and disables combat-only actions.
         /// </summary>
@@ -105,7 +105,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             {
                 _entity.InitializeSettings(id, team, 100f);
                 _entity.EnableCombatActions = false;
-                _entity.SetColliderRadius(0.25f);
+                _entity.SetColliderRadius(0.30f);
             }
         }
 
@@ -122,8 +122,12 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 if (col == null)
                 {
                     col = host.gameObject.AddComponent<SphereCollider>();
+                    col.radius = 0.18f;
                 }
-                col.radius = 0.40f;
+                else if (col.radius > 0.35f)
+                {
+                    col.radius = 0.18f;
+                }
                 col.isTrigger = true;
 
                 ContactBridge = host.GetComponent<HandContactBridge>();
@@ -137,6 +141,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
         /// <summary>
         /// Transitions this participant to the specified <see cref="HandshakeState"/> and updates locomotion constraints.
+        /// Duration parameter is deprecated; action duration and control intervals are bound from the animation clip.
         /// </summary>
         public void SetState(HandshakeState newState, float duration = 0f)
         {
@@ -144,7 +149,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
             HandshakeState prev = _state;
             _state = newState;
-            _stateTimer = duration;
+            _stateTime = 0f;
 
             if (_state == HandshakeState.None && prev != HandshakeState.None)
             {
@@ -166,20 +171,12 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 _state == HandshakeState.Laugh || _state == HandshakeState.Angry || _state == HandshakeState.ClapLaugh ||
                 _state == HandshakeState.Holding || _state == HandshakeState.ContestTriumph ||
                 _state == HandshakeState.ContestPain || _state == HandshakeState.ContestTie ||
-                _state == HandshakeState.EscapedStumble || _state == HandshakeState.GraspEmpty)
+                _state == HandshakeState.EscapedStumble || _state == HandshakeState.GraspEmpty ||
+                _state == HandshakeState.Caught || _state == HandshakeState.Catching || _state == HandshakeState.Leap)
             {
+                // Displacement in Caught, Catching, and Leap is driven strictly by animation root motion
                 _entity.LocomotionLocked = true;
                 _entity.SpeedOverride = 0f;
-            }
-            else if (_state == HandshakeState.Catching)
-            {
-                _entity.LocomotionLocked = false;
-                _entity.SpeedOverride = _entity.GuardSpeed;
-            }
-            else if (_state == HandshakeState.Caught)
-            {
-                _entity.LocomotionLocked = false;
-                _entity.SpeedOverride = _entity.WalkSpeed;
             }
             else if (_state == HandshakeState.Reaching || _state == HandshakeState.Waiting)
             {
@@ -201,7 +198,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         private void UpdateHandshakeState(CombatActionIntent intent)
         {
             bool isInteractDown = intent.InteractDown || (!_prevInteractHold && intent.InteractHold);
-            bool isInteractUp = intent.InteractUp || (_prevInteractHold && !intent.InteractHold);
             _prevInteractHold = intent.InteractHold;
 
             if (!intent.InteractHold)
@@ -209,40 +205,42 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 _requireInteractRelease = false;
             }
 
+            _stateTime += Time.deltaTime;
+
+            AnimationClip currentClip = Settings != null ? Settings.GetClipForState(_state) : null;
+            float clipLength = currentClip != null ? currentClip.length : 0.50f;
+            float normalizedTime = clipLength > 0f ? (_stateTime / clipLength) : 1.0f;
+
             switch (_state)
             {
                 case HandshakeState.None:
                     if (isInteractDown && !_requireInteractRelease)
                     {
-                        SetState(HandshakeState.Reaching, _reachDuration);
-                        EmitLog($"[{EntityId}] 按下互動鍵發起伸手（{_reachDuration:F2}s）");
+                        SetState(HandshakeState.Reaching);
+                        EmitLog($"[{EntityId}] 按下互動鍵發起伸手（片段長度: {clipLength:F2}s）");
                     }
                     break;
 
                 case HandshakeState.Reaching:
                     if (!intent.InteractHold)
                     {
-                        SetState(HandshakeState.Withdrawing, _withdrawDuration);
+                        SetState(HandshakeState.Withdrawing);
                         HandshakeArbitrator.Instance?.NotifyCancelled(this);
-                        EmitLog($"[{EntityId}] 放開互動鍵，收手取消（{_withdrawDuration:F2}s）");
+                        EmitLog($"[{EntityId}] 放開互動鍵，收手取消");
                     }
-                    else
+                    else if (normalizedTime >= 1.0f)
                     {
-                        _stateTimer -= Time.deltaTime;
-                        if (_stateTimer <= 0f)
-                        {
-                            SetState(HandshakeState.Waiting);
-                            EmitLog($"[{EntityId}] 伸手就緒，等待對方走近接觸");
-                        }
+                        SetState(HandshakeState.Waiting);
+                        EmitLog($"[{EntityId}] 伸手就緒，等待對方走近接觸");
                     }
                     break;
 
                 case HandshakeState.Waiting:
                     if (!intent.InteractHold)
                     {
-                        SetState(HandshakeState.Withdrawing, _withdrawDuration);
+                        SetState(HandshakeState.Withdrawing);
                         HandshakeArbitrator.Instance?.NotifyCancelled(this);
-                        EmitLog($"[{EntityId}] 放開互動鍵，等待中止並收手（{_withdrawDuration:F2}s）");
+                        EmitLog($"[{EntityId}] 放開互動鍵，等待中止並收手");
                     }
                     break;
 
@@ -265,10 +263,10 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                         EmitLog($"[{EntityId}] 被抓住時連按互動鍵重按！累計: {_interactPressCount} 次");
                         HandshakeArbitrator.Instance?.NotifyCaughtParticipantRepressed(this);
                     }
-                    else if (intent.Jump && _entity != null)
+                    else if (intent.Jump)
                     {
-                        _entity.Jump();
-                        EmitLog($"[{EntityId}] [暫代] 被抓住時起跳（以角色跳躍暫代根位移跳開）");
+                        SetState(HandshakeState.Leap);
+                        EmitLog($"[{EntityId}] 被抓住時起跳（播放 handshake-leap 根位移跳開）");
                     }
                     break;
 
@@ -278,16 +276,45 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                         _interactPressCount++;
                         EmitLog($"[{EntityId}] 抓住對方中連按互動鍵！累計: {_interactPressCount} 次");
                     }
-                    if (intent.Jump && _entity != null)
+                    break;
+
+                case HandshakeState.Leap:
+                    if (isInteractDown)
                     {
-                        _entity.Jump();
-                        EmitLog($"[{EntityId}] [暫代] 抓住對方時起跳（以角色跳躍暫代根位移跳躍）");
+                        bool underControl = Settings != null ? Settings.IsActionUnderControl(currentClip, normalizedTime) : (normalizedTime >= 0.667f);
+                        if (underControl && !_requireInteractRelease)
+                        {
+                            SetState(HandshakeState.Reaching);
+                            EmitLog($"[{EntityId}] 在跳開可控制區間（t={normalizedTime:F2}）重按互動鍵發起伸手");
+                        }
+                    }
+                    else if (normalizedTime >= 1.0f)
+                    {
+                        if (intent.InteractHold)
+                        {
+                            _requireInteractRelease = true;
+                        }
+                        SetState(HandshakeState.None);
                     }
                     break;
 
                 case HandshakeState.Withdrawing:
-                    _stateTimer -= Time.deltaTime;
-                    if (_stateTimer <= 0f)
+                    if (isInteractDown)
+                    {
+                        bool underControl = Settings != null ? Settings.IsActionUnderControl(currentClip, normalizedTime) : (normalizedTime >= 0.667f);
+                        if (underControl && !_requireInteractRelease)
+                        {
+                            SetState(HandshakeState.Reaching);
+                            EmitLog($"[{EntityId}] 在收手可控制區間（t={normalizedTime:F2}）重按互動鍵再次伸手");
+                            break;
+                        }
+                        else
+                        {
+                            EmitLog($"[{EntityId}] 在收手不可控制區間（t={normalizedTime:F2}）重按互動鍵無效");
+                        }
+                    }
+
+                    if (normalizedTime >= 1.0f)
                     {
                         var arb = HandshakeArbitrator.Instance;
                         if (arb != null && arb.SessionState == HandshakeState.Grip)
@@ -311,8 +338,22 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 case HandshakeState.ContestTie:
                 case HandshakeState.EscapedStumble:
                 case HandshakeState.GraspEmpty:
-                    _stateTimer -= Time.deltaTime;
-                    if (_stateTimer <= 0f)
+                    if (isInteractDown)
+                    {
+                        bool underControl = Settings != null ? Settings.IsActionUnderControl(currentClip, normalizedTime) : (normalizedTime >= 1.0f);
+                        if (underControl && !_requireInteractRelease)
+                        {
+                            SetState(HandshakeState.Reaching);
+                            EmitLog($"[{EntityId}] 在反應動作可控制區間（t={normalizedTime:F2}）重按互動鍵發起伸手");
+                            break;
+                        }
+                        else
+                        {
+                            EmitLog($"[{EntityId}] 在反應動作不可控制區間（t={normalizedTime:F2}）重按互動鍵無效");
+                        }
+                    }
+
+                    if (normalizedTime >= 1.0f)
                     {
                         if (intent.InteractHold)
                         {
@@ -322,6 +363,12 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                     }
                     break;
             }
+        }
+
+        private float GetClipLength(HandshakeState state, float defaultLen)
+        {
+            AnimationClip clip = Settings != null ? Settings.GetClipForState(state) : null;
+            return clip != null ? clip.length : defaultLen;
         }
 
         private void EmitLog(string message)
@@ -335,7 +382,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
         private void HandleEntityReset()
         {
-            _stateTimer = 0f;
+            _stateTime = 0f;
             _requireInteractRelease = false;
             _interactPressCount = 0;
             _prevInteractHold = false;

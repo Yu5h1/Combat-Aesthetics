@@ -94,6 +94,8 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             set => _enableCombatActions = value;
         }
 
+        public bool PauseGravity { get; set; }
+
         public static event Action OnGlobalArenaReset;
         public event Action<string> OnCombatLog;
         public event Action<CombatEntity, float, float> OnHealthChanged;
@@ -488,7 +490,11 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
 
             Vector3 driveVelocity = moveDir * (currentSpeed * Mathf.Clamp01(input.magnitude));
 
-            if (_wasGrounded)
+            if (PauseGravity)
+            {
+                _verticalVelocity = 0f;
+            }
+            else if (_wasGrounded)
             {
                 _verticalVelocity = -2f;
 

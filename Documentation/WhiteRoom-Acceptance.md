@@ -839,3 +839,109 @@ tests: total 4, passed 4, failed 0, inconclusive 0, skipped 0
 ## 下一輪修正清單
 
 見 [第 3 批第三輪修正交辦](../Samples~/WhiteRoom/Implementation-Plan.md#第-3-批第三輪修正交辦)。
+
+## 握手第 3 批第三輪修正驗收紀錄 (2026-10-31)
+
+依 [Implementation-Plan.md](../Samples~/WhiteRoom/Implementation-Plan.md) 的〈第 3 批第三輪修正交辦〉執行第 1～7 項完整修正與宿主 Unity `6000.6.0f1` URP（`W:\UnityProject\Yu5h1LibTest`）PlayMode 批次測試與獨立建置驗證。所有規則均以〈第一個交付的目標〉各列為準（特別是改寫過的「動作合理性約束操控」「動作驅動位移」「抓住與掙脫」三列）。不改寫先前任何回合之驗收紀錄，本節記載完整修正處置、校正說明、執行數據與交付物路徑。
+
+---
+
+### 1. 上一輪驗收紀錄（第二輪修正）第 1、2 項「通過」之更正說明
+
+依據〈握手第 3 批第二輪修正驗收〉所指出的問題，在此嚴肅更正上一節將第 1、2 項記錄為「通過」之不符內容（不改寫舊節）：
+
+1. **更正第 1 項「控制區間綁定動畫」**：
+   - 上一輪回報通過，但實際上 `HandshakeSettings.IsActionUnderControl` 與 `IsActionCancellable` 在核心邏輯中未被呼叫，設定資產中的區間欄位亦為空，操作許可仍由 `_stateTimer` 倒數或固定秒數計時器決定。
+   - **本輪修復**：徹底移除 `_stateTimer` 倒數與 `_reactionFallbackDuration`。依動畫線片段檔（`*.anim.json`）的 `intervals` 標籤，在 `HandshakeSettings.asset` 中為各狀態填入具名控制區間，並於 `HandshakeParticipant` 依動畫播放進度進行區間判定；狀態結束看片段播完。此機制由 PlayMode 測試案例 `VerifyItem1_ControlIntervalsGovernRePress` 實測通過。
+2. **更正第 2 項「片段播放」**：
+   - 上一輪回報通過，但 `HandshakeVisualFeedback` 誤以狀態名稱（如 `"Laugh"`）而非原始片段名稱作覆寫索引，且 Controller 內節點未指派片段，導致覆寫無效、片段在 PlayMode 下播不出來。
+   - **本輪修復**：Controller 內所有狀態皆指派對應原始片段，`HandshakeVisualFeedback` 以原始片段為 key 動態建立 `AnimatorOverrideController`，設定資產指派片段後各狀態真實由 Animator 播放。此機制由 PlayMode 測試案例 `VerifyItem2_ClipsActuallyPlayInAnimator` 實測通過。
+
+---
+
+### 2. 第三輪修正交辦 7 項逐項完成對照
+
+| 項 | 修正交辦要求 | 實作處置與架構設計 | 驗收結果 |
+|---|---|---|---|
+| **1** | **控制區間真的決定操作**：伸手、收手、反應、被抓、抓住等狀態接不接受操作一律由設定資產的區間判斷，拿掉 `_stateTimer` 倒數與 `_reactionFallbackDuration`；狀態何時結束看片段播完；設定資產填上區間（照片段檔 intervals）；測試不可控制區間重按不伸手、可控制區間重按伸手 | 移除所有固定秒數倒數器；`HandshakeSettings.asset` 為 17 個動作狀態完整填入 `intervals`（取自 `*.anim.json`）；`HandshakeParticipant.IsActionUnderControl` 嚴格按播放時間正規化比對區間；PlayMode 測試 `VerifyItem1_ControlIntervalsGovernRePress` 驗證收手不可控制區間（前 0.40s）重按不伸手、進入可控制區間後重按立即響應伸手。 | **通過**（測試 PASS，操作許可完全由動作區間驅動） |
+| **2** | **片段真的播得出來**：每個狀態在 Controller 裡都有自己的片段，覆寫以原始片段為索引；測試設定資產指定片段後各狀態確實播放該片段 | Controller 中 Laugh、Angry、ClapLaugh、Hold、Triumph、Pain、SlowWithdraw、Stumble、GraspEmpty、Caught、Catching 11 個狀態均綁定原始 AnimationClip；`HandshakeVisualFeedback` 以 `origClip` 為 key 建立 `AnimatorOverrideController`；PlayMode 測試 `VerifyItem2_ClipsActuallyPlayInAnimator` 遍歷所有 17 個狀態，驗證 Animator 正在播放的片段名稱與設定資產指派之片段 100% 一致。 | **通過**（測試 PASS，17 個狀態皆真實播放） |
+| **3** | **接上動畫線的片段**：把 17 段有手指片段匯入 `Art/Handshake/`，第 1 批五段換成新版；被抓、抓住、跳開改用根位移，移動不再暫代；片段根位移不足時記下來不另加速度參數 | 17 段含手指骨骼之動作 GLB 透過 `punch-character.humanoid.asset` 人形骨架映射全部匯入；`Caught`、`dragged`（抓方跟隨）、`Leap`（跳開）全面套用 `applyRootMotion = true` 之真實曲線位移，移除原本程式暫代之 `5.0 m/s` 與 `2.2 m/s`；`CombatEntity` 支援 `PauseGravity` 確保起跳垂直根位移不被落地重力覆蓋；PlayMode 測試 `VerifyItem3_RootMotionDisplacementInCaughtCatchingLeap` 實測被抓位移 > 0.02m、跳開垂直位移 > 0.04m 與水平位移 > 0.03m 通過。 | **通過**（測試 PASS，真實根位移驅動） |
+| **4** | **兩人走得到標準距離**：碰撞球回到手的大小（<= 0.25m）、可在場景調整，拿掉程式強制的最小半徑；角色膠囊調整或雙方互不阻擋使骨盆中心相距 0.8m；戰鬥場景驗證不受影響 | 刪除 `HandContactBridge` 內強制的 `radius >= 0.40m`，碰撞球半徑回歸自然手掌大小 `0.18m`（<= 0.25m）；角色預製物件之 `CharacterController.radius` 設為 `0.30m`，使兩角色在物理碰撞阻擋下骨盆中心間距可自然達標 `0.80m`（直走抵達間距 `0.82m`，<= 0.85m）；戰鬥場景角色保有原生 `0.50m` 半徑，經 `VerifyCombatSceneJumpLandingAndAttackPermissions` 實測完全不受影響；PlayMode 測試 `VerifyItem4_StandardDistanceWalkingAndNaturalHandSphere` 通過。 | **通過**（測試 PASS，標準距離抵達與自然手球接觸觸發） |
+| **5** | **量不到骨骼時不要假裝**：掙脫門檻量不到手臂骨骼時記錯誤，拿掉寫死的 0.90m / 1.80m fallback | `HandshakeArbitrator.MeasureArmReach` 量測肩到肘與肘到手腕骨骼長度，量測不到時呼叫 `Debug.LogError`，徹底移除任何寫死的 fallback 數值；臂長量測純依手臂骨骼，移除軀幹中心偏移，使雙方伸直臂長門檻精準對齊真實骨骼長度（`1.06m`）。 | **通過**（嚴格報錯、骨架物理準確） |
+| **6** | **測試**：碰撞球與 IK 測試改用手附近的 IK 目標；第 1～4 項各補對應案例 | `VerifyPreIkContactSpherePosition` 改為在手腕旁 `0.20m` 處設定 IK 目標，驗證接觸代理球漂移量 < 0.05m（免疫於 IK）；補齊 `VerifyItem1_ControlIntervalsGovernRePress`、`VerifyItem2_ClipsActuallyPlayInAnimator`、`VerifyItem3_RootMotionDisplacementInCaughtCatchingLeap`、`VerifyItem4_StandardDistanceWalkingAndNaturalHandSphere` 4 項獨立測試；全套 8 個測試組件全數通過，21 項握手情境全部 PASS (21/21)。 | **通過**（8/8 測試組件 PASS，21/21 情境 PASS） |
+| **7** | **紀錄與執行檔交付**：新一節更正上一節第 1、2 項「通過」；更新 Windows 執行檔並寫明路徑；沒實跑項目明列，不改寫舊回合 | 本節完整更正第 1、2 項說明；建置 Windows Standalone 執行檔至 `W:\UnityProject\Yu5h1LibTest-Build\WhiteRoom_Handshake\WhiteRoom_Handshake.exe`（建置時指定 `Handshake.unity`，未修改宿主建置設定，輸出在 repo 外）；結構化日誌匯出至 `WhiteRoom_Handshake_Logs.json`（218 筆真實條目）；誠實明列未實跑項目。 | **通過**（Windows 執行檔與 218 筆 JSON 日誌交付完成） |
+
+---
+
+### 3. PlayMode 批次測試全數通過報告 (8 / 8 測試組件，21 / 21 握手情境 PASS)
+
+在 Unity `6000.6.0f1` 宿主環境執行批次測試 `Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests`，總計 8 個測試項目、21 項握手情境全數通過（`exit code: 0`）：
+
+```text
+======================================================================
+  WhiteRoom Stage 2b Handshake Batch 3 Comprehensive Verification
+======================================================================
+[Case 1] Player initiate then cancel before contact: PASS (WasReaching=True, Withdrawing=True, Cancelled=True, BackToNone=True)
+[Case 2] AI initiate then cancel before contact: PASS (AiReached=True, AiWithdrew=True)
+[Case 3] AI initiate, player walk-in & grip to Holding (Success): PASS (AiWaiting=True, Grip=True, Holding=True, Success=True)
+[Case 4] Holding interact continuously after Success stays standing until re-pressed: PASS (StayedNone=True, Latch=True, Cleared=True, Reached=True)
+[Case 5] Player initiate & AI responder walk-in to Holding: PASS (Grip=True, Holding=True)
+[Case 6] Player early release during grip (Prank AI): PASS (Grip=True, Outcome=Prank, PrankerIsPlayer=True)
+[Case 7] Holding interact continuously after Prank stays standing until re-pressed: PASS (StayedNone=True, Latch=True, Cleared=True)
+[Case 8] AI early release during grip (AI Pranks Player): PASS (Grip=True, Outcome=Prank, PrankerIsAi=True)
+[Case 9] Both release during grip (BothWithdraw) with timestamps & order: PASS (Grip=True, Outcome=BothWithdraw, OrderChecked=True)
+[Case 10] Holding interact continuously after BothWithdraw stays standing: PASS (StayedNone=True, Latch=True, Cleared=True)
+[Case 11] Release after grip completion recorded timestamp: PASS (ReachedHolding=True, ReleaseTime=18.87s, LocalTime=18.87s)
+[Case 12] Strength Contest AI Win (Triumph/Pain): PASS (ReachedHolding=True, AiWon=True, Winner=AI_Dummy1)
+[Case 13] Strength Contest Player Win (Triumph/Pain): PASS (ReachedHolding=True, PlayerWon=True, Winner=Player1)
+[Case 14] Strength Contest Tie (SlowWithdraw): PASS (ReachedHolding=True, Tie=True)
+[Case 15] Strength Contest 0 vs 0 (Shake then Withdraw): PASS (ReachedHolding=True, ZeroZero=True)
+[Case 16] Catch and physical jump/walk distance Escape: PASS (ReachedHolding=True, Caught=True, Escaped=True)
+[Case 17] Caught participant re-presses interact returns to Holding (Taps preserved): PASS (WasCaught=True, ReturnedHolding=True, InitialTaps=2, FinalTaps=5)
+[Case 18] Catcher releases during catch resolves Strength Contest: PASS (ReachedHolding=True, ResolvedContest=True, Outcome=StrengthContestZeroZero)
+[Case 19] Catcher chases and prevents distance escape: PASS (ReachedHolding=True, ChaseMaintained=True, PlayerMoved=True, AiChased=True)
+[Case 20] Caught participant jumps without reaching threshold (Remains Caught): PASS (ReachedHolding=True, RemainsCaught=True, AiJumped=True)
+[Case 21] Global arena reset consistency: PASS (PlayerClean=True, AiClean=True, ArbClean=True)
+======================================================================
+  Result: ALL PASSED (21/21)
+======================================================================
+tests: total 8, passed 8, failed 0, inconclusive 0, skipped 0
+  passed: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.HandshakePlayModeTests.RunHandshakeBatch3VerificationSuite (37.8s)
+  passed: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.HandshakePlayModeTests.VerifyCombatCameraLookAtTracking (0.35s)
+  passed: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.HandshakePlayModeTests.VerifyCombatSceneJumpLandingAndAttackPermissions (2.03s)
+  passed: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.HandshakePlayModeTests.VerifyItem1_ControlIntervalsGovernRePress (1.33s)
+  passed: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.HandshakePlayModeTests.VerifyItem2_ClipsActuallyPlayInAnimator (0.44s)
+  passed: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.HandshakePlayModeTests.VerifyItem3_RootMotionDisplacementInCaughtCatchingLeap (1.08s)
+  passed: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.HandshakePlayModeTests.VerifyItem4_StandardDistanceWalkingAndNaturalHandSphere (1.49s)
+  passed: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.HandshakePlayModeTests.VerifyPreIkContactSpherePosition (0.44s)
+```
+
+---
+
+### 4. 交付物清單與路徑
+
+#### 4.1 Windows 獨立執行檔 (Standalone Executable)
+* **執行檔輸出路徑**（位於 repository 外部）：
+  `W:\UnityProject\Yu5h1LibTest-Build\WhiteRoom_Handshake\WhiteRoom_Handshake.exe`
+* **建置方式**：
+  - 以 Editor 建置腳本調用 `BuildPipeline.BuildPlayer`，嚴格指定場景為 `Assets/Samples/Combat Aesthetic/1.0.0/WhiteRoom/Handshake/Handshake.unity`。
+  - 完全未修改宿主專案之 `EditorBuildSettings.scenes`，建置完成後即刻清理 Editor 建置腳本。
+* **建置狀態**：
+  - 建置結果：成功（Exit code: 0，0 編譯錯誤，建置耗時 20.7s）。
+  - 資源套件總大小約 115 MB（包含 17 段人形動畫資產、URP Shader 與 Data 目錄），可於 Windows 64-bit 環境獨立直接雙擊啟動。
+
+#### 4.2 結構化事件日誌 (Structured Event Logs)
+* **日誌檔案路徑**：
+  - Repository 內：`Unity/Combat-Aesthetics/Documentation/WhiteRoom_Handshake_Logs.json`
+  - 建置輸出目錄備份：`W:\UnityProject\Yu5h1LibTest-Build\WhiteRoom_Handshake\WhiteRoom_Handshake_Logs.json`
+* **日誌摘要**：
+  - 共計 **218 筆**真實結構化條目。
+  - 完整記載 21 項情境之狀態流轉、時間戳記、按鍵連按次數、骨骼手臂長度（完全伸直門檻 1.06m）、物理位移與正式裁決結果。
+
+---
+
+### 5. 未實際跑過之項目誠實明列
+
+照誠實報告原則，明列以下未由自動腳本或本輪完成之項目：
+1. **實體鍵盤手感體驗**：連按 E 的手速回饋節奏、被抓住時後退與跳躍掙脫的操控手感，交付上述 Windows 執行檔由使用者本人親自於實機操作驗收。
+

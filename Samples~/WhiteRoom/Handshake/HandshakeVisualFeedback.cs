@@ -1,10 +1,12 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 {
     /// <summary>
-    /// Presentation-only component that plays the five Stage 2b humanoid handshake clips on a humanoid <see cref="Animator"/>
+    /// Presentation-only component that plays the humanoid handshake clips on a humanoid <see cref="Animator"/>
     /// and applies runtime humanoid IK (<c>OnAnimatorIK</c>) to align the right hand visually toward the opponent's hand.
+    /// Handles root motion application during Caught, Catching, and Leap states.
     /// Does not modify or participate in contact or outcome arbitration.
     /// </summary>
     [RequireComponent(typeof(Animator))]
@@ -71,6 +73,15 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
         private void Start()
         {
+            if (_preIkWristTransform == null && _animator != null)
+            {
+                _preIkWristTransform = _animator.GetBoneTransform(HumanBodyBones.RightHand);
+            }
+            if (_contactProxyTransform != null && _preIkWristTransform != null)
+            {
+                _contactProxyTransform.position = _preIkWristTransform.position + _preIkWristTransform.rotation * _fistLocalOffsetInWrist;
+                _contactProxyTransform.rotation = _preIkWristTransform.rotation;
+            }
             ConfigureAnimatorOverrides();
             PlayClipForState(HandshakeState.None);
         }
@@ -93,7 +104,10 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             PlayClipForState(HandshakeState.None);
         }
 
-        private void ConfigureAnimatorOverrides()
+        /// <summary>
+        /// Configures the runtime AnimatorOverrideController mapping original clip references to settings-defined clips.
+        /// </summary>
+        public void ConfigureAnimatorOverrides()
         {
             if (_animator == null || _animator.runtimeAnimatorController == null) return;
 
@@ -104,31 +118,51 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             var overrideController = new AnimatorOverrideController(_animator.runtimeAnimatorController);
             overrideController.name = "HandshakeAnimatorOverride";
 
-            AnimationClip fallbackClip = settings.WithdrawClip;
+            var overrides = new List<KeyValuePair<AnimationClip, AnimationClip>>();
+            overrideController.GetOverrides(overrides);
 
-            void SetOverride(string stateName, AnimationClip clip)
+            for (int i = 0; i < overrides.Count; i++)
             {
-                overrideController[stateName] = clip != null ? clip : fallbackClip;
+                var originalClip = overrides[i].Key;
+                if (originalClip != null)
+                {
+                    AnimationClip replacement = FindReplacementClip(settings, originalClip.name);
+                    if (replacement != null)
+                    {
+                        overrides[i] = new KeyValuePair<AnimationClip, AnimationClip>(originalClip, replacement);
+                    }
+                }
             }
 
-            SetOverride("Reach", settings.ReachClip);
-            SetOverride("Wait", settings.WaitClip);
-            SetOverride("Withdraw", settings.WithdrawClip);
-            SetOverride("Grip", settings.GripClip);
-            SetOverride("Shake", settings.ShakeClip);
-            SetOverride("Laugh", settings.LaughClip);
-            SetOverride("Angry", settings.AngryClip);
-            SetOverride("ClapLaugh", settings.ClapLaughClip);
-            SetOverride("Hold", settings.HoldClip);
-            SetOverride("Triumph", settings.TriumphClip);
-            SetOverride("Pain", settings.PainClip);
-            SetOverride("SlowWithdraw", settings.SlowWithdrawClip);
-            SetOverride("Stumble", settings.StumbleClip);
-            SetOverride("GraspEmpty", settings.GraspEmptyClip);
-            SetOverride("Caught", settings.CaughtPullClip);
-            SetOverride("Catching", settings.CatchingHoldClip);
-
+            overrideController.ApplyOverrides(overrides);
             _animator.runtimeAnimatorController = overrideController;
+        }
+
+        private AnimationClip FindReplacementClip(HandshakeSettings settings, string clipName)
+        {
+            if (settings == null) return null;
+            string lower = clipName.ToLowerInvariant();
+            if (lower.StartsWith("handshake-")) lower = lower.Substring("handshake-".Length);
+            else if (lower.StartsWith("handshake_")) lower = lower.Substring("handshake_".Length);
+
+            if (lower.Contains("reach")) return settings.ReachClip;
+            if (lower.Contains("wait")) return settings.WaitClip;
+            if (lower.Contains("withdraw") && !lower.Contains("slow")) return settings.WithdrawClip;
+            if (lower.Contains("grip")) return settings.GripClip;
+            if (lower.Contains("shake")) return settings.ShakeClip;
+            if (lower.Contains("laugh") && !lower.Contains("clap")) return settings.LaughClip;
+            if (lower.Contains("angry")) return settings.AngryClip;
+            if (lower.Contains("clap")) return settings.ClapLaughClip;
+            if (lower.Contains("hold")) return settings.HoldClip;
+            if (lower.Contains("triumph")) return settings.TriumphClip;
+            if (lower.Contains("pain")) return settings.PainClip;
+            if (lower.Contains("slow")) return settings.SlowWithdrawClip;
+            if (lower.Contains("stumble")) return settings.StumbleClip;
+            if (lower.Contains("grasp") || lower.Contains("empty")) return settings.GraspEmptyClip;
+            if (lower.Contains("caught")) return settings.CaughtPullClip;
+            if (lower.Contains("dragged") || lower.Contains("catching")) return settings.CatchingHoldClip;
+            if (lower.Contains("leap")) return settings.LeapClip;
+            return null;
         }
 
         private void OnDestroy()
@@ -148,6 +182,13 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         {
             if (_animator == null || _lastPlayedState == state) return;
             _lastPlayedState = state;
+
+            bool isRootMotionState = (state == HandshakeState.Caught || state == HandshakeState.Catching || state == HandshakeState.Leap);
+            _animator.applyRootMotion = isRootMotionState;
+            if (_participant != null && _participant.Entity != null)
+            {
+                _participant.Entity.PauseGravity = (state == HandshakeState.Leap);
+            }
 
             switch (state)
             {
@@ -187,6 +228,9 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 case HandshakeState.Caught:
                     _animator.Play("Caught", 0, 0f);
                     break;
+                case HandshakeState.Leap:
+                    _animator.Play("Leap", 0, 0f);
+                    break;
                 case HandshakeState.ContestTriumph:
                     _animator.Play("Triumph", 0, 0f);
                     break;
@@ -203,6 +247,32 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                     _animator.Play("GraspEmpty", 0, 0f);
                     break;
             }
+        }
+
+        private void OnAnimatorMove()
+        {
+            if (_animator != null && _animator.applyRootMotion && _participant != null && _participant.Entity != null)
+            {
+                CharacterController cc = _participant.Entity.GetComponent<CharacterController>();
+                if (cc != null)
+                {
+                    cc.Move(_animator.deltaPosition);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Retrieves the clip currently playing on the Base Layer.
+        /// </summary>
+        public AnimationClip GetCurrentPlayingClip()
+        {
+            if (_animator == null) return null;
+            var infos = _animator.GetCurrentAnimatorClipInfo(0);
+            if (infos != null && infos.Length > 0)
+            {
+                return infos[0].clip;
+            }
+            return null;
         }
 
         private void Update()
@@ -253,6 +323,10 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                     targetColor = Color.Lerp(_defaultBodyColor, new Color(0.95f, 0.25f, 0.25f), 0.75f);
                     break;
 
+                case HandshakeState.Leap:
+                    targetColor = Color.Lerp(_defaultBodyColor, new Color(1.0f, 0.4f, 0.1f), 0.8f);
+                    break;
+
                 case HandshakeState.ContestTriumph:
                     targetColor = Color.Lerp(_defaultBodyColor, new Color(0.2f, 0.95f, 0.3f), 0.8f);
                     break;
@@ -279,6 +353,15 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 Color current = GetCurrentColor();
                 ApplyColor(Color.Lerp(current, targetColor, 12f * Time.deltaTime));
             }
+
+            if (_contactProxyTransform != null && _preIkWristTransform != null)
+            {
+                if (!_hasIkOverride && _currentIkWeight < 0.01f)
+                {
+                    _contactProxyTransform.position = _preIkWristTransform.position + _preIkWristTransform.rotation * _fistLocalOffsetInWrist;
+                    _contactProxyTransform.rotation = _preIkWristTransform.rotation;
+                }
+            }
         }
 
         private bool _hasIkOverride = false;
@@ -303,12 +386,10 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         {
             if (_animator == null || _participant == null) return;
 
-            if (_contactProxyTransform != null)
+            if (_contactProxyTransform != null && _preIkWristTransform != null)
             {
-                Vector3 preIkHandPos = _animator.GetIKPosition(AvatarIKGoal.RightHand);
-                Quaternion preIkHandRot = _animator.GetIKRotation(AvatarIKGoal.RightHand);
-                _contactProxyTransform.position = preIkHandPos + preIkHandRot * _fistLocalOffsetInWrist;
-                _contactProxyTransform.rotation = preIkHandRot;
+                _contactProxyTransform.position = _preIkWristTransform.position + _preIkWristTransform.rotation * _fistLocalOffsetInWrist;
+                _contactProxyTransform.rotation = _preIkWristTransform.rotation;
             }
 
             float targetWeight = 0f;

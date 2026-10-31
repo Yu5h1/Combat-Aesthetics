@@ -607,9 +607,10 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
             _ai.Mode = HandshakeAiMode.Idle;
             _player.CustomIntent = CombatActionIntent.Empty;
 
-            bool timestampValid = (_arb.ParticipantAReleaseTimestamp > 0f && Mathf.Abs(_arb.ParticipantAReleaseTimestamp - releaseTimestamp) < 0.2f);
+            float actualRelease = _arb.GetParticipantReleaseTimestamp(_playerParticipant);
+            bool timestampValid = (actualRelease > 0f && Mathf.Abs(actualRelease - releaseTimestamp) < 0.2f);
             _case11Pass = reachedHolding && timestampValid;
-            _results.Add($"[Case 11] Release after grip completion recorded timestamp: {(_case11Pass ? "PASS" : "FAIL")} (ReachedHolding={reachedHolding}, ReleaseTime={_arb.ParticipantAReleaseTimestamp:F2}s, LocalTime={releaseTimestamp:F2}s)");
+            _results.Add($"[Case 11] Release after grip completion recorded timestamp: {(_case11Pass ? "PASS" : "FAIL")} (ReachedHolding={reachedHolding}, ReleaseTime={actualRelease:F2}s, LocalTime={releaseTimestamp:F2}s)");
         }
 
         private IEnumerator Case12_StrengthContest_AiWin()
