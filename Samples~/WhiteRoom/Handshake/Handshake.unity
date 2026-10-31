@@ -152,6 +152,7 @@ MonoBehaviour:
   _characterModelPrefab: {fileID: 6334693208988405809, guid: 7849f2e48da20e848957a70b8bfab07d, type: 3}
   _humanoidAvatar: {fileID: -5478683720352436592, guid: 5752433c6143861469b371f8bbe0144d, type: 2}
   _animatorController: {fileID: 9100000, guid: 0767a4c7110421d449a5e61834fc2a96, type: 2}
+  _settings: {fileID: 11400000, guid: e8801d01f5ea4e41ba9256eb41d3b599, type: 2}
   _reachClip: {fileID: 8779831864619793406, guid: 2110e5b1e6b8f434284ad27fea77b4b1, type: 2}
   _waitClip: {fileID: 8952854439076216105, guid: 827bef51320c4f142a4d56390cf741b1, type: 2}
   _withdrawClip: {fileID: -6327883441209141040, guid: 00aa645ac5d8a1644a9a6c087d44bd41, type: 2}

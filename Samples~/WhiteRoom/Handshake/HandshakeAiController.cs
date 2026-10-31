@@ -14,7 +14,17 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         AiResponder = 2,
         AiCancel = 3,
         AiEarlyRelease = 4,
-        AiReleaseAfterGrip = 5
+        AiReleaseAfterGrip = 5,
+        ContestWin = 6,
+        ContestLose = 7,
+        ContestTie = 8,
+        ContestZeroZero = 9,
+        AiCatchPlayer = 10,
+        AiCaughtByPlayer = 11,
+        AiEscape = 12,
+        AiChaseCatch = 13,
+        AiJumpNoEscape = 14,
+        AiCatchAndRelease = 15
     }
 
     /// <summary>
@@ -36,6 +46,16 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         [SerializeField] private bool _walkIn = false;
         [SerializeField] private float _stopDistance = 0.78f;
 
+        [Header("Batch 3 Contest & Catch Settings")]
+        [SerializeField] private int _contestTapTarget = 0;
+        [SerializeField] private float _contestTapInterval = 0.1f;
+        [SerializeField] private float _holdingReleaseDelay = 0.8f;
+        [SerializeField] private bool _pullBackWhenCaught = true;
+        [SerializeField] private bool _jumpWhenCaught = false;
+        [SerializeField] private bool _followWhenCatching = true;
+        [SerializeField] private bool _repressWhenCaught = false;
+        [SerializeField] private float _repressDelay = 0.5f;
+
         private CombatEntity _entity;
         private HandshakeParticipant _participant;
         private HandshakeParticipant _targetPlayer;
@@ -43,8 +63,14 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         private float _holdTimer = 0f;
         private float _gripTimer = 0f;
         private float _postGripTimer = 0f;
+        private float _tapTimer = 0f;
+        private int _tapsDone = 0;
+        private bool _tapLowFrame = false;
+        private float _caughtTimer = 0f;
+        private float _catchingTimer = 0f;
         private bool _isHoldingInteract = false;
         private bool _hasCompletedHoldCycle = false;
+        private HandshakeState _lastParticipantState = HandshakeState.None;
 
         public HandshakeAiMode Mode
         {
@@ -64,6 +90,14 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         public float ReleaseAfterGripDelay { get => _releaseAfterGripDelay; set => _releaseAfterGripDelay = value; }
         public bool WalkIn { get => _walkIn; set => _walkIn = value; }
         public float StopDistance { get => _stopDistance; set => _stopDistance = value; }
+        public int ContestTapTarget { get => _contestTapTarget; set => _contestTapTarget = value; }
+        public float ContestTapInterval { get => _contestTapInterval; set => _contestTapInterval = value; }
+        public float HoldingReleaseDelay { get => _holdingReleaseDelay; set => _holdingReleaseDelay = value; }
+        public bool PullBackWhenCaught { get => _pullBackWhenCaught; set => _pullBackWhenCaught = value; }
+        public bool JumpWhenCaught { get => _jumpWhenCaught; set => _jumpWhenCaught = value; }
+        public bool FollowWhenCatching { get => _followWhenCatching; set => _followWhenCatching = value; }
+        public bool RepressWhenCaught { get => _repressWhenCaught; set => _repressWhenCaught = value; }
+        public float RepressDelay { get => _repressDelay; set => _repressDelay = value; }
 
         private void Awake()
         {
@@ -110,6 +144,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
         private void ApplyModeDefaults(HandshakeAiMode mode)
         {
+            _lastParticipantState = HandshakeState.None;
             switch (mode)
             {
                 case HandshakeAiMode.Idle:
@@ -140,6 +175,89 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 case HandshakeAiMode.AiReleaseAfterGrip:
                     _holdDuration = -1f;
                     _walkIn = false;
+                    break;
+
+                case HandshakeAiMode.ContestWin:
+                    _holdDuration = -1f;
+                    _contestTapTarget = 5;
+                    _contestTapInterval = 0.08f;
+                    _holdingReleaseDelay = 0.15f;
+                    _walkIn = true;
+                    break;
+
+                case HandshakeAiMode.ContestLose:
+                    _holdDuration = -1f;
+                    _contestTapTarget = 0;
+                    _contestTapInterval = 0.2f;
+                    _holdingReleaseDelay = 0.8f;
+                    _walkIn = true;
+                    break;
+
+                case HandshakeAiMode.ContestTie:
+                    _holdDuration = -1f;
+                    _contestTapTarget = 2;
+                    _contestTapInterval = 0.12f;
+                    _holdingReleaseDelay = 0.8f;
+                    _walkIn = true;
+                    break;
+
+                case HandshakeAiMode.ContestZeroZero:
+                    _holdDuration = -1f;
+                    _contestTapTarget = 0;
+                    _contestTapInterval = 0.2f;
+                    _holdingReleaseDelay = 0.15f;
+                    _walkIn = true;
+                    break;
+
+                case HandshakeAiMode.AiCatchPlayer:
+                    _holdDuration = -1f;
+                    _contestTapTarget = 0;
+                    _holdingReleaseDelay = 999f;
+                    _followWhenCatching = true;
+                    _walkIn = true;
+                    break;
+
+                case HandshakeAiMode.AiCaughtByPlayer:
+                    _holdDuration = -1f;
+                    _contestTapTarget = 0;
+                    _holdingReleaseDelay = 0.05f;
+                    _pullBackWhenCaught = true;
+                    _jumpWhenCaught = false;
+                    _walkIn = true;
+                    break;
+
+                case HandshakeAiMode.AiEscape:
+                    _holdDuration = -1f;
+                    _contestTapTarget = 0;
+                    _holdingReleaseDelay = 0.05f;
+                    _pullBackWhenCaught = true;
+                    _jumpWhenCaught = true;
+                    _walkIn = true;
+                    break;
+
+                case HandshakeAiMode.AiChaseCatch:
+                    _holdDuration = -1f;
+                    _contestTapTarget = 0;
+                    _holdingReleaseDelay = 999f;
+                    _followWhenCatching = true;
+                    _walkIn = true;
+                    break;
+
+                case HandshakeAiMode.AiJumpNoEscape:
+                    _holdDuration = -1f;
+                    _contestTapTarget = 0;
+                    _holdingReleaseDelay = 0.05f;
+                    _pullBackWhenCaught = false;
+                    _jumpWhenCaught = true;
+                    _walkIn = true;
+                    break;
+
+                case HandshakeAiMode.AiCatchAndRelease:
+                    _holdDuration = -1f;
+                    _contestTapTarget = 0;
+                    _holdingReleaseDelay = 999f;
+                    _followWhenCatching = false;
+                    _walkIn = true;
                     break;
             }
         }
@@ -178,11 +296,14 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             float distance = toTarget.magnitude;
 
             bool prevHold = _isHoldingInteract;
+            bool isContestOrCatchMode = _mode >= HandshakeAiMode.ContestWin;
 
-            if (_mode == HandshakeAiMode.AiResponder)
+            if (_mode == HandshakeAiMode.AiResponder || isContestOrCatchMode)
             {
                 bool playerReady = (_targetPlayer.State == HandshakeState.Reaching || _targetPlayer.State == HandshakeState.Waiting ||
-                                    _participant.State == HandshakeState.Grip || _participant.State == HandshakeState.Shaking);
+                                    _targetPlayer.State == HandshakeState.Caught || _targetPlayer.State == HandshakeState.Catching ||
+                                    _participant.State == HandshakeState.Grip || _participant.State == HandshakeState.Shaking ||
+                                    _participant.State == HandshakeState.Holding || _participant.State == HandshakeState.Catching);
                 if (playerReady && !_hasCompletedHoldCycle)
                 {
                     _isHoldingInteract = true;
@@ -201,13 +322,93 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 }
             }
 
-            if (_isHoldingInteract)
+            if (_isHoldingInteract && _participant.State != HandshakeState.Holding)
             {
                 _holdTimer += Time.deltaTime;
                 if (_holdDuration > 0f && _holdTimer >= _holdDuration)
                 {
                     _isHoldingInteract = false;
                     _hasCompletedHoldCycle = true;
+                }
+            }
+
+            if (_participant.State == HandshakeState.Holding)
+            {
+                if (_lastParticipantState != HandshakeState.Holding)
+                {
+                    _holdTimer = 0f;
+                    _tapTimer = 0f;
+                    _tapsDone = 0;
+                    _tapLowFrame = false;
+                }
+
+                if (_tapsDone < _contestTapTarget)
+                {
+                    _tapTimer += Time.deltaTime;
+                    if (_tapLowFrame)
+                    {
+                        _isHoldingInteract = true;
+                        _tapLowFrame = false;
+                        _tapsDone++;
+                        _tapTimer = 0f;
+                    }
+                    else if (_tapTimer >= _contestTapInterval)
+                    {
+                        _isHoldingInteract = false;
+                        _tapLowFrame = true;
+                    }
+                }
+                else
+                {
+                    _holdTimer += Time.deltaTime;
+                    if (_holdTimer >= _holdingReleaseDelay)
+                    {
+                        _isHoldingInteract = false;
+                        _hasCompletedHoldCycle = true;
+                    }
+                    else
+                    {
+                        _isHoldingInteract = true;
+                    }
+                }
+            }
+            else if (_participant.State == HandshakeState.Caught)
+            {
+                if (_pullBackWhenCaught)
+                {
+                    Vector3 away = -toTarget.normalized;
+                    intent.MoveInput = new Vector2(away.x, away.z);
+                }
+
+                _caughtTimer += Time.deltaTime;
+                if (_jumpWhenCaught && _caughtTimer >= 0.1f)
+                {
+                    intent.Jump = true;
+                    _jumpWhenCaught = false;
+                }
+
+                if (_repressWhenCaught && _caughtTimer >= _repressDelay)
+                {
+                    _isHoldingInteract = true;
+                }
+            }
+            else if (_participant.State == HandshakeState.Catching)
+            {
+                _catchingTimer += Time.deltaTime;
+
+                if (_mode == HandshakeAiMode.AiCatchAndRelease && _catchingTimer >= 0.25f)
+                {
+                    _isHoldingInteract = false;
+                    _hasCompletedHoldCycle = true;
+                }
+                else
+                {
+                    _isHoldingInteract = true;
+                    if (_followWhenCatching && distance > 0.45f)
+                    {
+                        Vector3 toward = toTarget.normalized;
+                        intent.MoveInput = new Vector2(toward.x, toward.z);
+                    }
                 }
             }
 
@@ -254,6 +455,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             intent.InteractHold = _isHoldingInteract;
             intent.InteractDown = !prevHold && _isHoldingInteract;
             intent.InteractUp = prevHold && !_isHoldingInteract;
+            _lastParticipantState = _participant.State;
             return intent;
         }
 
@@ -266,8 +468,14 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             _holdTimer = 0f;
             _gripTimer = 0f;
             _postGripTimer = 0f;
+            _tapTimer = 0f;
+            _tapsDone = 0;
+            _tapLowFrame = false;
+            _caughtTimer = 0f;
+            _catchingTimer = 0f;
             _isHoldingInteract = false;
             _hasCompletedHoldCycle = false;
+            _lastParticipantState = HandshakeState.None;
         }
     }
 }

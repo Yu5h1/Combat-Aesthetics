@@ -47,6 +47,27 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                 _distance = Mathf.Clamp(distance, _minDistance, _maxDistance);
             }
             _hasExplicitOrbit = true;
+            SnapToTarget();
+        }
+
+        /// <summary>
+        /// Instantly snaps the camera to its target framing without smoothing lag.
+        /// </summary>
+        public void SnapToTarget()
+        {
+            if (_target == null) return;
+            Quaternion rotation = Quaternion.Euler(_pitch, _yaw, 0f);
+            Vector3 pivot = _target.position + _targetOffset + (rotation * _shoulderOffset);
+            Vector3 desiredPosition = pivot - (rotation * Vector3.forward * _distance);
+            transform.position = desiredPosition;
+            if (_shoulderOffset == Vector3.zero)
+            {
+                transform.LookAt(pivot);
+            }
+            else
+            {
+                transform.rotation = rotation;
+            }
         }
 
         /// <summary>
@@ -125,11 +146,17 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             Vector3 pivot = _target.position + _targetOffset + (rotation * _shoulderOffset);
             Vector3 desiredPosition = pivot - (rotation * Vector3.forward * _distance);
 
-            if (Physics.Raycast(pivot, desiredPosition - pivot, out RaycastHit hit, _distance))
+            Vector3 rayDir = desiredPosition - pivot;
+            float rayDist = rayDir.magnitude;
+            if (rayDist > 0.01f)
             {
-                if (hit.transform != _target)
+                rayDir /= rayDist;
+                if (Physics.Raycast(pivot, rayDir, out RaycastHit hit, rayDist, ~0, QueryTriggerInteraction.Ignore))
                 {
-                    desiredPosition = hit.point + hit.normal * 0.2f;
+                    if (hit.transform != _target && !hit.transform.IsChildOf(_target))
+                    {
+                        desiredPosition = hit.point + hit.normal * 0.2f;
+                    }
                 }
             }
 

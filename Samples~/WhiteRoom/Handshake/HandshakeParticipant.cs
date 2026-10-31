@@ -18,6 +18,12 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         private HandshakeState _state = HandshakeState.None;
         private float _stateTimer = 0f;
         private bool _requireInteractRelease = false;
+        private int _interactPressCount = 0;
+        private bool _wasInteractPressedInHolding = false;
+        private float _reReachCooldownTimer = 0f;
+
+        private Vector3 _caughtJumpArcVelocity = Vector3.zero;
+        private float _caughtJumpArcTimer = 0f;
 
         public CombatEntity Entity => _entity;
         public string EntityId => _entity != null ? _entity.EntityId : name;
@@ -26,6 +32,8 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         public float StateTimer => _stateTimer;
         public CombatActionIntent CurrentIntent => _entity != null ? _entity.CurrentIntent : CombatActionIntent.Empty;
         public bool RequiresInteractRelease => _requireInteractRelease;
+        public int InteractPressCount => _interactPressCount;
+        public float ReReachCooldownTimer => _reReachCooldownTimer;
 
         public Transform RightHandTransform { get; set; }
         public HandContactBridge ContactBridge { get; set; }
@@ -35,6 +43,23 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
         public event Action<HandshakeParticipant, HandshakeState> OnStateChanged;
         public event Action<string> OnParticipantLog;
+
+        /// <summary>
+        /// Resets the accumulated contest press count to zero for a fresh strength contest.
+        /// </summary>
+        public void ResetPressCount()
+        {
+            _interactPressCount = 0;
+            _wasInteractPressedInHolding = true;
+        }
+
+        /// <summary>
+        /// Locks initiation of a new reach for the specified uncontrollable interval duration.
+        /// </summary>
+        public void LockReachingForDuration(float duration)
+        {
+            _reReachCooldownTimer = Mathf.Max(_reReachCooldownTimer, duration);
+        }
 
         private void Awake()
         {
@@ -54,6 +79,19 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             {
                 _entity.OnIntentStepped -= HandleIntentStepped;
                 _entity.OnEntityReset -= HandleEntityReset;
+            }
+        }
+
+        private void Update()
+        {
+            if (_caughtJumpArcTimer > 0f)
+            {
+                _caughtJumpArcTimer -= Time.deltaTime;
+                CharacterController cc = GetComponent<CharacterController>();
+                if (cc != null && cc.enabled)
+                {
+                    cc.Move(_caughtJumpArcVelocity * Time.deltaTime);
+                }
             }
         }
 
@@ -108,6 +146,15 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             _state = newState;
             _stateTimer = duration;
 
+            if (newState == HandshakeState.Holding)
+            {
+                _wasInteractPressedInHolding = true;
+            }
+            else
+            {
+                _wasInteractPressedInHolding = false;
+            }
+
             if (_state == HandshakeState.None && prev != HandshakeState.None)
             {
                 if (CurrentIntent.InteractHold)
@@ -124,11 +171,28 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         {
             if (_entity == null) return;
 
+            var arb = HandshakeArbitrator.Instance;
+            float followSpeed = arb != null && arb.Settings != null ? arb.Settings.CatchingFollowSpeed : 1.20f;
+            float walkSpeed = arb != null && arb.Settings != null ? arb.Settings.CaughtWalkSpeed : _entity.WalkSpeed;
+
             if (_state == HandshakeState.Grip || _state == HandshakeState.Shaking ||
-                _state == HandshakeState.Laugh || _state == HandshakeState.Angry || _state == HandshakeState.ClapLaugh)
+                _state == HandshakeState.Laugh || _state == HandshakeState.Angry || _state == HandshakeState.ClapLaugh ||
+                _state == HandshakeState.Holding || _state == HandshakeState.ContestTriumph ||
+                _state == HandshakeState.ContestPain || _state == HandshakeState.ContestTie ||
+                _state == HandshakeState.EscapedStumble || _state == HandshakeState.GraspEmpty)
             {
                 _entity.LocomotionLocked = true;
                 _entity.SpeedOverride = 0f;
+            }
+            else if (_state == HandshakeState.Catching)
+            {
+                _entity.LocomotionLocked = false;
+                _entity.SpeedOverride = followSpeed;
+            }
+            else if (_state == HandshakeState.Caught)
+            {
+                _entity.LocomotionLocked = false;
+                _entity.SpeedOverride = walkSpeed;
             }
             else if (_state == HandshakeState.Reaching || _state == HandshakeState.Waiting)
             {
@@ -149,6 +213,11 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
         private void UpdateHandshakeState(CombatActionIntent intent)
         {
+            if (_reReachCooldownTimer > 0f)
+            {
+                _reReachCooldownTimer -= Time.deltaTime;
+            }
+
             if (!intent.InteractHold)
             {
                 _requireInteractRelease = false;
@@ -157,7 +226,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             switch (_state)
             {
                 case HandshakeState.None:
-                    if ((intent.InteractHold || intent.InteractDown) && !_requireInteractRelease)
+                    if ((intent.InteractHold || intent.InteractDown) && !_requireInteractRelease && _reReachCooldownTimer <= 0f)
                     {
                         SetState(HandshakeState.Reaching, _reachDuration);
                         EmitLog($"[{EntityId}] 按住互動鍵發起伸手（{_reachDuration:F2}s）");
@@ -195,10 +264,43 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 case HandshakeState.Shaking:
                     break;
 
+                case HandshakeState.Holding:
+                    bool isPressed = intent.InteractDown || intent.InteractHold;
+                    if (isPressed && !_wasInteractPressedInHolding)
+                    {
+                        _interactPressCount++;
+                        EmitLog($"[{EntityId}] 握住中比力氣連按互動鍵！累計: {_interactPressCount} 次");
+                    }
+                    _wasInteractPressedInHolding = isPressed;
+                    break;
+
+                case HandshakeState.Caught:
+                    if (intent.InteractDown || intent.InteractHold)
+                    {
+                        HandshakeArbitrator.Instance?.NotifyCaughtParticipantRepressed(this);
+                    }
+                    else if (intent.Jump)
+                    {
+                        ApplyCaughtJumpDisplacement();
+                    }
+                    break;
+
+                case HandshakeState.Catching:
+                    if (intent.Jump && _entity != null)
+                    {
+                        _entity.Jump();
+                    }
+                    break;
+
                 case HandshakeState.Withdrawing:
                 case HandshakeState.Laugh:
                 case HandshakeState.Angry:
                 case HandshakeState.ClapLaugh:
+                case HandshakeState.ContestTriumph:
+                case HandshakeState.ContestPain:
+                case HandshakeState.ContestTie:
+                case HandshakeState.EscapedStumble:
+                case HandshakeState.GraspEmpty:
                     _stateTimer -= Time.deltaTime;
                     if (_stateTimer <= 0f)
                     {
@@ -210,6 +312,25 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                     }
                     break;
             }
+        }
+
+        private void ApplyCaughtJumpDisplacement()
+        {
+            var arb = HandshakeArbitrator.Instance;
+            if (arb == null || arb.CatchingParticipant == null || _entity == null) return;
+
+            _entity.Jump();
+
+            Vector3 away = transform.position - arb.CatchingParticipant.transform.position;
+            away.y = 0f;
+            if (away.sqrMagnitude < 0.001f) away = -transform.forward;
+            away.Normalize();
+
+            float disp = arb.Settings != null ? arb.Settings.JumpEscapeDisplacement : 0.60f;
+            _caughtJumpArcTimer = 0.40f;
+            _caughtJumpArcVelocity = away * (disp / 0.40f);
+
+            EmitLog($"[{EntityId}] 被抓住時跳躍往後彈開 {disp:F2}m！");
         }
 
         private void EmitLog(string message)
@@ -225,6 +346,11 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         {
             _stateTimer = 0f;
             _requireInteractRelease = false;
+            _reReachCooldownTimer = 0f;
+            _interactPressCount = 0;
+            _wasInteractPressedInHolding = false;
+            _caughtJumpArcTimer = 0f;
+            _caughtJumpArcVelocity = Vector3.zero;
             SetState(HandshakeState.None);
         }
 

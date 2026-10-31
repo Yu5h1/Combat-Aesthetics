@@ -81,6 +81,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             if (_animator == null || _lastPlayedState == state) return;
             _lastPlayedState = state;
 
+            var arb = HandshakeArbitrator.Instance;
             switch (state)
             {
                 case HandshakeState.None:
@@ -108,15 +109,76 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                     break;
 
                 case HandshakeState.Laugh:
-                    if (_animator.HasState(0, Animator.StringToHash("Laugh"))) _animator.Play("Laugh", 0, 0f);
+                    if (arb != null && arb.LaughClip != null && _animator.HasState(0, Animator.StringToHash("Laugh")))
+                        _animator.Play("Laugh", 0, 0f);
+                    else
+                        _animator.Play("Withdraw", 0, 0f);
                     break;
 
                 case HandshakeState.Angry:
-                    if (_animator.HasState(0, Animator.StringToHash("Angry"))) _animator.Play("Angry", 0, 0f);
+                    if (arb != null && arb.AngryClip != null && _animator.HasState(0, Animator.StringToHash("Angry")))
+                        _animator.Play("Angry", 0, 0f);
+                    else
+                        _animator.Play("Withdraw", 0, 0f);
                     break;
 
                 case HandshakeState.ClapLaugh:
-                    if (_animator.HasState(0, Animator.StringToHash("ClapLaugh"))) _animator.Play("ClapLaugh", 0, 0f);
+                    if (arb != null && arb.ClapLaughClip != null && _animator.HasState(0, Animator.StringToHash("ClapLaugh")))
+                        _animator.Play("ClapLaugh", 0, 0f);
+                    else
+                        _animator.Play("Withdraw", 0, 0f);
+                    break;
+
+                case HandshakeState.Holding:
+                    if (arb != null && arb.HoldClip != null && _animator.HasState(0, Animator.StringToHash("Hold")))
+                        _animator.Play("Hold", 0, 0f);
+                    break;
+
+                case HandshakeState.Catching:
+                    if (arb != null && arb.CatchingHoldClip != null && _animator.HasState(0, Animator.StringToHash("Catching")))
+                        _animator.Play("Catching", 0, 0f);
+                    break;
+
+                case HandshakeState.Caught:
+                    if (arb != null && arb.CaughtPullClip != null && _animator.HasState(0, Animator.StringToHash("Caught")))
+                        _animator.Play("Caught", 0, 0f);
+                    else
+                        _animator.Play("Withdraw", 0, 0f);
+                    break;
+
+                case HandshakeState.ContestTriumph:
+                    if (arb != null && arb.TriumphClip != null && _animator.HasState(0, Animator.StringToHash("Triumph")))
+                        _animator.Play("Triumph", 0, 0f);
+                    else
+                        _animator.Play("Withdraw", 0, 0f);
+                    break;
+
+                case HandshakeState.ContestPain:
+                    if (arb != null && arb.PainClip != null && _animator.HasState(0, Animator.StringToHash("Pain")))
+                        _animator.Play("Pain", 0, 0f);
+                    else
+                        _animator.Play("Withdraw", 0, 0f);
+                    break;
+
+                case HandshakeState.ContestTie:
+                    if (arb != null && arb.SlowWithdrawClip != null && _animator.HasState(0, Animator.StringToHash("SlowWithdraw")))
+                        _animator.Play("SlowWithdraw", 0, 0f);
+                    else
+                        _animator.Play("Withdraw", 0, 0f);
+                    break;
+
+                case HandshakeState.EscapedStumble:
+                    if (arb != null && arb.StumbleClip != null && _animator.HasState(0, Animator.StringToHash("Stumble")))
+                        _animator.Play("Stumble", 0, 0f);
+                    else
+                        _animator.Play("Withdraw", 0, 0f);
+                    break;
+
+                case HandshakeState.GraspEmpty:
+                    if (arb != null && arb.GraspEmptyClip != null && _animator.HasState(0, Animator.StringToHash("GraspEmpty")))
+                        _animator.Play("GraspEmpty", 0, 0f);
+                    else
+                        _animator.Play("Withdraw", 0, 0f);
                     break;
             }
         }
@@ -156,21 +218,44 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 case HandshakeState.Angry:
                     targetColor = Color.Lerp(_defaultBodyColor, new Color(1f, 0.25f, 0.25f), 0.6f);
                     break;
+
+                case HandshakeState.Holding:
+                    targetColor = Color.Lerp(_defaultBodyColor, new Color(1f, 0.55f, 0.15f), 0.7f);
+                    break;
+
+                case HandshakeState.Catching:
+                    targetColor = Color.Lerp(_defaultBodyColor, new Color(0.95f, 0.45f, 0.1f), 0.65f);
+                    break;
+
+                case HandshakeState.Caught:
+                    targetColor = Color.Lerp(_defaultBodyColor, new Color(0.95f, 0.25f, 0.25f), 0.75f);
+                    break;
+
+                case HandshakeState.ContestTriumph:
+                    targetColor = Color.Lerp(_defaultBodyColor, new Color(0.2f, 0.95f, 0.3f), 0.8f);
+                    break;
+
+                case HandshakeState.ContestPain:
+                    targetColor = Color.Lerp(_defaultBodyColor, new Color(0.95f, 0.2f, 0.2f), 0.8f);
+                    break;
+
+                case HandshakeState.ContestTie:
+                    targetColor = Color.Lerp(_defaultBodyColor, new Color(0.45f, 0.55f, 0.95f), 0.7f);
+                    break;
+
+                case HandshakeState.EscapedStumble:
+                    targetColor = Color.Lerp(_defaultBodyColor, new Color(0.25f, 0.85f, 0.85f), 0.7f);
+                    break;
+
+                case HandshakeState.GraspEmpty:
+                    targetColor = Color.Lerp(_defaultBodyColor, new Color(0.6f, 0.6f, 0.6f), 0.5f);
+                    break;
             }
 
             if (_instanceMaterial != null)
             {
                 Color current = GetCurrentColor();
                 ApplyColor(Color.Lerp(current, targetColor, 12f * Time.deltaTime));
-            }
-        }
-
-        private void LateUpdate()
-        {
-            if (_preIkWristTransform != null && _contactProxyTransform != null)
-            {
-                _contactProxyTransform.position = _preIkWristTransform.TransformPoint(_fistLocalOffsetInWrist);
-                _contactProxyTransform.rotation = _preIkWristTransform.rotation;
             }
         }
 
@@ -189,13 +274,25 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
             if (_opponent != null && _opponent.RightHandTransform != null)
             {
-                bool oppGripOrShake = (_opponent.State == HandshakeState.Grip || _opponent.State == HandshakeState.Shaking);
-                if ((state == HandshakeState.Grip || state == HandshakeState.Shaking) && oppGripOrShake)
+                bool oppActiveGrip = (_opponent.State == HandshakeState.Grip || _opponent.State == HandshakeState.Shaking || _opponent.State == HandshakeState.Holding);
+                bool myActiveGrip = (state == HandshakeState.Grip || state == HandshakeState.Shaking || state == HandshakeState.Holding);
+
+                if (myActiveGrip && oppActiveGrip)
                 {
                     targetWeight = 0.85f;
                     Vector3 myHand = _preIkWristTransform != null ? _preIkWristTransform.position : _participant.RightHandTransform.position;
                     Vector3 oppHand = _opponent.RightHandTransform.position;
                     _currentIkTarget = Vector3.Lerp(myHand, oppHand, 0.5f);
+                }
+                else if (state == HandshakeState.Caught && _opponent.State == HandshakeState.Catching)
+                {
+                    targetWeight = 0.95f;
+                    _currentIkTarget = _opponent.RightHandTransform.position;
+                }
+                else if (state == HandshakeState.Catching && _opponent.State == HandshakeState.Caught)
+                {
+                    targetWeight = 0.85f;
+                    _currentIkTarget = _opponent.RightHandTransform.position;
                 }
             }
 

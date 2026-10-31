@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 993a9017b39b4417954381b136bdc5f7, type: 3}
+  m_Name: HandshakeSettings
+  _releaseGraceTime: 0.3
+  _contestThreshold: 1
+  _escapeDistanceThreshold: 1.8
+  _prankReactionDuration: 0.6
+  _reactionFallbackDuration: 0.5
+  _caughtWalkSpeed: 2.2
+  _catchingFollowSpeed: 1.2
+  _jumpEscapeDisplacement: 0.6
+  _reachClip: {fileID: 8779831864619793406, guid: 2110e5b1e6b8f434284ad27fea77b4b1, type: 2}
+  _waitClip: {fileID: 8952854439076216105, guid: 827bef51320c4f142a4d56390cf741b1, type: 2}
+  _withdrawClip: {fileID: -6327883441209141040, guid: 00aa645ac5d8a1644a9a6c087d44bd41, type: 2}
+  _gripClip: {fileID: 6561813818055005941, guid: 05699cc6fd156d64bae27408ce5afcc1, type: 2}
+  _shakeClip: {fileID: 6303289161557001744, guid: 45ae0b402cd25004daffa8e0930fec4c, type: 2}
+  _laughClip: {fileID: 0}
+  _angryClip: {fileID: 0}
+  _clapLaughClip: {fileID: 0}
+  _holdClip: {fileID: 0}
+  _triumphClip: {fileID: 0}
+  _painClip: {fileID: 0}
+  _slowWithdrawClip: {fileID: 0}
+  _stumbleClip: {fileID: 0}
+  _graspEmptyClip: {fileID: 0}
+  _caughtPullClip: {fileID: 0}
+  _catchingHoldClip: {fileID: 0}

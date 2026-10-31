@@ -86,6 +86,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
         public bool LocomotionLocked { get; set; }
         public float SpeedOverride { get; set; } = -1f;
         public CombatActionIntent CurrentIntent => _currentIntent;
+        public bool IsGrounded => _controller != null ? _controller.isGrounded : _wasGrounded;
 
         public bool EnableCombatActions
         {
@@ -154,6 +155,20 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             {
                 _controller.radius = radius;
                 _controller.minMoveDistance = 0f;
+            }
+        }
+
+        /// <summary>
+        /// Initiates a vertical jump impulse when grounded.
+        /// </summary>
+        public void Jump()
+        {
+            if (_wasGrounded)
+            {
+                _verticalVelocity = Mathf.Sqrt(2f * _jumpHeight * Mathf.Abs(_gravity));
+                _wasGrounded = false;
+                SetState(CombatState.Jumping);
+                OnCombatLog?.Invoke($"[{_entityId}] 起跳！");
             }
         }
 
@@ -477,12 +492,9 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             {
                 _verticalVelocity = -2f;
 
-                if (intent.Jump && canMove && !_isCrouching && _state != CombatState.Guarding && SpeedOverride < 0f)
+                if (intent.Jump && canMove && !_isCrouching && _state != CombatState.Guarding)
                 {
-                    _verticalVelocity = Mathf.Sqrt(2f * _jumpHeight * Mathf.Abs(_gravity));
-                    _wasGrounded = false;
-                    SetState(CombatState.Jumping);
-                    OnCombatLog?.Invoke($"[{_entityId}] 起跳！");
+                    Jump();
                 }
             }
             else
@@ -540,10 +552,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                     SetState(CombatState.Jumping);
                 }
             }
-        }
-
-        private void OnControllerColliderHit(ControllerColliderHit hit)
-        {
         }
 
         private void SetState(CombatState newState)

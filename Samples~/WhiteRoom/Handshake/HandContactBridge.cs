@@ -57,7 +57,8 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         {
             if (HandCollider is SphereCollider sphere)
             {
-                Collider[] overlaps = Physics.OverlapSphere(transform.position, sphere.radius);
+                float effectiveRadius = sphere.radius * Mathf.Max(transform.lossyScale.x, Mathf.Max(transform.lossyScale.y, transform.lossyScale.z));
+                Collider[] overlaps = Physics.OverlapSphere(transform.position, effectiveRadius);
                 for (int i = 0; i < overlaps.Length; i++)
                 {
                     Collider col = overlaps[i];

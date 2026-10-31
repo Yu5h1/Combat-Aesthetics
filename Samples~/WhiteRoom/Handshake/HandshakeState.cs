@@ -1,7 +1,7 @@
 namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 {
     /// <summary>
-    /// Enumerates the states of the Stage 2b handshake interaction.
+    /// Enumerates the states of the Stage 2b handshake interaction across Batches 1, 2, and 3.
     /// </summary>
     public enum HandshakeState
     {
@@ -13,11 +13,19 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         Withdrawing = 5,
         Laugh = 6,
         Angry = 7,
-        ClapLaugh = 8
+        ClapLaugh = 8,
+        Holding = 9,
+        Catching = 10,
+        Caught = 11,
+        ContestTriumph = 12,
+        ContestPain = 13,
+        ContestTie = 14,
+        EscapedStumble = 15,
+        GraspEmpty = 16
     }
 
     /// <summary>
-    /// Enumerates the arbitrated outcome of a handshake session.
+    /// Enumerates the arbitrated outcome of a handshake session across Batches 1, 2, and 3.
     /// </summary>
     public enum HandshakeOutcome
     {
@@ -25,6 +33,11 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         Cancelled = 1,
         Success = 2,
         Prank = 3,
-        BothWithdraw = 4
+        BothWithdraw = 4,
+        StrengthContestWin = 5,
+        StrengthContestTie = 6,
+        StrengthContestZeroZero = 7,
+        Caught = 8,
+        Escaped = 9
     }
 }

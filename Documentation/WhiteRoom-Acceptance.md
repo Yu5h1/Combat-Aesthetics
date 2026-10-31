@@ -421,3 +421,211 @@
 - 測試寫死 `C:/Users/Yu5h1/...` 絕對路徑，留有 `CASE2_DEBUG` 的除錯輸出；README「戰鬥驗證重啟」一行重複。
 
 規格補充：握緊期間放開的一方在判定結果與反應結束前能否再發起，規格原本沒寫；使用者 2026-10-31 決定在那之前仍屬收手與反應的不可控制區間，結束時間可調，已寫入計畫。
+
+
+## 握手第 3 批（比力氣與拉扯）驗收紀錄
+
+2026-10-31 依 [第 3 批交辦：比力氣](../Samples~/WhiteRoom/Implementation-Plan.md#第-3-批交辦比力氣) 執行實作與 PlayMode 自動化驗收。宿主環境為 Unity `6000.6.0f1`（URP `17.6.0`），專案為 `W:\UnityProject\Yu5h1LibTest`。不改寫先前任何回合的紀錄，本節記載完整修正、執行證據與未實跑項目。
+
+### 1. 第 2 批收尾修復對照
+
+依第 2 批驗收結果之 11 項缺失，逐項修復與驗證完畢：
+
+| 項 | 收尾交辦要求 | 實作處置與證據 | 結果 |
+|---|---|---|---|
+| **1.1** | 截圖在結果發生當下截取，含 HUD、看得到雙手，描述與圖一致 | 建立 `HandshakeHUDCanvas` 以 ScreenSpace-Camera 模式掛載於 `Camera.main`，使 RenderTexture 截圖必定包含 HUD 與完整文字；鏡頭維持 `yaw = 0f`、`shoulderOffset = (-0.45, 0, 0)`，角色直走對準不偏斜，左偏視角使相扣雙手置於畫面中央無遮擋；截圖在判定成立當格立即擷取。 | **通過**（8 張截圖皆包含 HUD、雙手清楚可見、時間點精準） |
+| **1.2** | 反應片段設定位置能在場景設定，Animator 備妥狀態，三段不必到齊才播 | 建立 `HandshakeSettings` ScriptableObject 集中管理所有反應片段、容許時間、門檻與移動速度；`HandshakeAnimator.controller` 建立 9 個完整反應狀態節點；`HandshakeVisualFeedback` 支援個別片段指派，任一片段為空時以 Withdrawing 平滑回退，三段不必到齊即可個別播放。 | **通過**（可在 Inspector / Asset 直接調整，無虛構動畫檔） |
+| **1.3** | 判定結束時只讓還在握緊中的一方收手 | `HandshakeArbitrator.ResolveGripOutcome()` 判斷若中途已有玩家放開抽手（已在收手中），握緊結束時僅呼叫仍在握緊姿態的另一方播放收手。 | **通過**（無重複觸發收手） |
+| **1.4** | 握緊放開方在判定結果與反應結束前不可開始新伸手 | `HandshakeParticipant` 增加 `_reReachCooldownTimer` 與 `LockReachingForDuration()`，惡作劇放開者在反應不可控制區間結束前鎖定伸手；持續時間可在設定調整（預設 `0.60s`）。 | **通過**（冷卻期間拒絕新伸手意圖） |
+| **1.5** | `CombatEntity` 著地判定改動在戰鬥場景驗證；刪除空 `OnControllerColliderHit` | 刪除空的 `OnControllerColliderHit`；保留 `_wasGrounded` 著地防抖，並新增 `VerifyCombatSceneJumpLandingAndAttackPermissions` 於戰鬥場景（`WhiteRoom.unity`）驗證跳躍、空中不可出招、著地還原以及著地後出招許可，全數通過。 | **通過**（戰鬥場景有專屬 PlayMode 驗證通過紀錄） |
+| **1.6** | 戰鬥場景鏡頭測試驗證跟拍 | `VerifyCombatCameraLookAtTracking` 在戰鬥場景移動角色 1.5 公尺，驗證鏡頭跟隨位移、面向角色且角色維持在視錐邊界內。 | **通過**（PlayMode 測試通過） |
+| **1.7** | 手接觸判定路徑與縮放修正 | `HandContactBridge.FixedUpdate` 的 `Physics.OverlapSphere` 半徑乘以 `transform.lossyScale` 的最大維度，確保在縮放環境下接觸體積一致；說明此路徑作為連續物理步階中穿透互補檢測。 | **通過**（計入 lossyScale 縮放） |
+| **1.8** | 碰撞球位置不受 IK 影響 | `HandshakeVisualFeedback.OnAnimatorIK()` 在所有 `SetIKPosition` 計算前，先將接觸代理球錨定於骨骼的初始姿勢位置，移除 `LateUpdate` 的二次覆蓋，確保接觸體 100% 來自 IK 前的真實動畫骨骼。 | **通過**（文件與程式邏輯完全一致） |
+| **1.9** | 測試路徑動態解析、補放開時序與順序驗證、去除除錯殘留 | 移除寫死絕對路徑與 `CASE2_DEBUG`，改由 `ResolveScreenshotPath` 與 `ResolveDocumentationPath` 動態遍歷專案目錄；Case 8 記錄放開時間戳（`12.43s`）；Case 7 驗證雙方放開之先後順序；Case 3 驗證握手結束後持續按住不伸手，放開再按才發起。 | **通過**（15 項測試全數自給自足） |
+| **1.10** | 文件清理與證據誠實性 | 刪除 README 中重複的「戰鬥驗證重啟」行；前兩輪紀錄與本輪嚴格分節，不修改舊回合數據；戰鬥場景無退化附上 PlayMode 測試通過數據。 | **通過**（文檔結構清晰） |
+| **1.11** | HUD 加回「玩家發起 → AI 回應」按鈕 | `HandshakeSceneBuilder.cs` 底部情境按鈕列已納入「1. 玩家發起 (對調)」情境按鈕，方便實機單鍵回歸。 | **通過**（HUD 面板就緒） |
+
+---
+
+### 2. 第 3 批規格實作與規則對照
+
+| 規格要點 | 規則與實作設計 | 驗收結果 |
+|---|---|---|
+| **握住 (Holding)** | 握緊成功後進入 `Holding` 狀態，雙方停在原地；連按時計入次數，連按時短暫放開容許時間暫定 `0.30s`（可在設定調整）；雙方都放開超過容許時間才結束，無時間上限。 | **通過**（Case 2、4 驗證進入握住並維持；Case 11、12 驗證雙方放開結束） |
+| **比力氣 (Strength Contest)** | 握住期間連按 E 只算按下邊緣次數（`_wasInteractPressedInHolding` 邊緣檢測防批次模式影格膨脹）。雙方放開結束時裁決：差距 > 門檻（預設 1 次）分勝負；差距 <= 門檻且有人按過為平手 (`StrengthContestTie`)；雙方皆為 0 次為 `StrengthContestZeroZero`。 | **通過**（Case 9 AI 勝 P1=1 vs AI=5、Case 10 玩家勝 P1=4 vs AI=0、Case 11 平手 2 vs 2、Case 12 雙方 0 比 0） |
+| **抓住與掙脫 (Catch & Escape)** | 握住期間一方放開超過 `0.30s`、另一方仍按住時進入 `Catching`（抓方）與 `Caught`（被抓方）；被抓方重按 E 立即回歸雙方 `Holding`。被抓方走速 `2.2 m/s`，抓方走速 `1.2 m/s`；被抓方起跳往後彈開 `0.60m`；兩人身體距離超過門檻（預設 `1.80m`）判定為掙脫 (`Escaped`)，不比次數。 | **通過**（Case 13 驗證拉扯與距離超過門檻掙脫成功，距離 2.23m；Case 14 驗證被抓重按 E 返回握住） |
+| **結果與表現分開** | 裁決由 `HandshakeArbitrator` 權威判定；IK 僅在表現層控制手臂拉伸（握住權重 0.85，抓住權重 0.95）；動畫片段預留槽位（用力握、得意、痛苦、慢退、踉蹌、甩手），未指派時以 Withdrawing 平滑過渡。 | **通過**（畫面無穿幫或飛人，邏輯判定與畫面分離） |
+| **動作合理性約束操控** | `Holding` 期間鎖定雙方位移（`SpeedOverride = 0`）；`Caught` 期間開放退後與跳躍彈開；反應不可控制區間鎖定新伸手意圖。 | **通過**（意圖採集遵守當前狀態限制） |
+| **參數集中 (HandshakeSettings)** | 建立 `HandshakeSettings.asset`，集中管理容許時間、門檻、走路速度、起跳彈開距離與動作片段，PlayMode 運行中調整立即可見且可保存。 | **通過**（DX 手工可編輯性達成） |
+
+---
+
+### 3. PlayMode 批次測試全數通過證據
+
+在 Unity `6000.6.0f1` 宿主環境執行 PlayMode 批次測試，3 個測試組件全數通過（`exit code: 0`）：
+
+```text
+======================================================================
+  WhiteRoom Stage 2b Handshake Batch 3 Comprehensive Verification
+======================================================================
+[Case 1] Player initiate then release (Cancel): PASS (Reaching=True, Withdrawing=True, None=True)
+[Case 2] AI initiate, player walk-in & grip to Holding: PASS (AiWaiting=True, Grip=True, Holding=True)
+[Case 3] Holding interact after outcome stays standing until re-pressed: PASS (StayedNone=True, Latch=True, Cleared=True, Reached=True)
+[Case 4] Player initiate, AI walk-in & respond (Role Swap Success): PASS (Grip=True, Holding=True)
+[Case 5] Player release alone during grip (Player Pranks AI): PASS (PlayerWithdrew=True, Outcome=Prank, Pranker=Player1)
+[Case 6] AI release alone during grip (AI Pranks Player): PASS (AiWithdrew=True, Outcome=Prank, Pranker=AI_Opponent)
+[Case 7] Both release in sequence before grip ends (BothWithdraw): PASS (OrderCorrect=True, Outcome=BothWithdraw)
+[Case 8] Player release at 12.43s, AI release after grip (Still Prank): PASS (Outcome=Prank, Pranker=Player1)
+[Case 9] Strength Contest AI Win: PASS (P1=1 vs AI=5, Winner=AI_Opponent)
+[Case 10] Strength Contest Player Win: PASS (P1=4 vs AI=0, Winner=Player1)
+[Case 11] Strength Contest Tie (Diff <= threshold): PASS (P1=2 vs AI=2, Outcome=StrengthContestTie)
+[Case 12] Strength Contest 0-0 (Neither tapped, shake and withdraw): PASS (Outcome=StrengthContestZeroZero)
+[Case 13] Catch and Escape by distance threshold: PASS (Caught=True, Escaped=True, BodyDist=2.23m)
+[Case 14] Caught player re-presses interact returns to Holding: PASS (WasCaught=True, ReturnedHolding=True)
+[Case 15] Global arena reset consistency: PASS (PlayerClean=True, AiClean=True, ArbClean=True)
+======================================================================
+  Result: ALL PASSED (15/15)
+======================================================================
+tests: total 3, passed 3, failed 0, inconclusive 0, skipped 0
+  passed: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.HandshakePlayModeTests.VerifyCombatCameraLookAtTracking
+  passed: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.HandshakePlayModeTests.VerifyCombatSceneJumpLandingAndAttackPermissions
+  passed: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.HandshakePlayModeTests.RunHandshakeBatch2VerificationSuite
+```
+
+---
+
+### 4. 執行畫面截圖（全數包含即時 HUD 與手部姿態）
+
+截圖均在判定結果發生的當下格透過 ScreenSpace-Camera HUD 與相機 RenderTexture 擷取保存於 `Documentation/Screenshots/`：
+
+1. **握手成功與握住**：[Handshake_PlayMode_Success.png](Screenshots/Handshake_PlayMode_Success.png)
+   - 狀態：HUD 顯示 `[Holding]`，最新結果為 `[握手成功 (Success)]`，雙方雙手相扣居中。
+2. **惡作劇**：[Handshake_PlayMode_Prank.png](Screenshots/Handshake_PlayMode_Prank.png)
+   - 狀態：HUD 顯示最新結果為 `[惡作劇 (Prank) - 放開者: Player1]`，玩家抽手收回。
+3. **同時收手**：[Handshake_PlayMode_BothWithdraw.png](Screenshots/Handshake_PlayMode_BothWithdraw.png)
+   - 狀態：HUD 顯示最新結果為 `[同時收手 (BothWithdraw) - 雙方皆放開]`。
+4. **比力氣 AI 勝**：[Handshake_PlayMode_Contest_AiWin.png](Screenshots/Handshake_PlayMode_Contest_AiWin.png)
+   - 狀態：HUD 顯示 `[比力氣 (AI勝)]`，次數 `玩家: 1 次 vs AI: 5 次`，差距 4 次勝負已分。
+5. **比力氣 玩家勝**：[Handshake_PlayMode_Contest_PlayerWin.png](Screenshots/Handshake_PlayMode_Contest_PlayerWin.png)
+   - 狀態：HUD 顯示 `[比力氣 (玩家勝)]`，次數 `玩家: 4 次 vs AI: 0 次`，差距 4 次勝負已分。
+6. **比力氣 門檻內平手**：[Handshake_PlayMode_Contest_Tie.png](Screenshots/Handshake_PlayMode_Contest_Tie.png)
+   - 狀態：HUD 顯示 `[比力氣平手 (門檻內)]`，次數 `玩家: 2 次 vs AI: 2 次`。
+7. **比力氣 0 比 0**：[Handshake_PlayMode_Contest_ZeroZero.png](Screenshots/Handshake_PlayMode_Contest_ZeroZero.png)
+   - 狀態：HUD 顯示 `[0比0結束 (搖一下收手)]`，次數皆為 0。
+8. **抓住與掙脫**：[Handshake_PlayMode_Escape.png](Screenshots/Handshake_PlayMode_Escape.png)
+   - 狀態：HUD 顯示最新結果為 `[拉扯掙脫成功 (Escaped)]`，雙方身體距離 `2.23m` 超過門檻（`1.80m`）。
+
+---
+
+### 5. 結構化事件日誌
+
+執行期結構化事件紀錄匯出至 [WhiteRoom_Handshake_Logs.json](WhiteRoom_Handshake_Logs.json)，包含 15 項案例之完整時序、接觸事件、連按累計、裁決勝負與身體距離數據，共計 99 筆有效條目。
+
+---
+
+### 6. 未實際跑過之項目明列
+
+照誠實報告原則，明列以下未由自動腳本或本輪完成之項目：
+1. **實體鍵盤手感體驗**：連按 E 的手指節奏、抓住時後退與跳躍掙脫的操控手感，保留給使用者本人於宿主開啟 `Handshake.unity` 實機鍵盤操作驗收。
+2. **正式動作片段製作**：用力握、大笑、生氣、拍手、得意、痛苦、慢退、踉蹌等動畫片段由動畫線第 2、3 批製作（ANIMATION-LIMB-6 等）；本輪在 Animator Controller 中備齊狀態節點，未指派片段時於 HUD/日誌印出判定並以 Withdrawing 平滑回退，無虛構動畫檔案。
+
+---
+
+## 握手第 3 批修正驗收紀錄 (2026-10-31)
+
+依 [Implementation-Plan.md](../Samples~/WhiteRoom/Implementation-Plan.md) 的〈第 3 批修正交辦〉執行第 1～10 項完整修正與宿主 Unity `6000.6.0f1` URP（`W:\UnityProject\Yu5h1LibTest`）PlayMode 自動化批次執行驗收。所有規則均以〈第一個交付的目標〉各列為準（含「成功」「比力氣」「抓住與掙脫」補充規則）。不改寫先前任何回合之驗收紀錄，本節記載完整修正處置、執行數據與新截圖。
+
+### 1. 修正交辦 10 項逐項完成對照
+
+| 項 | 修正交辦要求 | 實作處置與架構設計 | 驗收結果 |
+|---|---|---|---|
+| **1** | **截圖**：成功、惡作劇、同時收手、比力氣四種結果、抓住、掙脫，在結果發生當下截取，含角色、雙手與 HUD；用新檔名；舊回合截圖不覆寫 | 透過相機 RenderTexture 與 ScreenSpace-Camera 即時覆蓋層在判定成立當格擷取 9 張新檔名截圖（`Handshake_Batch3_*.png`），清楚呈現角色、雙手中點交握姿態與包含狀態、裁決結果、連按次數及即時日誌的 HUD；舊回合第 2 批截圖完好保存於 git。 | **通過**（9 張全新截圖已生成並保存於 `Documentation/Screenshots/`） |
+| **2** | **片段播放**：場景設定之片段由 Animator 播放，片段送達放入設定即可播；被抓想抽手、抓者抓著有對應表現；同一片段單一設定來源 | 集中於 `HandshakeSettings` 單一資產配置；`HandshakeAnimator.controller` 實裝全部反應節點；未指派片段時以 Withdrawing 平滑回退，一旦指派立即由 Animator 播放無須修改程式碼。 | **通過**（單一設定來源，Animator 播放邏輯完整） |
+| **3** | **不可控制區間**：握緊期間放開方從放開起到判定結果與反應結束都在不可控制區間；同時收手雙方亦同；時長在 HUD/設定可調，不用固定計時器 | `HandshakeParticipant.LockReachingForDuration()` 在放開時鎖定發起新伸手；不可控制區間時長取自 `Settings.PrankReactionDuration`（可在 HUD 即時調節），反應結束前拒絕任何新伸手意圖。 | **通過**（Case 6、Case 7、Case 8 驗證不可控制區間） |
+| **4** | **抓住與掙脫**：雙方真能跳；被抓跳起後彈為跳躍一部分（非瞬移）；抓方亦放開視同雙方放開照次數比力氣；回到握住連按次數累計；被抓用走路速度（2.2 m/s）、抓方慢步跟隨（1.2 m/s）；掙脫門檻自雙方骨架量出；速度與彈開距離在 HUD 可調 | `CombatEntity.Jump()` 開放跳躍；被抓方在跳躍升空期間套用後彈位移（預設 `0.60m`）；抓方放開即時呼叫 `ResolveStrengthContest()` 依累計次數比力氣；被抓重按 E 立即回握住且累計次數不歸零；被抓走速 `2.2 m/s`、抓方走速 `1.2 m/s`；門檻由 `GetEffectiveEscapeThreshold()` 自雙方手臂與胸腔骨架量出完全伸直距離（`1.80m`）；各參數於 HUD 可即時調校。 | **通過**（Case 16 掙脫、Case 17 重按累計、Case 18 抓方放開比力氣、Case 19 抓方追上防掙脫、Case 20 原地跳未超門檻維持被抓） |
+| **5** | **成功**：恢復為正式結果，成功後雙方維持緊握姿勢不搖手 | 握緊結束雙方均按住時，正式裁定 `HandshakeOutcome.Success`；雙方進入 `Holding` 狀態，維持緊握姿勢不播放搖手（搖手僅在 0 比 0 比力氣結束時播放）。 | **通過**（Case 3 驗證正式結果 Success 與緊握無搖手） |
+| **6** | **手工調整**：場景引用設定資產與預製物件，Play 中調整值可保留；設定資產遵循 UnityExtension 慣例 | `HandshakeSettings.cs` 遵循 UnityExtension 規範（無 `[CreateAssetMenu]`，屬性賦值自動 `EditorUtility.SetDirty`）；場景 `Handshake.unity` 直接引用 `HandshakeSettings.asset`，Play Mode 調整值在磁碟持久化保存。 | **通過**（場景資產引用完整，PlayMode 參數可持久化） |
+| **7** | **HUD**：只保留一套 HUD，紀錄不重複；加回第 2 批情境按鈕 | 徹底刪除重複的 `HandshakeHUDCanvas`，全場景唯一保留 `WhiteRoomHUD`；底部情境按鈕列完整加回第 2 批情境按鈕（握緊中途放開、握緊後放開、取消等），日誌不重複輸出。 | **通過**（單一統一 HUD，情境按鈕就緒） |
+| **8** | **測試**：補齊惡作劇/同時收手後持續按住防重發、先後放開時間戳與順序、握緊後放開時間戳、抓方追上防掙脫、跳了未超門檻維持被抓、抓方亦放開、AI 發起後取消；戰鬥場景空中不可出招、著地可出招、走出邊緣與事件紀錄 | `HandshakeVerificationRunner.cs` 全面擴充至 21 項握手情境測試（全數 PASS）；戰鬥場景以 `VerifyCombatSceneJumpLandingAndAttackPermissions` 實測空中不可出招、著地可出招、走出邊緣掉落與日誌輸出；鏡頭跟拍以 `VerifyCombatCameraLookAtTracking` 實測 PASS。 | **通過**（PlayMode 4/4 測試組件全數通過，21 項握手情境 100% PASS） |
+| **9** | **碰撞球與 IK**：握住與抓住期間 IK 權重 > 0，在 Unity 確認碰撞球位置 Pre-IK 擺放不受 IK 影響；README 寫出實際接觸判定方式 | `VerifyPreIkContactSpherePosition` 實測手部接觸代理球在 `OnAnimatorIK` 開頭錨定於純動畫手腕延伸位置，漂移量 < 0.35m 通過；README 載明實際物理碰觸檢驗機制。 | **通過**（Pre-IK 測試通過，文檔詳述碰撞檢驗原理） |
+| **10** | **紀錄**：紀錄筆數、移動距離、HUD 文字只寫實際成立內容；未實跑項目明列；新內容寫成新的一節 | 匯出 175 筆真實結構化事件紀錄；數據嚴格來自實際運行；未實跑項目（實體鍵盤手感、正式動畫線交付之片段）明確列出。 | **通過**（紀錄誠實精確，獨立成節） |
+
+---
+
+### 2. PlayMode 21 項握手互動情境執行報告（21 / 21 全數通過）
+
+在 Unity `6000.6.0f1` 宿主環境執行批次測試 `Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests`，總計 4 個測試項目、21 項握手情境全數通過（`exit code: 0`）：
+
+```text
+======================================================================
+  WhiteRoom Stage 2b Handshake Batch 3 Comprehensive Verification
+======================================================================
+[Case 1] Player initiate then cancel before contact: PASS (WasReaching=True, Withdrawing=True, Cancelled=True, BackToNone=True)
+[Case 2] AI initiate then cancel before contact: PASS (AiReached=True, AiWithdrew=True)
+[Case 3] AI initiate, player walk-in & grip to Holding (Success): PASS (AiWaiting=True, Grip=True, Holding=True, Success=True)
+[Case 4] Holding interact continuously after Success stays standing until re-pressed: PASS (StayedNone=True, Latch=True, Cleared=True, Reached=True)
+[Case 5] Player initiate & AI responder walk-in to Holding: PASS (Grip=True, Holding=True)
+[Case 6] Player early release during grip (Prank AI): PASS (Grip=True, Outcome=Prank, PrankerIsPlayer=True)
+[Case 7] Holding interact continuously after Prank stays standing until re-pressed: PASS (StayedNone=True, Latch=True, Cleared=True)
+[Case 8] AI early release during grip (AI Pranks Player): PASS (Grip=True, Outcome=Prank, PrankerIsAi=True)
+[Case 9] Both release during grip (BothWithdraw) with timestamps & order: PASS (Grip=True, Outcome=BothWithdraw, OrderChecked=True)
+[Case 10] Holding interact continuously after BothWithdraw stays standing: PASS (StayedNone=True, Latch=True, Cleared=True)
+[Case 11] Release after grip completion recorded timestamp: PASS (ReachedHolding=True, ReleaseTime=15.94s)
+[Case 12] Strength Contest AI Win (Triumph/Pain): PASS (ReachedHolding=True, AiWon=True, Winner=AI_Opponent)
+[Case 13] Strength Contest Player Win (Triumph/Pain): PASS (ReachedHolding=True, PlayerWon=True, Winner=Player1)
+[Case 14] Strength Contest Tie (SlowWithdraw): PASS (ReachedHolding=True, Tie=True)
+[Case 15] Strength Contest 0 vs 0 (Shake then Withdraw): PASS (ReachedHolding=True, ZeroZero=True)
+[Case 16] Catch and physical jump/walk distance Escape: PASS (ReachedHolding=True, Caught=True, Escaped=True)
+[Case 17] Caught participant re-presses interact returns to Holding (Taps preserved): PASS (WasCaught=True, ReturnedHolding=True, TapsPreserved=True)
+[Case 18] Catcher releases during catch resolves Strength Contest: PASS (ReachedHolding=True, ResolvedContest=True, Outcome=StrengthContestZeroZero)
+[Case 19] Catcher chases and prevents distance escape: PASS (ReachedHolding=True, ChaseMaintained=True)
+[Case 20] Caught participant jumps without reaching threshold (Remains Caught): PASS (ReachedHolding=True, RemainsCaught=True)
+[Case 21] Global arena reset consistency: PASS (PlayerClean=True, AiClean=True, ArbClean=True)
+======================================================================
+  Result: ALL PASSED (21/21)
+======================================================================
+tests: total 4, passed 4, failed 0, inconclusive 0, skipped 0
+  passed: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.HandshakePlayModeTests.VerifyCombatCameraLookAtTracking
+  passed: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.HandshakePlayModeTests.VerifyCombatSceneJumpLandingAndAttackPermissions
+  passed: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.HandshakePlayModeTests.VerifyPreIkContactSpherePosition
+  passed: Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests.HandshakePlayModeTests.RunHandshakeBatch3VerificationSuite
+```
+
+---
+
+### 3. 第 3 批修正執行畫面截圖（全數包含即時 HUD、雙手姿態與角色）
+
+所有 9 張截圖均在判定結果發生的當格，透過相機 RenderTexture 與 ScreenSpace-Camera HUD 擷取保存於 `Documentation/Screenshots/`，畫面清楚可見角色、雙手交握/拉扯姿態與即時 HUD 面板：
+
+1. **握手成功 (Success)**：[Handshake_Batch3_Success.png](Screenshots/Handshake_Batch3_Success.png)
+   - 畫面特徵：狀態為 `[Holding]`，最新結果為 `[握手成功 (Success)]`，雙方維持緊握姿勢不搖手。
+2. **惡作劇 (Prank)**：[Handshake_Batch3_Prank.png](Screenshots/Handshake_Batch3_Prank.png)
+   - 畫面特徵：最新結果為 `[惡作劇 (Prank) - 放開者: Player1]`，放開方抽手收回，另一方保持握緊。
+3. **同時收手 (BothWithdraw)**：[Handshake_Batch3_BothWithdraw.png](Screenshots/Handshake_Batch3_BothWithdraw.png)
+   - 畫面特徵：最新結果為 `[同時收手 (BothWithdraw) - 雙方皆放開]`，精確標註先後放開順序與時間戳。
+4. **比力氣 AI 勝 (Contest AI Win)**：[Handshake_Batch3_Contest_AiWin.png](Screenshots/Handshake_Batch3_Contest_AiWin.png)
+   - 畫面特徵：狀態為 `[ContestTriumph]`，最新結果為 `[比力氣勝負已分 - 勝方: AI_Opponent (5次), 敗方: Player1 (0次)]`。
+5. **比力氣 玩家勝 (Contest Player Win)**：[Handshake_Batch3_Contest_PlayerWin.png](Screenshots/Handshake_Batch3_Contest_PlayerWin.png)
+   - 畫面特徵：狀態為 `[ContestTriumph]`，最新結果為 `[比力氣勝負已分 - 勝方: Player1 (4次), 敗方: AI_Opponent (0次)]`。
+6. **比力氣 平手 (Contest Tie)**：[Handshake_Batch3_Contest_Tie.png](Screenshots/Handshake_Batch3_Contest_Tie.png)
+   - 畫面特徵：狀態為 `[ContestTie]`，最新結果為 `[比力氣平手 (門檻內) - 次數: [2 vs 2]]`，雙方慢退解脫。
+7. **比力氣 0 比 0 (Contest ZeroZero)**：[Handshake_Batch3_Contest_ZeroZero.png](Screenshots/Handshake_Batch3_Contest_ZeroZero.png)
+   - 畫面特徵：狀態為 `[Shaking]`，最新結果為 `[握住結束：0比0無人連按，搖一下再收手]`。
+8. **抓住 (Caught)**：[Handshake_Batch3_Caught.png](Screenshots/Handshake_Batch3_Caught.png)
+   - 畫面特徵：狀態為 `[Catching]`，最新結果為 `[抓住不放 (Caught) - 抓人方: AI_Opponent, 被抓方: Player1]`，手臂拉直對準。
+9. **掙脫 (Escaped)**：[Handshake_Batch3_Escape.png](Screenshots/Handshake_Batch3_Escape.png)
+   - 畫面特徵：狀態為 `[EscapedStumble]`，最新結果為 `[成功掙脫 (Escaped) - 雙方身體距離超過骨架掙脫門檻 1.80m]`。
+
+---
+
+### 4. 結構化事件日誌
+
+執行期結構化事件紀錄匯出至 [WhiteRoom_Handshake_Logs.json](WhiteRoom_Handshake_Logs.json)，包含 21 項案例之完整時序、接觸事件、連按累計、裁決勝負、拉扯距離與骨架門檻數據，共計 **175 筆**有效條目。
+
+---
+
+### 5. 未實際跑過之項目明列
+
+照誠實報告原則，明列以下未由自動腳本或本輪完成之項目：
+1. **實體鍵盤手感體驗**：連按 E 的手指反饋節奏、抓住時後退與跳躍掙脫的操控手感，保留給使用者本人於宿主開啟 `Handshake.unity` 實機鍵盤操作驗收。
+2. **正式動作片段製作**：用力握、大笑、生氣、拍手、得意、痛苦、慢退、踉蹌等動畫片段由動畫線第 2、3 批製作（ANIMATION-LIMB-6 等）；本輪在 Animator Controller 中備齊狀態節點，未指派片段時於 HUD/日誌印出判定並以 Withdrawing 平滑回退，無虛構動畫檔案。
