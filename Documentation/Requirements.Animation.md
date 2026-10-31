@@ -1,12 +1,12 @@
 # Combat Aesthetics 對 Animation 的需求
 
-目標：data-driven/animation（動畫線，[握手動作片段](../../../data-driven/animation/Documentation/Handshake-Clips.md)）。提出端：Combat-Aesthetics 的 WhiteRoom Sample。接用方式：動畫線以動畫編輯器製作握手片段，經角色建造器匯出動作 GLB，再由 UnityExtension 的人形匯入器（LIMB-ANIM-1）轉成人形片段給 WhiteRoom 播放；互動規則由 [WhiteRoom 計畫〈第一個交付的目標〉](../Samples~/WhiteRoom/Implementation-Plan.md#第一個交付的目標) 擁有。提出日期：2026-10-31。未結需求：3。
+目標：data-driven/animation（動畫線，[握手動作片段](../../../data-driven/animation/Documentation/Handshake-Clips.md)）。提出端：Combat-Aesthetics 的 WhiteRoom Sample。接用方式：動畫線以動畫編輯器製作握手片段，經角色建造器匯出動作 GLB，再由 UnityExtension 的人形匯入器（LIMB-ANIM-1）轉成人形片段給 WhiteRoom 播放；互動規則由 [WhiteRoom 計畫〈第一個交付的目標〉](../Samples~/WhiteRoom/Implementation-Plan.md#第一個交付的目標) 擁有。提出日期：2026-10-31。未結需求：2。
 
 ## 比力氣的拚力後慢退（COMBAT-ANIMATION-1）
 
 | 欄位 | 內容 |
 |---|---|
-| Status | Outstanding，提出 2026-10-31。 |
+| Status | Outstanding，提出 2026-10-31。2026-10-31 驗收交付（data-driven `c51cee3`、AnimationEditor `d7bbf16`）：第 1 項通過，清單第 3 批列出「拚力後慢退」約 1.5 秒（`slow-withdraw.anim.json` 45 影格），起點和用力握相同、結束和收手起點相同（`handshake.test.mjs` 銜接測試通過）。第 2 項未通過：片段以沒有手指的角色製作，「慢慢鬆開」只靠 `fist_r` 的縮放表現，人形匯入只寫肌肉姿勢、不帶骨骼縮放，到 WhiteRoom 會消失，也不符合清單「角色要有手指」的製作規則。待動畫線在有手指的角色（ANIMATION-LIMB-6）提交後，以手指重做這段的放鬆。 |
 | Requirement | 握手片段第 3 批加一段「拚力後慢退」：比力氣的次數差距在門檻內且有人按過時，雙方從用力握的姿勢慢慢鬆開、退開，再接收手，表現用力後的解脫。 |
 | Evidence | 使用者 2026-10-31 定下比力氣的規則（WhiteRoom 計畫〈第一個交付的目標〉的「比力氣」列）：每次握緊成功都進入握住，還有一方按著就持續、雙方都放開才結束，期間只算按下次數；差距超過門檻時少的一方痛苦、多的一方得意；差距在門檻內且有人按過時拚力後慢退再收手；0 比 0 時搖一下再收手。目前片段清單第 3 批只有用力握、痛苦、得意。 |
 | Acceptance | 1. 片段清單第 3 批列出這段，長度依製作規則訂定，從用力握接上，結束的姿勢能接收手。2. 片段做出後，可經人形匯入給 WhiteRoom 使用。 |
@@ -17,7 +17,7 @@
 
 | 欄位 | 內容 |
 |---|---|
-| Status | Outstanding，提出 2026-10-31。 |
+| Status | Implemented，2026-10-31（data-driven `c51cee3`）。提出 2026-10-31。依據：片段清單「大笑」的用途改為「惡作劇時放開的一方」，與 WhiteRoom 計畫「惡作劇」列一致；片段未改。 |
 | Requirement | 片段清單中「大笑」的用途由「惡作劇的發起方」改為「惡作劇時放開的一方」。 |
 | Evidence | 使用者 2026-10-31 決定惡作劇不分發起方或回應方，誰單獨放開就是誰惡作劇（WhiteRoom 計畫〈第一個交付的目標〉的「惡作劇」列）；片段清單仍寫「惡作劇的發起方」。 |
 | Acceptance | 片段清單「大笑」的用途欄與新規則一致；片段本身不用改。 |
@@ -28,7 +28,7 @@
 
 | 欄位 | 內容 |
 |---|---|
-| Status | Outstanding，提出 2026-10-31。 |
+| Status | Outstanding，提出 2026-10-31。2026-10-31 驗收交付（data-driven `c51cee3`、AnimationEditor `d7bbf16`）：第 1 項通過，清單第 3 批列出想抽手（1 秒循環，`caught` 30 影格）、掙脫（約 1 秒，`stumble` 30 影格）、抓空（約 1 秒，`grasp-empty` 30 影格），掙脫與抓空結束和收手起點相同（銜接測試通過）。第 2 項通過：`caught` 只有身體與手臂軌道，沒有手的接觸約束；清單製作規則也寫明手由執行時 IK 處理。第 3 項未通過：片段以沒有手指的角色製作，「抓空」的抓手只靠 `fist_r` 的縮放表現，人形匯入不帶骨骼縮放，到 WhiteRoom 會消失，也不符合清單「角色要有手指」的製作規則。待動畫線在有手指的角色（ANIMATION-LIMB-6）提交後，以手指重做抓空。 |
 | Requirement | 握手片段第 3 批加三段：「想抽手」（循環，被抓住的一方身體往後拉、想把手抽回）、「掙脫」（掙脫的一方往後踉蹌、甩甩手，結束能接收手）、「抓空」（抓的一方手抓空，結束能接收手）。 |
 | Evidence | 使用者 2026-10-31 定下抓住與掙脫的規則（WhiteRoom 計畫〈第一個交付的目標〉的「抓住與掙脫」列）：握住期間一方放開、另一方還按著，就是抓住不放；被抓住期間雙方都能慢步移動，身體拉開超過門檻就掙脫；掙脫的一方往後踉蹌、甩甩手，抓的一方抓空，再各自收手。目前片段清單沒有這三段。 |
 | Acceptance | 1. 片段清單第 3 批列出這三段，長度依製作規則訂定。2. 「想抽手」只做身體，手的位置由 WhiteRoom 在執行時以人形 IK 黏在對方手上，片段不必對準對方的手。3. 片段做出後，可經人形匯入給 WhiteRoom 使用。 |
