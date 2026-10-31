@@ -13,7 +13,8 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         AiInitiator = 1,
         AiResponder = 2,
         AiCancel = 3,
-        AiEarlyRelease = 4
+        AiEarlyRelease = 4,
+        AiReleaseAfterGrip = 5
     }
 
     /// <summary>
@@ -30,7 +31,8 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         [SerializeField] private float _reachDelay = 0.6f;
         [SerializeField] private float _holdDuration = -1f;
         [SerializeField] private float _cancelHoldDuration = 1.2f;
-        [SerializeField] private float _earlyReleaseGripTime = 0.15f;
+        [SerializeField] private float _earlyReleaseGripTime = 0.18f;
+        [SerializeField] private float _releaseAfterGripDelay = 0.15f;
         [SerializeField] private bool _walkIn = false;
         [SerializeField] private float _stopDistance = 0.78f;
 
@@ -40,6 +42,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         private float _timer = 0f;
         private float _holdTimer = 0f;
         private float _gripTimer = 0f;
+        private float _postGripTimer = 0f;
         private bool _isHoldingInteract = false;
         private bool _hasCompletedHoldCycle = false;
 
@@ -56,6 +59,9 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
         public float ReachDelay { get => _reachDelay; set => _reachDelay = value; }
         public float HoldDuration { get => _holdDuration; set => _holdDuration = value; }
+        public float CancelHoldDuration { get => _cancelHoldDuration; set => _cancelHoldDuration = value; }
+        public float EarlyReleaseGripTime { get => _earlyReleaseGripTime; set => _earlyReleaseGripTime = value; }
+        public float ReleaseAfterGripDelay { get => _releaseAfterGripDelay; set => _releaseAfterGripDelay = value; }
         public bool WalkIn { get => _walkIn; set => _walkIn = value; }
         public float StopDistance { get => _stopDistance; set => _stopDistance = value; }
 
@@ -127,6 +133,11 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                     break;
 
                 case HandshakeAiMode.AiEarlyRelease:
+                    _holdDuration = -1f;
+                    _walkIn = false;
+                    break;
+
+                case HandshakeAiMode.AiReleaseAfterGrip:
                     _holdDuration = -1f;
                     _walkIn = false;
                     break;
@@ -216,6 +227,22 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                     _gripTimer = 0f;
                 }
             }
+            else if (_mode == HandshakeAiMode.AiReleaseAfterGrip)
+            {
+                if (_participant.State == HandshakeState.Grip)
+                {
+                    _gripTimer += Time.deltaTime;
+                }
+                else if (_gripTimer > 0f)
+                {
+                    _postGripTimer += Time.deltaTime;
+                    if (_postGripTimer >= _releaseAfterGripDelay)
+                    {
+                        _isHoldingInteract = false;
+                        _hasCompletedHoldCycle = true;
+                    }
+                }
+            }
 
             if (_walkIn && _isHoldingInteract && distance > _stopDistance &&
                 (_participant.State == HandshakeState.Reaching || _participant.State == HandshakeState.Waiting))
@@ -238,6 +265,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             _timer = 0f;
             _holdTimer = 0f;
             _gripTimer = 0f;
+            _postGripTimer = 0f;
             _isHoldingInteract = false;
             _hasCompletedHoldCycle = false;
         }

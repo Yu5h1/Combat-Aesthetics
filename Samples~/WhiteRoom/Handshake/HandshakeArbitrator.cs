@@ -31,9 +31,18 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         [SerializeField] private AnimationClip _gripClip;
         [SerializeField] private AnimationClip _shakeClip;
 
+        [Header("Batch 2 Reaction Humanoid Animation Clips")]
+        [SerializeField] private AnimationClip _laughClip;
+        [SerializeField] private AnimationClip _angryClip;
+        [SerializeField] private AnimationClip _clapLaughClip;
+
         private readonly List<HandshakeParticipant> _participants = new List<HandshakeParticipant>();
         private HandshakeParticipant _participantA;
         private HandshakeParticipant _participantB;
+        private bool _participantAReleasedDuringGrip = false;
+        private bool _participantBReleasedDuringGrip = false;
+        private HandshakeParticipant _lastPranker;
+        private HandshakeParticipant _lastPranked;
 
         private HandshakeState _sessionState = HandshakeState.None;
         private float _sessionTimer = 0f;
@@ -43,6 +52,14 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         public HandshakeOutcome LastOutcome => _lastOutcome;
         public HandshakeParticipant ParticipantA => _participantA;
         public HandshakeParticipant ParticipantB => _participantB;
+        public HandshakeParticipant LastPranker => _lastPranker;
+        public HandshakeParticipant LastPranked => _lastPranked;
+        public bool ParticipantAReleasedDuringGrip => _participantAReleasedDuringGrip;
+        public bool ParticipantBReleasedDuringGrip => _participantBReleasedDuringGrip;
+
+        public AnimationClip LaughClip => _laughClip;
+        public AnimationClip AngryClip => _angryClip;
+        public AnimationClip ClapLaughClip => _clapLaughClip;
 
         public float GripDuration => _gripClip != null ? _gripClip.length : 0f;
         public float ShakeDuration => _shakeClip != null ? _shakeClip.length : 0f;
@@ -92,6 +109,16 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             {
                 ApplyClipDurationsToParticipant(p);
             }
+        }
+
+        /// <summary>
+        /// Configures the optional Batch 2 reaction humanoid animation clips (laugh, angry, clap-laugh).
+        /// </summary>
+        public void ConfigureBatch2Clips(AnimationClip laugh, AnimationClip angry, AnimationClip clapLaugh)
+        {
+            _laughClip = laugh;
+            _angryClip = angry;
+            _clapLaughClip = clapLaugh;
         }
 
         private void ApplyClipDurationsToParticipant(HandshakeParticipant participant)
@@ -165,6 +192,10 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             {
                 UpdateShakingState();
             }
+            else if (_sessionState == HandshakeState.Laugh || _sessionState == HandshakeState.ClapLaugh)
+            {
+                UpdateReactionState();
+            }
         }
 
         private void TryInitiateGrip(HandshakeParticipant p1, HandshakeParticipant p2)
@@ -179,6 +210,10 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
             _participantA = p1;
             _participantB = p2;
+            _participantAReleasedDuringGrip = false;
+            _participantBReleasedDuringGrip = false;
+            _lastPranker = null;
+            _lastPranked = null;
 
             float gripLen = _gripClip.length;
             _sessionState = HandshakeState.Grip;
@@ -202,25 +237,37 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             bool bHolding = _participantB.CurrentIntent.InteractHold;
             float withdrawLen = _withdrawClip != null ? _withdrawClip.length : 0.50f;
 
-            if (!aHolding || !bHolding)
+            if (!aHolding && !_participantAReleasedDuringGrip)
             {
-                _lastOutcome = HandshakeOutcome.EarlyReleaseDuringGrip;
-                string who = !aHolding && !bHolding ? "雙方" : (!aHolding ? _participantA.EntityId : _participantB.EntityId);
-                EmitArbitrationLog($"[握手判定] 握緊期間【{who}】放開互動（第 2 批的情況），雙方直接收手（{withdrawLen:F2}s）。");
-
+                _participantAReleasedDuringGrip = true;
                 _participantA.SetState(HandshakeState.Withdrawing, withdrawLen);
-                _participantB.SetState(HandshakeState.Withdrawing, withdrawLen);
+                EmitArbitrationLog($"[握手判定] [{_participantA.EntityId}] 於握緊期間放開互動鍵！先行抽回收手（{withdrawLen:F2}s），持續判定至握緊結束。");
+            }
 
-                _sessionState = HandshakeState.None;
-                OnHandshakeFinished?.Invoke(_lastOutcome);
-                return;
+            if (!bHolding && !_participantBReleasedDuringGrip)
+            {
+                _participantBReleasedDuringGrip = true;
+                _participantB.SetState(HandshakeState.Withdrawing, withdrawLen);
+                EmitArbitrationLog($"[握手判定] [{_participantB.EntityId}] 於握緊期間放開互動鍵！先行抽回收手（{withdrawLen:F2}s），持續判定至握緊結束。");
             }
 
             _sessionTimer -= Time.deltaTime;
             if (_sessionTimer <= 0f)
             {
+                ResolveGripOutcome();
+            }
+        }
+
+        private void ResolveGripOutcome()
+        {
+            float withdrawLen = _withdrawClip != null ? _withdrawClip.length : 0.50f;
+
+            if (!_participantAReleasedDuringGrip && !_participantBReleasedDuringGrip)
+            {
                 float shakeLen = _shakeClip != null ? _shakeClip.length : 0.50f;
                 _lastOutcome = HandshakeOutcome.Success;
+                _lastPranker = null;
+                _lastPranked = null;
                 EmitArbitrationLog($"[握手判定] 握手成功！雙方按住到握緊結束，開始搖一下（{shakeLen:F2}s）。");
 
                 _sessionState = HandshakeState.Shaking;
@@ -228,6 +275,96 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
                 _participantA.SetState(HandshakeState.Shaking, shakeLen);
                 _participantB.SetState(HandshakeState.Shaking, shakeLen);
+            }
+            else if (_participantAReleasedDuringGrip && _participantBReleasedDuringGrip)
+            {
+                _lastOutcome = HandshakeOutcome.BothWithdraw;
+                _lastPranker = null;
+                _lastPranked = null;
+                EmitArbitrationLog("[握手判定] 判定結果：同時收手 (BothWithdraw)！雙方均在握緊結束前放開。");
+
+                TriggerBothWithdrawPresentation(withdrawLen);
+            }
+            else
+            {
+                _lastOutcome = HandshakeOutcome.Prank;
+                HandshakeParticipant pranker = _participantAReleasedDuringGrip ? _participantA : _participantB;
+                HandshakeParticipant pranked = _participantAReleasedDuringGrip ? _participantB : _participantA;
+                _lastPranker = pranker;
+                _lastPranked = pranked;
+                EmitArbitrationLog($"[握手判定] 判定結果：惡作劇 (Prank)！放開者為【{pranker.EntityId}】，被惡作劇者為【{pranked.EntityId}】。");
+
+                TriggerPrankPresentation(pranker, pranked, withdrawLen);
+            }
+        }
+
+        private void TriggerBothWithdrawPresentation(float fallbackWithdrawLen)
+        {
+            if (_clapLaughClip != null)
+            {
+                float clapLen = _clapLaughClip.length;
+                _participantA.SetState(HandshakeState.ClapLaugh, clapLen);
+                _participantB.SetState(HandshakeState.ClapLaugh, clapLen);
+                _sessionState = HandshakeState.ClapLaugh;
+                _sessionTimer = clapLen;
+            }
+            else
+            {
+                if (_participantA.State != HandshakeState.Withdrawing)
+                {
+                    _participantA.SetState(HandshakeState.Withdrawing, fallbackWithdrawLen);
+                }
+                if (_participantB.State != HandshakeState.Withdrawing)
+                {
+                    _participantB.SetState(HandshakeState.Withdrawing, fallbackWithdrawLen);
+                }
+                _sessionState = HandshakeState.None;
+                OnHandshakeFinished?.Invoke(_lastOutcome);
+            }
+        }
+
+        private void TriggerPrankPresentation(HandshakeParticipant pranker, HandshakeParticipant pranked, float fallbackWithdrawLen)
+        {
+            if (_laughClip != null && _angryClip != null)
+            {
+                float laughLen = _laughClip.length;
+                float angryLen = _angryClip.length;
+                pranker.SetState(HandshakeState.Laugh, laughLen);
+                pranked.SetState(HandshakeState.Angry, angryLen);
+                _sessionState = HandshakeState.Laugh;
+                _sessionTimer = Mathf.Max(laughLen, angryLen);
+            }
+            else
+            {
+                if (pranker.State != HandshakeState.Withdrawing)
+                {
+                    pranker.SetState(HandshakeState.Withdrawing, fallbackWithdrawLen);
+                }
+                if (pranked.State != HandshakeState.Withdrawing)
+                {
+                    pranked.SetState(HandshakeState.Withdrawing, fallbackWithdrawLen);
+                }
+                _sessionState = HandshakeState.None;
+                OnHandshakeFinished?.Invoke(_lastOutcome);
+            }
+        }
+
+        private void UpdateReactionState()
+        {
+            _sessionTimer -= Time.deltaTime;
+            if (_sessionTimer <= 0f)
+            {
+                float withdrawLen = _withdrawClip != null ? _withdrawClip.length : 0.50f;
+                if (_participantA != null && _participantA.State != HandshakeState.None)
+                {
+                    _participantA.SetState(HandshakeState.Withdrawing, withdrawLen);
+                }
+                if (_participantB != null && _participantB.State != HandshakeState.None)
+                {
+                    _participantB.SetState(HandshakeState.Withdrawing, withdrawLen);
+                }
+                _sessionState = HandshakeState.None;
+                OnHandshakeFinished?.Invoke(_lastOutcome);
             }
         }
 
@@ -262,6 +399,10 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             _sessionState = HandshakeState.None;
             _sessionTimer = 0f;
             _lastOutcome = HandshakeOutcome.None;
+            _participantAReleasedDuringGrip = false;
+            _participantBReleasedDuringGrip = false;
+            _lastPranker = null;
+            _lastPranked = null;
             _participantA = null;
             _participantB = null;
         }

@@ -134,7 +134,15 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             }
 
             transform.position = Vector3.Lerp(transform.position, desiredPosition, _smoothSpeed * Time.deltaTime);
-            transform.rotation = rotation;
+
+            if (_shoulderOffset == Vector3.zero)
+            {
+                transform.LookAt(pivot);
+            }
+            else
+            {
+                transform.rotation = rotation;
+            }
         }
     }
 }

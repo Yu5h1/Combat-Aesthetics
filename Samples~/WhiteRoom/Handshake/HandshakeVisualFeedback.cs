@@ -106,6 +106,18 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 case HandshakeState.Withdrawing:
                     _animator.Play("Withdraw", 0, 0f);
                     break;
+
+                case HandshakeState.Laugh:
+                    if (_animator.HasState(0, Animator.StringToHash("Laugh"))) _animator.Play("Laugh", 0, 0f);
+                    break;
+
+                case HandshakeState.Angry:
+                    if (_animator.HasState(0, Animator.StringToHash("Angry"))) _animator.Play("Angry", 0, 0f);
+                    break;
+
+                case HandshakeState.ClapLaugh:
+                    if (_animator.HasState(0, Animator.StringToHash("ClapLaugh"))) _animator.Play("ClapLaugh", 0, 0f);
+                    break;
             }
         }
 
@@ -135,12 +147,30 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 case HandshakeState.Withdrawing:
                     targetColor = Color.Lerp(_defaultBodyColor, new Color(0.65f, 0.65f, 0.65f), 0.45f);
                     break;
+
+                case HandshakeState.Laugh:
+                case HandshakeState.ClapLaugh:
+                    targetColor = Color.Lerp(_defaultBodyColor, new Color(0.2f, 0.8f, 1f), 0.6f);
+                    break;
+
+                case HandshakeState.Angry:
+                    targetColor = Color.Lerp(_defaultBodyColor, new Color(1f, 0.25f, 0.25f), 0.6f);
+                    break;
             }
 
             if (_instanceMaterial != null)
             {
                 Color current = GetCurrentColor();
                 ApplyColor(Color.Lerp(current, targetColor, 12f * Time.deltaTime));
+            }
+        }
+
+        private void LateUpdate()
+        {
+            if (_preIkWristTransform != null && _contactProxyTransform != null)
+            {
+                _contactProxyTransform.position = _preIkWristTransform.TransformPoint(_fistLocalOffsetInWrist);
+                _contactProxyTransform.rotation = _preIkWristTransform.rotation;
             }
         }
 
@@ -159,7 +189,8 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
             if (_opponent != null && _opponent.RightHandTransform != null)
             {
-                if (state == HandshakeState.Grip || state == HandshakeState.Shaking)
+                bool oppGripOrShake = (_opponent.State == HandshakeState.Grip || _opponent.State == HandshakeState.Shaking);
+                if ((state == HandshakeState.Grip || state == HandshakeState.Shaking) && oppGripOrShake)
                 {
                     targetWeight = 0.85f;
                     Vector3 myHand = _preIkWristTransform != null ? _preIkWristTransform.position : _participant.RightHandTransform.position;

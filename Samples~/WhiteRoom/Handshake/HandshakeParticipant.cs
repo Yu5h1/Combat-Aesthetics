@@ -85,7 +85,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 {
                     col = host.gameObject.AddComponent<SphereCollider>();
                 }
-                col.radius = 0.22f;
+                col.radius = 0.25f;
                 col.isTrigger = true;
 
                 ContactBridge = host.GetComponent<HandContactBridge>();
@@ -124,7 +124,8 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         {
             if (_entity == null) return;
 
-            if (_state == HandshakeState.Grip || _state == HandshakeState.Shaking)
+            if (_state == HandshakeState.Grip || _state == HandshakeState.Shaking ||
+                _state == HandshakeState.Laugh || _state == HandshakeState.Angry || _state == HandshakeState.ClapLaugh)
             {
                 _entity.LocomotionLocked = true;
                 _entity.SpeedOverride = 0f;
@@ -195,6 +196,9 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                     break;
 
                 case HandshakeState.Withdrawing:
+                case HandshakeState.Laugh:
+                case HandshakeState.Angry:
+                case HandshakeState.ClapLaugh:
                     _stateTimer -= Time.deltaTime;
                     if (_stateTimer <= 0f)
                     {

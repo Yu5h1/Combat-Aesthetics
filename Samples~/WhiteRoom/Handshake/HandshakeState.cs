@@ -10,7 +10,10 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         Waiting = 2,
         Grip = 3,
         Shaking = 4,
-        Withdrawing = 5
+        Withdrawing = 5,
+        Laugh = 6,
+        Angry = 7,
+        ClapLaugh = 8
     }
 
     /// <summary>
@@ -21,6 +24,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         None = 0,
         Cancelled = 1,
         Success = 2,
-        EarlyReleaseDuringGrip = 3
+        Prank = 3,
+        BothWithdraw = 4
     }
 }

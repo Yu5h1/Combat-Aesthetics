@@ -233,12 +233,12 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             WhiteRoomHUD hud = WhiteRoomSceneBuilder.EnsureHUD();
             hud.IsInteractionMode = true;
             hud.ActiveInteractionLabel = "握手 (Handshake)";
-            hud.CustomScenarioName = "Handshake_Stage2b_Batch1";
+            hud.CustomScenarioName = "Handshake_Stage2b_Batch2";
             hud.CustomStatusGUI = DrawHandshakeStatusGUI;
             hud.CustomScenarioGUI = DrawHandshakeScenarioGUI;
             hud.CustomHelpGUI = DrawHandshakeHelpGUI;
             hud.RefreshBindings();
-            hud.LogAction("【WhiteRoom 握手互動系統就緒】可直接使用 WASD 與互動鍵操作，或調整左側 AI 設定。");
+            hud.LogAction("【WhiteRoom 握手互動系統就緒 (第 2 批)】可直接使用 WASD 與互動鍵操作，或調整左側 AI 設定。");
         }
 
         private void DrawHandshakeStatusGUI()
@@ -246,8 +246,36 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             var arb = HandshakeArbitrator.Instance;
             if (arb != null)
             {
-                GUILayout.Label($"<b>判定狀態:</b> <color=yellow>[{arb.SessionState}]</color> | <b>最新結果:</b> <color=cyan>[{arb.LastOutcome}]</color>");
+                string outcomeColor = "cyan";
+                string outcomeText = arb.LastOutcome.ToString();
+                if (arb.LastOutcome == HandshakeOutcome.Success)
+                {
+                    outcomeColor = "#44ff44";
+                    outcomeText = "握手成功 (Success)";
+                }
+                else if (arb.LastOutcome == HandshakeOutcome.Prank)
+                {
+                    outcomeColor = "#ff5555";
+                    string prankerName = arb.LastPranker != null ? arb.LastPranker.EntityId : "未知";
+                    outcomeText = $"惡作劇 (Prank) - 放開者: {prankerName}";
+                }
+                else if (arb.LastOutcome == HandshakeOutcome.BothWithdraw)
+                {
+                    outcomeColor = "#ffff44";
+                    outcomeText = "同時收手 (BothWithdraw) - 雙方皆放開";
+                }
+                else if (arb.LastOutcome == HandshakeOutcome.Cancelled)
+                {
+                    outcomeColor = "#ffaa44";
+                    outcomeText = "取消 (Cancelled)";
+                }
+
+                GUILayout.Label($"<b>判定狀態:</b> <color=yellow>[{arb.SessionState}]</color> | <b>最新結果:</b> <color={outcomeColor}>[{outcomeText}]</color>");
                 GUILayout.Label($"<b>片段時長:</b> 握緊 {arb.GripDuration:F2}s | 搖手 {arb.ShakeDuration:F2}s | 伸手 {arb.ReachDuration:F2}s | 收手 {arb.WithdrawDuration:F2}s");
+                string reactionStatus = (arb.LaughClip != null && arb.AngryClip != null && arb.ClapLaughClip != null)
+                    ? "已配置人形反應片段"
+                    : "<color=grey>反應片段槽位留空 (動畫線第 2 批製作中，HUD 顯示並以收手回站姿)</color>";
+                GUILayout.Label($"<b>反應動作:</b> {reactionStatus}");
             }
 
             if (_playerParticipant != null)
@@ -283,44 +311,63 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 _ai.HoldDuration = GUILayout.HorizontalSlider(_ai.HoldDuration, -1f, 3.0f);
                 GUILayout.EndHorizontal();
 
+                GUILayout.BeginHorizontal();
+                GUILayout.Label($"AI 握緊放開: {_ai.EarlyReleaseGripTime:F2}s", GUILayout.Width(135));
+                _ai.EarlyReleaseGripTime = GUILayout.HorizontalSlider(_ai.EarlyReleaseGripTime, 0.05f, 0.45f);
+                GUILayout.EndHorizontal();
+
                 _ai.WalkIn = GUILayout.Toggle(_ai.WalkIn, $"AI 主動走近玩家 (停止距離 {_ai.StopDistance:F2}m)");
             }
 
             GUILayout.Space(4);
-            if (GUILayout.Button("1. [AI 發起 ➔ 玩家走近回應 (成功)]") && _ai != null)
+            if (GUILayout.Button("1. [AI 發起 ➔ 玩家走近 ➔ 握手成功]") && _ai != null)
             {
                 _ai.Mode = HandshakeAiMode.AiInitiator;
                 CombatEntity.ResetAllArenaEntities();
-                hud?.LogAction("【情境 1】AI 主動伸手等待，請按住 E 並以 WASD 走近使右手接觸。");
+                hud?.LogAction("【情境 1】AI 主動伸手等待，請按住 E 並以 WASD 走近使右手接觸至握手成功。");
             }
-            if (GUILayout.Button("2. [玩家發起 ➔ AI 走近回應 (對調)]") && _ai != null)
+            if (GUILayout.Button("2. [玩家惡作劇 AI (玩家於握緊中途放開 E)]") && _ai != null)
             {
-                _ai.Mode = HandshakeAiMode.AiResponder;
+                _ai.Mode = HandshakeAiMode.AiInitiator;
                 CombatEntity.ResetAllArenaEntities();
-                hud?.LogAction("【情境 2】請原地按住 E 伸手，AI 將伸手並主動走近回應。");
+                hud?.LogAction("【情境 2】走近接觸握緊後，請在 0.50s 內放開 E；判定為玩家惡作劇 AI。");
             }
-            if (GUILayout.Button("3. [玩家發起 ➔ 放開取消 / AI 取消]") && _ai != null)
-            {
-                _ai.Mode = HandshakeAiMode.AiCancel;
-                CombatEntity.ResetAllArenaEntities();
-                hud?.LogAction("【情境 3】AI 伸手後按設定時長放開取消；玩家亦可隨時按 E 再放開取消。");
-            }
-            if (GUILayout.Button("4. [握緊期間放開 (第 2 批的情況)]") && _ai != null)
+            if (GUILayout.Button("3. [AI 惡作劇玩家 (AI 於握緊中途放開)]") && _ai != null)
             {
                 _ai.Mode = HandshakeAiMode.AiEarlyRelease;
                 CombatEntity.ResetAllArenaEntities();
-                hud?.LogAction("【情境 4】雙手接觸進入握緊後 AI 提前放開，雙方直接收手並標明第 2 批的情況。");
+                hud?.LogAction("【情境 3】走近接觸握緊後，請持續按住 E；AI 將於握緊期間提前抽手，判定為 AI 惡作劇玩家。");
+            }
+            if (GUILayout.Button("4. [雙方同時收手 (雙方均在握緊結束前放開)]") && _ai != null)
+            {
+                _ai.Mode = HandshakeAiMode.AiEarlyRelease;
+                _ai.EarlyReleaseGripTime = 0.25f;
+                CombatEntity.ResetAllArenaEntities();
+                hud?.LogAction("【情境 4】走近接觸握緊後，玩家與 AI 均在 0.50s 握緊結束前放開；判定為雙方同時收手。");
+            }
+            if (GUILayout.Button("5. [握緊放開 vs 握緊結束後放開 (惡作劇判定)]") && _ai != null)
+            {
+                _ai.Mode = HandshakeAiMode.AiReleaseAfterGrip;
+                _ai.ReleaseAfterGripDelay = 0.15f;
+                CombatEntity.ResetAllArenaEntities();
+                hud?.LogAction("【情境 5】玩家於握緊中途放開，AI 堅持至握緊結束後才放開；判定嚴格維持為玩家惡作劇 AI。");
+            }
+            if (GUILayout.Button("6. [取消收手 (伸手後放開)]") && _ai != null)
+            {
+                _ai.Mode = HandshakeAiMode.AiCancel;
+                CombatEntity.ResetAllArenaEntities();
+                hud?.LogAction("【情境 6】伸手後於接觸前放開，收手取消回站姿。");
             }
         }
 
         private void DrawHandshakeHelpGUI()
         {
-            GUILayout.Label("<b>操作與互動指南 (Stage 2b 第 1 批)：</b>");
-            GUILayout.Label("• <b>[互動鍵 (預設 E，可改鍵)]</b>：站立按住伸手 ➔ 等待循環；放開收手取消");
-            GUILayout.Label("• <b>[重新按下才發起]</b>：完成或收手回站姿時若仍按著，須先放開再按下才再次伸手");
-            GUILayout.Label("• <b>[WASD / Space]</b>：8 方向移動（伸手時慢步 2.2m/s 走近）與跳躍");
-            GUILayout.Label("• <b>[右手碰撞體接觸]</b>：雙方右手 Trigger 實際接觸才算碰到 ➔ 握緊 ➔ 成功搖一下");
-            GUILayout.Label("• <b>[R 鍵]</b>：全場快速重設（共用 CombatEntity.ResetAllArenaEntities）");
+            GUILayout.Label("<b>操作與互動指南 (Stage 2b 第 2 批：惡作劇與同時收手)：</b>");
+            GUILayout.Label("• <b>[互動鍵 (預設 E，可改鍵)]</b>：站立按住伸手 ➔ 等待循環；接觸前放開收手取消");
+            GUILayout.Label("• <b>[握緊裁決規則]</b>：接觸進入握緊（0.50s）：雙方按住 ➔ 成功；單方放開 ➔ 惡作劇；雙方放開 ➔ 同時收手");
+            GUILayout.Label("• <b>[放開的手立刻抽回]</b>：握緊期間放開者立刻播放收手抽手，判定持續至握緊結束裁定");
+            GUILayout.Label("• <b>[重新按下才發起]</b>：成功、惡作劇、同時收手後若持續按著 E，須先放開再按下才再次伸手");
+            GUILayout.Label("• <b>[WASD / Space / R]</b>：移動、跳躍與全場快速重設（共用 CombatEntity）");
         }
 
         private static void SafeDestroy(GameObject go)

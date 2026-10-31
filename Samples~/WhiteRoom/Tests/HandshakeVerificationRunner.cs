@@ -32,6 +32,9 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
         private bool _case5Pass;
         private bool _case6Pass;
         private bool _case7Pass;
+        private bool _case8Pass;
+        private bool _case9Pass;
+        private bool _case10Pass;
 
         private void Start()
         {
@@ -57,20 +60,24 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
             yield return new WaitForSeconds(0.2f);
 
             _results.Add("======================================================================");
-            _results.Add("  WhiteRoom Stage 2b Handshake Supplemental Automated Check (6000.6.0f1)");
+            _results.Add("  WhiteRoom Stage 2b Handshake Batch 2 Supplemental Automated Check");
             _results.Add("======================================================================");
 
             yield return StartCoroutine(Case1_PlayerCancel());
             yield return StartCoroutine(Case2_AiInitiate_PlayerRespond_Success());
             yield return StartCoroutine(Case3_ContinuousHoldDoesNotReinitiate());
             yield return StartCoroutine(Case4_PlayerInitiate_AiRespond_Success());
-            yield return StartCoroutine(Case5_EarlyReleaseDuringGrip());
-            yield return StartCoroutine(Case6_AiCancel());
-            yield return StartCoroutine(Case7_ResetConsistency());
+            yield return StartCoroutine(Case5_PlayerPranksAi());
+            yield return StartCoroutine(Case6_AiPranksPlayer());
+            yield return StartCoroutine(Case7_BothWithdraw());
+            yield return StartCoroutine(Case8_PrankWhenOtherReleasesAfterGrip());
+            yield return StartCoroutine(Case9_AiCancel());
+            yield return StartCoroutine(Case10_ResetConsistency());
 
-            AllPassed = _case1Pass && _case2Pass && _case3Pass && _case4Pass && _case5Pass && _case6Pass && _case7Pass;
+            AllPassed = _case1Pass && _case2Pass && _case3Pass && _case4Pass && _case5Pass &&
+                        _case6Pass && _case7Pass && _case8Pass && _case9Pass && _case10Pass;
             _results.Add("======================================================================");
-            _results.Add($"  Result: {(AllPassed ? "ALL PASSED (7/7)" : "FAILED")}");
+            _results.Add($"  Result: {(AllPassed ? "ALL PASSED (10/10)" : "FAILED")}");
             _results.Add("======================================================================");
 
             TestReport = string.Join("\n", _results);
@@ -161,6 +168,10 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
 
             bool outcomeSuccess = (_arb.LastOutcome == HandshakeOutcome.Success);
             _case2Pass = aiWaiting && reachedGrip && reachedShaking && outcomeSuccess;
+            if (_case2Pass)
+            {
+                CaptureCameraToFile("C:/Users/Yu5h1/Dev/VSProjects/Yu5h1Lib/Unity/Combat-Aesthetics/Documentation/Screenshots/Handshake_PlayMode_Success.png");
+            }
             _results.Add($"[Case 2] AI initiate, player walk-in & grip to completion (Success): {(_case2Pass ? "PASS" : "FAIL")} (AiWaiting={aiWaiting}, Grip={reachedGrip}, Shake={reachedShaking}, Outcome={_arb.LastOutcome})");
         }
 
@@ -218,6 +229,12 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
                 yield return null;
             }
 
+            Vector3 pHand = _playerParticipant.ContactBridge != null ? _playerParticipant.ContactBridge.transform.position : Vector3.zero;
+            Vector3 aHand = _aiParticipant.ContactBridge != null ? _aiParticipant.ContactBridge.transform.position : Vector3.zero;
+            float handDist = Vector3.Distance(pHand, aHand);
+            float bodyDist = Vector3.Distance(_player.transform.position, _ai.transform.position);
+            Debug.Log($"[CASE2_DEBUG] At end of walk: bodyDist={bodyDist:F3}, handDist={handDist:F3}, PlayerHand={pHand}, AiHand={aHand}");
+
             float gripElapsed = 0f;
             bool reachedShaking = false;
             while (gripElapsed < 1.0f)
@@ -241,11 +258,62 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
             _results.Add($"[Case 4] Player initiate, AI walk-in & respond (Role Swap Success): {(_case4Pass ? "PASS" : "FAIL")} (Grip={reachedGrip}, Shake={reachedShaking}, Outcome={_arb.LastOutcome})");
         }
 
-        private IEnumerator Case5_EarlyReleaseDuringGrip()
+        private IEnumerator Case5_PlayerPranksAi()
+        {
+            _arb.ResetAll();
+            _ai.Mode = HandshakeAiMode.AiResponder;
+            _ai.HoldDuration = -1f;
+            _player.CustomIntent = CombatActionIntent.Empty;
+            yield return new WaitForSeconds(0.2f);
+
+            float elapsed = 0f;
+            bool reachedGrip = false;
+            while (elapsed < 5.0f && !reachedGrip)
+            {
+                var intent = CombatActionIntent.Empty;
+                intent.InteractHold = true;
+                _player.CustomIntent = intent;
+
+                if (_arb.SessionState == HandshakeState.Grip)
+                {
+                    reachedGrip = true;
+                }
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            yield return new WaitForSeconds(0.15f);
+
+            var releaseIntent = CombatActionIntent.Empty;
+            releaseIntent.InteractHold = false;
+            releaseIntent.InteractUp = true;
+            _player.CustomIntent = releaseIntent;
+            yield return new WaitForSeconds(0.05f);
+
+            bool playerWithdrawingDuringGrip = (_playerParticipant.State == HandshakeState.Withdrawing);
+            bool aiStillInGrip = (_aiParticipant.State == HandshakeState.Grip);
+            bool sessionStillInGrip = (_arb.SessionState == HandshakeState.Grip);
+
+            yield return new WaitForSeconds(0.40f);
+
+            bool outcomePrank = (_arb.LastOutcome == HandshakeOutcome.Prank);
+            bool prankerIsPlayer = (_arb.LastPranker == _playerParticipant);
+            bool prankedIsAi = (_arb.LastPranked == _aiParticipant);
+
+            _case5Pass = reachedGrip && playerWithdrawingDuringGrip && aiStillInGrip && sessionStillInGrip && outcomePrank && prankerIsPlayer && prankedIsAi;
+            if (_case5Pass)
+            {
+                CaptureCameraToFile("C:/Users/Yu5h1/Dev/VSProjects/Yu5h1Lib/Unity/Combat-Aesthetics/Documentation/Screenshots/Handshake_PlayMode_Prank.png");
+            }
+            _results.Add($"[Case 5] Player release alone during grip (Player Pranks AI): {(_case5Pass ? "PASS" : "FAIL")} (PlayerWithdrewDuringGrip={playerWithdrawingDuringGrip}, AiHeldInGrip={aiStillInGrip}, Outcome={_arb.LastOutcome}, Pranker={_arb.LastPranker?.EntityId})");
+        }
+
+        private IEnumerator Case6_AiPranksPlayer()
         {
             _arb.ResetAll();
             _ai.Mode = HandshakeAiMode.AiEarlyRelease;
-            _ai.ReachDelay = 0.1f;
+            _ai.EarlyReleaseGripTime = 0.18f;
+            _ai.ReachDelay = 0.15f;
             _player.CustomIntent = CombatActionIntent.Empty;
             yield return new WaitForSeconds(0.2f);
 
@@ -266,16 +334,106 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
                 yield return null;
             }
 
+            yield return new WaitForSeconds(0.25f);
+
+            bool aiWithdrawingDuringGrip = (_aiParticipant.State == HandshakeState.Withdrawing);
+            bool playerStillInGrip = (_playerParticipant.State == HandshakeState.Grip);
+
             yield return new WaitForSeconds(0.35f);
 
-            bool earlyReleaseTriggered = (_arb.LastOutcome == HandshakeOutcome.EarlyReleaseDuringGrip);
-            bool sessionClosed = (_arb.SessionState == HandshakeState.None);
+            bool outcomePrank = (_arb.LastOutcome == HandshakeOutcome.Prank);
+            bool prankerIsAi = (_arb.LastPranker == _aiParticipant);
+            bool prankedIsPlayer = (_arb.LastPranked == _playerParticipant);
 
-            _case5Pass = reachedGrip && earlyReleaseTriggered && sessionClosed;
-            _results.Add($"[Case 5] Release during grip (Batch 2 placeholder withdraw): {(_case5Pass ? "PASS" : "FAIL")} (Grip={reachedGrip}, EarlyRelease={earlyReleaseTriggered}, Closed={sessionClosed})");
+            _case6Pass = reachedGrip && aiWithdrawingDuringGrip && playerStillInGrip && outcomePrank && prankerIsAi && prankedIsPlayer;
+            _results.Add($"[Case 6] AI release alone during grip (AI Pranks Player): {(_case6Pass ? "PASS" : "FAIL")} (AiWithdrewDuringGrip={aiWithdrawingDuringGrip}, PlayerHeldInGrip={playerStillInGrip}, Outcome={_arb.LastOutcome}, Pranker={_arb.LastPranker?.EntityId})");
         }
 
-        private IEnumerator Case6_AiCancel()
+        private IEnumerator Case7_BothWithdraw()
+        {
+            _arb.ResetAll();
+            _ai.Mode = HandshakeAiMode.AiEarlyRelease;
+            _ai.EarlyReleaseGripTime = 0.28f;
+            _ai.ReachDelay = 0.15f;
+            _player.CustomIntent = CombatActionIntent.Empty;
+            yield return new WaitForSeconds(0.2f);
+
+            float elapsed = 0f;
+            bool reachedGrip = false;
+            while (elapsed < 4.0f && !reachedGrip)
+            {
+                var intent = CombatActionIntent.Empty;
+                intent.InteractHold = true;
+                intent.MoveInput = new Vector2(0f, 1f);
+                _player.CustomIntent = intent;
+
+                if (_arb.SessionState == HandshakeState.Grip)
+                {
+                    reachedGrip = true;
+                }
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            yield return new WaitForSeconds(0.12f);
+            var releaseIntent = CombatActionIntent.Empty;
+            releaseIntent.InteractHold = false;
+            releaseIntent.InteractUp = true;
+            _player.CustomIntent = releaseIntent;
+
+            yield return new WaitForSeconds(0.45f);
+
+            bool outcomeBoth = (_arb.LastOutcome == HandshakeOutcome.BothWithdraw);
+            _case7Pass = reachedGrip && outcomeBoth;
+            if (_case7Pass)
+            {
+                CaptureCameraToFile("C:/Users/Yu5h1/Dev/VSProjects/Yu5h1Lib/Unity/Combat-Aesthetics/Documentation/Screenshots/Handshake_PlayMode_BothWithdraw.png");
+            }
+            _results.Add($"[Case 7] Both release before grip ends (BothWithdraw): {(_case7Pass ? "PASS" : "FAIL")} (Outcome={_arb.LastOutcome})");
+        }
+
+        private IEnumerator Case8_PrankWhenOtherReleasesAfterGrip()
+        {
+            _arb.ResetAll();
+            _ai.Mode = HandshakeAiMode.AiReleaseAfterGrip;
+            _ai.ReleaseAfterGripDelay = 0.15f;
+            _ai.ReachDelay = 0.15f;
+            _player.CustomIntent = CombatActionIntent.Empty;
+            yield return new WaitForSeconds(0.2f);
+
+            float elapsed = 0f;
+            bool reachedGrip = false;
+            while (elapsed < 4.0f && !reachedGrip)
+            {
+                var intent = CombatActionIntent.Empty;
+                intent.InteractHold = true;
+                intent.MoveInput = new Vector2(0f, 1f);
+                _player.CustomIntent = intent;
+
+                if (_arb.SessionState == HandshakeState.Grip)
+                {
+                    reachedGrip = true;
+                }
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            yield return new WaitForSeconds(0.15f);
+            var releaseIntent = CombatActionIntent.Empty;
+            releaseIntent.InteractHold = false;
+            releaseIntent.InteractUp = true;
+            _player.CustomIntent = releaseIntent;
+
+            yield return new WaitForSeconds(0.45f);
+
+            bool outcomePrank = (_arb.LastOutcome == HandshakeOutcome.Prank);
+            bool prankerIsPlayer = (_arb.LastPranker == _playerParticipant);
+
+            _case8Pass = reachedGrip && outcomePrank && prankerIsPlayer;
+            _results.Add($"[Case 8] One release during grip, other releases after grip (Still Prank): {(_case8Pass ? "PASS" : "FAIL")} (Outcome={_arb.LastOutcome}, Pranker={_arb.LastPranker?.EntityId})");
+        }
+
+        private IEnumerator Case9_AiCancel()
         {
             _arb.ResetAll();
             _ai.Mode = HandshakeAiMode.AiCancel;
@@ -289,11 +447,11 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
             yield return new WaitForSeconds(0.8f);
             bool aiWithdrawingOrNone = (_aiParticipant.State == HandshakeState.Withdrawing || _aiParticipant.State == HandshakeState.None);
 
-            _case6Pass = aiReached && aiWithdrawingOrNone;
-            _results.Add($"[Case 6] Configurable AI initiate then release (AI Cancel): {(_case6Pass ? "PASS" : "FAIL")} (AiReached={aiReached}, AiWithdrew={aiWithdrawingOrNone})");
+            _case9Pass = aiReached && aiWithdrawingOrNone;
+            _results.Add($"[Case 9] Configurable AI initiate then release (AI Cancel): {(_case9Pass ? "PASS" : "FAIL")} (AiReached={aiReached}, AiWithdrew={aiWithdrawingOrNone})");
         }
 
-        private IEnumerator Case7_ResetConsistency()
+        private IEnumerator Case10_ResetConsistency()
         {
             _arb.ResetAll();
             _ai.Mode = HandshakeAiMode.AiInitiator;
@@ -304,8 +462,42 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
             bool aiClean = (_aiParticipant.State == HandshakeState.None && Mathf.Abs(_aiParticipant.transform.position.z - 1.2f) < 0.1f);
             bool arbClean = (_arb.SessionState == HandshakeState.None && _arb.LastOutcome == HandshakeOutcome.None);
 
-            _case7Pass = pClean && aiClean && arbClean;
-            _results.Add($"[Case 7] Global arena reset consistency: {(_case7Pass ? "PASS" : "FAIL")} (PlayerClean={pClean}, AiClean={aiClean}, ArbClean={arbClean})");
+            _case10Pass = pClean && aiClean && arbClean;
+            _results.Add($"[Case 10] Global arena reset consistency: {(_case10Pass ? "PASS" : "FAIL")} (PlayerClean={pClean}, AiClean={aiClean}, ArbClean={arbClean})");
+        }
+
+        /// <summary>
+        /// Captures a screenshot of the main camera to the specified disk path using RenderTexture rendering.
+        /// </summary>
+        private void CaptureCameraToFile(string filePath)
+        {
+            Camera cam = Camera.main;
+            if (cam == null) return;
+
+            int w = 1920;
+            int h = 1080;
+            RenderTexture rt = RenderTexture.GetTemporary(w, h, 24);
+            RenderTexture prev = cam.targetTexture;
+            cam.targetTexture = rt;
+            cam.Render();
+            cam.targetTexture = prev;
+
+            RenderTexture prevActive = RenderTexture.active;
+            RenderTexture.active = rt;
+            Texture2D tex = new Texture2D(w, h, TextureFormat.RGB24, false);
+            tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
+            tex.Apply();
+            RenderTexture.active = prevActive;
+            RenderTexture.ReleaseTemporary(rt);
+
+            byte[] bytes = tex.EncodeToPNG();
+            DestroyImmediate(tex);
+            string dir = System.IO.Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(dir) && !System.IO.Directory.Exists(dir))
+            {
+                System.IO.Directory.CreateDirectory(dir);
+            }
+            System.IO.File.WriteAllBytes(filePath, bytes);
         }
     }
 }

@@ -52,5 +52,25 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 OnTriggerContact?.Invoke(this, otherBridge);
             }
         }
+
+        private void FixedUpdate()
+        {
+            if (HandCollider is SphereCollider sphere)
+            {
+                Collider[] overlaps = Physics.OverlapSphere(transform.position, sphere.radius);
+                for (int i = 0; i < overlaps.Length; i++)
+                {
+                    Collider col = overlaps[i];
+                    if (col == HandCollider) continue;
+
+                    var otherBridge = col.GetComponent<HandContactBridge>();
+                    if (otherBridge != null && otherBridge.Owner != null && Owner != null && otherBridge.Owner != Owner)
+                    {
+                        OnTriggerContact?.Invoke(this, otherBridge);
+                        break;
+                    }
+                }
+            }
+        }
     }
 }

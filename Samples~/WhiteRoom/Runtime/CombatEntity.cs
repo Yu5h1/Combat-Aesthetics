@@ -73,6 +73,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
         private Quaternion _spawnRotation;
         private Vector3 _residualVelocity;
         private float _verticalVelocity;
+        private bool _wasGrounded = true;
         private CombatState _state = CombatState.Idle;
         private float _stateTimer = 0f;
         private float _guardStartTime = -1f;
@@ -118,6 +119,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                 _controller.height = _standingHeight;
                 _controller.center = _standingCenter;
                 _controller.radius = _colliderRadius;
+                _controller.minMoveDistance = 0f;
             }
             _spawnPosition = transform.position;
             _spawnRotation = transform.rotation;
@@ -151,6 +153,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             if (_controller != null)
             {
                 _controller.radius = radius;
+                _controller.minMoveDistance = 0f;
             }
         }
 
@@ -470,13 +473,14 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
 
             Vector3 driveVelocity = moveDir * (currentSpeed * Mathf.Clamp01(input.magnitude));
 
-            if (_controller.isGrounded)
+            if (_wasGrounded)
             {
                 _verticalVelocity = -2f;
 
                 if (intent.Jump && canMove && !_isCrouching && _state != CombatState.Guarding && SpeedOverride < 0f)
                 {
                     _verticalVelocity = Mathf.Sqrt(2f * _jumpHeight * Mathf.Abs(_gravity));
+                    _wasGrounded = false;
                     SetState(CombatState.Jumping);
                     OnCombatLog?.Invoke($"[{_entityId}] 起跳！");
                 }
@@ -484,7 +488,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             else
             {
                 _verticalVelocity += _gravity * Time.deltaTime;
-                if (_state != CombatState.Flinching && _state != CombatState.Stunned && _state != CombatState.Incapacitated)
+                if (_verticalVelocity < -2.5f && _state != CombatState.Flinching && _state != CombatState.Stunned && _state != CombatState.Incapacitated)
                 {
                     SetState(CombatState.Jumping);
                 }
@@ -500,17 +504,23 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                 _controller.Move(totalVelocity * Time.deltaTime);
             }
 
-            if (_controller.isGrounded)
+            bool nowGrounded = _controller.isGrounded;
+            if (nowGrounded)
             {
-                if (_state == CombatState.Jumping)
+                _verticalVelocity = -2f;
+                if (!_wasGrounded)
                 {
-                    if (_isCrouching)
-                        SetState(CombatState.Crouching);
-                    else if (canMove && input.sqrMagnitude > 0.05f)
-                        SetState(CombatState.Moving);
-                    else
-                        SetState(CombatState.Idle);
-                    OnCombatLog?.Invoke($"[{_entityId}] 著地");
+                    _wasGrounded = true;
+                    if (_state == CombatState.Jumping)
+                    {
+                        if (_isCrouching)
+                            SetState(CombatState.Crouching);
+                        else if (canMove && input.sqrMagnitude > 0.05f)
+                            SetState(CombatState.Moving);
+                        else
+                            SetState(CombatState.Idle);
+                        OnCombatLog?.Invoke($"[{_entityId}] 著地");
+                    }
                 }
                 else if (_state == CombatState.Idle || _state == CombatState.Moving)
                 {
@@ -522,6 +532,18 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                         SetState(CombatState.Idle);
                 }
             }
+            else
+            {
+                _wasGrounded = false;
+                if (_verticalVelocity < -2.5f && _state != CombatState.Flinching && _state != CombatState.Stunned && _state != CombatState.Incapacitated)
+                {
+                    SetState(CombatState.Jumping);
+                }
+            }
+        }
+
+        private void OnControllerColliderHit(ControllerColliderHit hit)
+        {
         }
 
         private void SetState(CombatState newState)
@@ -561,7 +583,8 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
 
             _currentHealth = _maxHealth;
             _residualVelocity = Vector3.zero;
-            _verticalVelocity = 0f;
+            _verticalVelocity = -2f;
+            _wasGrounded = true;
             _isCrouching = false;
             _stateTimer = 0f;
             _guardStartTime = -1f;
@@ -575,6 +598,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                 _controller.height = _standingHeight;
                 _controller.center = _standingCenter;
                 _controller.radius = _colliderRadius;
+                _controller.minMoveDistance = 0f;
             }
 
             SetState(CombatState.Idle);
