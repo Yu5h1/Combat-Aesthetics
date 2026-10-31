@@ -1,0 +1,36 @@
+# Combat Aesthetics 對 Animation 的需求
+
+目標：data-driven/animation（動畫線，[握手動作片段](../../../data-driven/animation/Documentation/Handshake-Clips.md)）。提出端：Combat-Aesthetics 的 WhiteRoom Sample。接用方式：動畫線以動畫編輯器製作握手片段，經角色建造器匯出動作 GLB，再由 UnityExtension 的人形匯入器（LIMB-ANIM-1）轉成人形片段給 WhiteRoom 播放；互動規則由 [WhiteRoom 計畫〈第一個交付的目標〉](../Samples~/WhiteRoom/Implementation-Plan.md#第一個交付的目標) 擁有。提出日期：2026-10-31。未結需求：3。
+
+## 比力氣的拚力後慢退（COMBAT-ANIMATION-1）
+
+| 欄位 | 內容 |
+|---|---|
+| Status | Outstanding，提出 2026-10-31。 |
+| Requirement | 握手片段第 3 批加一段「拚力後慢退」：比力氣的次數差距在門檻內且有人按過時，雙方從用力握的姿勢慢慢鬆開、退開，再接收手，表現用力後的解脫。 |
+| Evidence | 使用者 2026-10-31 定下比力氣的規則（WhiteRoom 計畫〈第一個交付的目標〉的「比力氣」列）：每次握緊成功都進入握住，還有一方按著就持續、雙方都放開才結束，期間只算按下次數；差距超過門檻時少的一方痛苦、多的一方得意；差距在門檻內且有人按過時拚力後慢退再收手；0 比 0 時搖一下再收手。目前片段清單第 3 批只有用力握、痛苦、得意。 |
+| Acceptance | 1. 片段清單第 3 批列出這段，長度依製作規則訂定，從用力握接上，結束的姿勢能接收手。2. 片段做出後，可經人形匯入給 WhiteRoom 使用。 |
+| Impact | WhiteRoom 第 3 批（[第 3 批交辦](../Samples~/WhiteRoom/Implementation-Plan.md#第-3-批交辦比力氣)）播放這段；它和第 3 批其他片段一樣，要等有手指的角色（ANIMATION-LIMB-6）。 |
+| Workaround | 片段到之前，WhiteRoom 只在 HUD 與事件紀錄顯示這個結果，雙方用收手回到站姿。 |
+
+## 大笑的用途改為放開的一方（COMBAT-ANIMATION-2）
+
+| 欄位 | 內容 |
+|---|---|
+| Status | Outstanding，提出 2026-10-31。 |
+| Requirement | 片段清單中「大笑」的用途由「惡作劇的發起方」改為「惡作劇時放開的一方」。 |
+| Evidence | 使用者 2026-10-31 決定惡作劇不分發起方或回應方，誰單獨放開就是誰惡作劇（WhiteRoom 計畫〈第一個交付的目標〉的「惡作劇」列）；片段清單仍寫「惡作劇的發起方」。 |
+| Acceptance | 片段清單「大笑」的用途欄與新規則一致；片段本身不用改。 |
+| Impact | 無；發起方與回應方本來就共用同一組片段。 |
+| Workaround | 以 WhiteRoom 計畫的規則為準。 |
+
+## 抓住與掙脫的片段（COMBAT-ANIMATION-3）
+
+| 欄位 | 內容 |
+|---|---|
+| Status | Outstanding，提出 2026-10-31。 |
+| Requirement | 握手片段第 3 批加三段：「想抽手」（循環，被抓住的一方身體往後拉、想把手抽回）、「掙脫」（掙脫的一方往後踉蹌、甩甩手，結束能接收手）、「抓空」（抓的一方手抓空，結束能接收手）。 |
+| Evidence | 使用者 2026-10-31 定下抓住與掙脫的規則（WhiteRoom 計畫〈第一個交付的目標〉的「抓住與掙脫」列）：握住期間一方放開、另一方還按著，就是抓住不放；被抓住期間雙方都能慢步移動，身體拉開超過門檻就掙脫；掙脫的一方往後踉蹌、甩甩手，抓的一方抓空，再各自收手。目前片段清單沒有這三段。 |
+| Acceptance | 1. 片段清單第 3 批列出這三段，長度依製作規則訂定。2. 「想抽手」只做身體，手的位置由 WhiteRoom 在執行時以人形 IK 黏在對方手上，片段不必對準對方的手。3. 片段做出後，可經人形匯入給 WhiteRoom 使用。 |
+| Impact | WhiteRoom 第 3 批（[第 3 批交辦](../Samples~/WhiteRoom/Implementation-Plan.md#第-3-批交辦比力氣)）播放這三段；和第 3 批其他片段一樣，要等有手指的角色（ANIMATION-LIMB-6）。 |
+| Workaround | 片段到之前，WhiteRoom 只在 HUD 與事件紀錄顯示抓住與掙脫，手的 IK 照常表現被拉住，雙方用收手回到站姿。 |
