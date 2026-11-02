@@ -833,7 +833,7 @@ tests: total 4, passed 4, failed 0, inconclusive 0, skipped 0
 
 ## 交辦以外的發現
 
-1. **手的碰撞球被放大到半徑 0.40 m**：`HandContactBridge` 在程式裡強制半徑至少 0.40 m（場景改小也會被蓋掉）。紀錄說原因是角色膠囊半徑 0.5 m，兩人最近只能站到約 0.58 m 以外，0.25 m 的球碰不到。放大碰撞球等於雙手相距將近 0.8 m 就算碰到，偏離「右手碰撞體真的碰到」；真正的問題是兩人走不到片段製作的標準距離（骨盆中心相距 0.8 m，見 [握手動作片段〈製作規則〉](../../../data-driven/animation/Documentation/Handshake-Clips.md#製作規則)）。
+1. **手的碰撞球被放大到半徑 0.40 m**：`HandContactBridge` 在程式裡強制半徑至少 0.40 m（場景改小也會被蓋掉）。紀錄說原因是角色膠囊半徑 0.5 m，兩人最近只能站到約 0.58 m 以外，0.25 m 的球碰不到。放大碰撞球等於雙手相距將近 0.8 m 就算碰到，偏離「右手碰撞體真的碰到」；真正的問題是兩人走不到片段製作的標準距離（骨盆中心相距 0.8 m，見 [握手動作片段〈製作規則〉](file:///W:/Yu5h1Lib/AnimationEditor/Documentation/Handshake-Clips.md#製作規則)）。
 2. `Documentation/Screenshots/` 有 9 個未追蹤的 `Handshake_Batch3_*.png.meta`（Unity 匯入時產生），截圖本身仍在版本控制內。截圖已不作為證據，要不要刪由使用者決定；主 session 沒有動這些檔案。
 
 ## 下一輪修正清單
