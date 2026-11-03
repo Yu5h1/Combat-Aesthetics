@@ -364,7 +364,7 @@ Sample 輔助程式不得靠宿主的 Assembly-CSharp 或特定機器絕對路�
 1. **重新匯出 17 段握手動作 GLB**：用 CharacterBuilder 的 `skin/export-glb.mjs`，從 AnimationEditor `samples/handshake/` 的 17 個 `.anim.json` 匯出，角色與骨架和現在的 `punch-character.glb` 相同。其中 13 段標了區間（收手、大笑、握拳生氣、拍手大笑、痛苦、得意、拚力後慢退、掙脫、抓空、跳開、想抽手、被拖著跟上、用力握）；逐檔確認 `animations[0].extras.yu5h1.intervals` 存在，區間名稱與影格和 `.anim.json` 一致。伸手、等待、握住、搖手 4 段沒有區間，匯出後也不該有。
 2. **替換套件與宿主的 GLB**：保留既有 `.meta`，GUID 與匯入設定不變；不要刪除或重建 `.humanoid.asset`，讓匯入器依名稱沿用既有片段，片段的 fileID 才不會變（`c9b215c` 換片段時 fileID 變了，controller 的 Idle 斷掉）；替換後確認 controller 每個狀態都有動作；在宿主重新匯入後，人形匯入設定的 `intervals` 清單列出 13 個 `MotionIntervals`。
 3. **WhiteRoom 改讀匯入結果**：`HandshakeSettings` 的區間來源改成匯入產生的 `MotionIntervals`（依片段對應），刪掉手動填寫的區間資料；`IsActionUnderControl` 判斷的結果不變。沒有區間的 4 段維持現在的判斷（播完才可再操作）；13 段之中缺了匯入區間的記一次錯誤，不改用寫死的分界。
-4. **測試**：既有 9 項 PlayMode 測試全數通過；新增一項：設定資產的區間來自匯入資產，且某段片段的「不可控制」區間與 `.anim.json` 的影格換算一致。
+4. **測試**：只跑受影響的測試：`VerifyItem1_ControlIntervalsGovernRePress`（區間決定能否再按）、`VerifyItem2_ClipsActuallyPlayInAnimator`（換了 GLB 後片段仍會播放），以及新增的一項；其他已通過、這次沒動到的不重跑（使用者 2026-11-03）。新增的一項：設定資產的區間來自匯入資產，且某段片段的「不可控制」區間與 `.anim.json` 的影格換算一致。
 5. **重建 Windows 執行檔**，寫明路徑與時間。
 
 範圍：不改握手規則、不重做動畫、不改 CharacterBuilder 與 UnityExtension 的程式；匯出若需要改它們，停下回報。提交時指定路徑，不推送；紀錄寫在驗收紀錄最後。
