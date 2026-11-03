@@ -1071,3 +1071,49 @@ tests: total 9, passed 9, failed 0, inconclusive 0, skipped 0
 | 紅字「Cannot calculate escape threshold」 | HUD 每次重繪都會算掙脫門檻。從開始到第一次握緊之前，以及每次重設之後，判定器還沒有配對中的兩人，量出的臂長是 0，就記錯誤。判定本身不受影響，是誤報。batchmode 測試不畫 HUD，所以沒抓到。 | 判定器新增 `HasPair`；沒有配對時，臂長與門檻回傳 −1，不記錯誤。HUD 在沒有配對時顯示「未配對」。 |
 
 驗證：使用者在 Editor 確認恢復正常；主控台沒有錯誤。修正後的 PlayMode 測試在使用者的 Editor 啟動了，但沒有等結果（使用者表示不需要）。Windows 執行檔**沒有重建**，因為專案正在 Editor 開著，還是 16:34 那一版（站姿問題仍在）。
+
+## 攝影機統一
+
+日期：2026-11-03。起因：使用者在 Editor 試玩握手場景，覺得攝影機體驗很差，要求握手改用戰鬥場景（Combat）的攝影機，所有 demo 只用一種做法。宿主：`W:/UnityProject/Yu5h1LibTest`，Unity `6000.6.0f1`，用使用者開著的 Editor 經 Unity MCP 驗證，沒有開 batchmode。
+
+### 兩個場景原本的差異
+
+| 項目 | 戰鬥（`Combat/WhiteRoom.unity`） | 握手（`Handshake/Handshake.unity`，修改前） |
+|---|---|---|
+| 攝影機物件 | 場景裡的 `Main Camera`（near 0.3、depth −1、位置 (0, 1, −10)、有 URP 資料、沒有 `WhiteRoomCamera`）。 | `WhiteRoom_Camera.prefab` 的實例（near 0.1、depth 0、位置 (0, 0, 0)）。 |
+| 掛上 `WhiteRoomCamera` 的方式 | `WhiteRoomSceneBuilder.ApplyScenario` 呼叫 `EnsureCamera`，在 `Main Camera` 上掛元件。 | 場景預製物件實例自帶元件；`HandshakeSceneBuilder` 在 `_camera` 為空時才走 `_cameraPrefab` 或 `EnsureCamera`。 |
+| `WhiteRoomCamera` 的欄位值 | 場景沒有序列化值，用程式預設：目標偏移 (0, 1.4, 0)、距離 4、最小／最大距離 1.5／8、滑鼠靈敏度 2、仰角 −25°～65°、平滑 15、肩部偏移 0。 | 預製物件的序列化值逐項和程式預設相同，沒有差異。 |
+| 執行期覆寫 | 無。起始偏航與俯角取自 `Main Camera` 的旋轉（0°、0°）。 | `SetOrbit(0, 12, 3.4)`：起始俯角 12°、距離 4 → 3.4。`SetShoulderOffset((−0.45, 0, 0))`：偏肩。 |
+| 跟拍方式 | `LateUpdate` 每幀 `LookAt` 目標，角色固定在畫面中心。 | 因為肩部偏移不為 0，改成直接套用軌道旋轉，角色不在畫面中心。 |
+
+結論：欄位值本身沒有分歧，分歧在兩處——握手另有一個預製物件（near、depth 與戰鬥的 `Main Camera` 不同，還重複了一份預設值），以及 `HandshakeSceneBuilder` 的 `SetOrbit`／`SetShoulderOffset` 覆寫，構圖因此和戰鬥不同。
+
+### 改了什麼
+
+- 建立方式只剩一種：兩個場景都由 `WhiteRoomSceneBuilder.EnsureCamera` 在場景的 `Main Camera` 上掛 `WhiteRoomCamera`。設定只在 `WhiteRoomCamera` 的欄位預設值。
+- `Handshake.unity`：移除 `WhiteRoom_Camera` 預製物件實例，放入和戰鬥場景同一份 `Main Camera`（同一組元件與數值，由戰鬥場景逐段複製）；`HandshakeSceneBuilder` 上的 `_cameraPrefab`、`_camera` 序列化值一併移除。
+- `HandshakeSceneBuilder`：刪除 `_cameraPrefab`、`SetOrbit`、`SetShoulderOffset` 的呼叫；攝影機一律 `_camera = WhiteRoomSceneBuilder.EnsureCamera(_player.transform)`，`_camera` 不再序列化。
+- `WhiteRoomCamera`：刪除只為握手存在的 `SetOrbit`、`SnapToTarget`、`SetShoulderOffset`、`_shoulderOffset`、`_hasExplicitOrbit`，以及只有 `SetOrbit` 用到的 `_minDistance`、`_maxDistance`（留著會有未使用警告）。`Start` 一律從 `Main Camera` 的旋轉取起始角度，`LateUpdate` 一律 `LookAt`。戰鬥原本走的就是這條路徑（肩部偏移為 0），所以行為不變。
+- 刪除 `Prefabs/WhiteRoom_Camera.prefab` 與 `.meta`（沒有其他參照，留著只會讓預設值又出現兩份）。`README.md` 的預製物件與鏡頭描述同步更新。
+- 沒有為握手另外調任何數值。
+
+這一節之前的章節提到的肩部偏移與握手專屬構圖是當時的紀錄，已被這一節取代，未改寫。
+
+### 測試結果
+
+| 項目 | 結果 |
+|---|---|
+| 編譯 | 通過；移除 `_minDistance`／`_maxDistance` 前有 2 個未使用警告，移除後主控台沒有錯誤、沒有警告。 |
+| PlayMode 組件 `Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests` | **9 / 9 通過**（46 s）。`VerifyCombatCameraLookAtTracking` 通過（0.44 s）：戰鬥鏡頭在目標移動後仍朝向目標、目標在視錐內、遮擋時拉近。握手批次驗證 21 / 21 通過。 |
+| 依賴握手舊攝影機數值的測試 | 沒有。測試裡的攝影機判斷只有戰鬥場景那一項，其他只用 `Camera.main` 的朝向換算移動方向，不需要修改。 |
+| 編輯模式比對兩個場景的 `Main Camera` | tag、near 0.3、視野 60、depth −1、清除旗標、位置 (0, 1, −10)、URP 資料、AudioListener 全部相同，兩邊都沒有預先掛 `WhiteRoomCamera`。 |
+| Play Mode 執行握手場景 | 場景裡只有 1 個攝影機、1 個 `WhiteRoomCamera`，且是 `Camera.main`；欄位值就是程式預設（目標偏移 (0, 1.4, 0)、距離 4、靈敏度 2、仰角 −25°～65°、平滑 15）。攝影機位置 (0, 1.4, −5.2)，在玩家（z = −1.2）正後方 4 m，朝向與玩家頭部的夾角為 0。 |
+| 主控台 | 沒有錯誤。測試輸出裡有「KeyCode 無法轉換到 Key」訊息，以及量不到臂長測試預期的紅字；兩者和攝影機無關。修改前的基準沒有另外跑，這個判斷來自內容而不是前後比對。 |
+
+### 沒驗證的部分
+
+- 使用者親手試玩握手的視角感受：新的起始俯角是 0°（和戰鬥相同），舊的是 12°，視角會比以前平。要調整只能改 `WhiteRoomCamera` 的預設，且會同時影響兩個 demo。
+- 戰鬥場景修改前後的畫面逐幀比對沒有做，只用程式路徑相同和 `VerifyCombatCameraLookAtTracking` 證明行為沒變。
+- 握手場景裡的遮擋（牆或 AI 擋在鏡頭與玩家之間）沒有專門測試，遮擋測試只在戰鬥場景跑。
+- Windows 執行檔**沒有重建**（Editor 開著）。`W:\UnityProject\Yu5h1LibTest-Build\WhiteRoom_Handshake\` 還是 16:34 的版本，攝影機仍是舊的偏肩構圖，也仍有站姿問題；Editor 關掉後要重建。
+- 宿主複本已同步這次改的檔（`Handshake.unity`、`HandshakeSceneBuilder.cs`、`README.md`、`WhiteRoomCamera.cs`，並刪除攝影機預製物件）。宿主的 `Implementation-Plan.md` 本來就和套件不同，不是這次改的，沒有動。

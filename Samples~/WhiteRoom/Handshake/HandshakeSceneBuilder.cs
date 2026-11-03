@@ -20,10 +20,9 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         [SerializeField] private Avatar _humanoidAvatar;
         [SerializeField] private RuntimeAnimatorController _animatorController;
 
-        [Header("Participant and Camera Prefabs (Manual Scene Authoring)")]
+        [Header("Participant Prefabs (Manual Scene Authoring)")]
         [SerializeField] private GameObject _playerPrefab;
         [SerializeField] private GameObject _aiPrefab;
-        [SerializeField] private GameObject _cameraPrefab;
 
         [Header("Handshake Settings Asset (Manual Authoring & Persistence)")]
         [SerializeField, Inline] private HandshakeSettings _settings;
@@ -31,7 +30,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         [Header("Scene Object References (Direct Scene Authoring)")]
         [SerializeField] private WhiteRoomCharacter _player;
         [SerializeField] private HandshakeAiController _ai;
-        [SerializeField] private WhiteRoomCamera _camera;
+        private WhiteRoomCamera _camera;
 
         private readonly List<GameObject> _spawnedEntities = new List<GameObject>();
         private HandshakeParticipant _playerParticipant;
@@ -77,13 +76,12 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         }
 
         /// <summary>
-        /// Configures the facing player and AI participants and camera. Uses scene prefab instances when present.
+        /// Configures the facing player and AI participants and binds the shared camera through <see cref="WhiteRoomSceneBuilder.EnsureCamera"/>. Uses scene prefab instances when present.
         /// </summary>
         public void SpawnParticipants()
         {
             if (_player == null) _player = ObjectUtility.FindObject<WhiteRoomCharacter>(false);
             if (_ai == null) _ai = ObjectUtility.FindObject<HandshakeAiController>(false);
-            if (_camera == null) _camera = ObjectUtility.FindObject<WhiteRoomCamera>(false);
 
             HandshakeVisualFeedback playerFeedback = null;
             HandshakeVisualFeedback aiFeedback = null;
@@ -158,24 +156,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
             if (_player != null)
             {
-                if (_camera == null)
-                {
-                    if (_cameraPrefab != null)
-                    {
-                        GameObject camGo = Instantiate(_cameraPrefab);
-                        _camera = camGo.GetComponent<WhiteRoomCamera>();
-                    }
-                    else
-                    {
-                        _camera = WhiteRoomSceneBuilder.EnsureCamera(_player.transform);
-                    }
-                }
-                if (_camera != null)
-                {
-                    _camera.Target = _player.transform;
-                    _camera.SetOrbit(0f, 12f, 3.4f);
-                    _camera.SetShoulderOffset(new Vector3(-0.45f, 0f, 0f));
-                }
+                _camera = WhiteRoomSceneBuilder.EnsureCamera(_player.transform);
             }
 
             var arb = HandshakeArbitrator.Instance;

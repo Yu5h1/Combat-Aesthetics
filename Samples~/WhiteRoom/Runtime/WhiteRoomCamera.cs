@@ -8,18 +8,16 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
 {
     /// <summary>
     /// Third-person orbit camera that tracks a target transform and yields cursor focus when the HUD is hovered.
+    /// Every WhiteRoom scene gets it through <see cref="WhiteRoomSceneBuilder.EnsureCamera"/> and these field defaults are the only framing configuration; no scene or demo overrides them.
     /// </summary>
     public class WhiteRoomCamera : MonoBehaviour
     {
         [Header("Target Settings")]
         [SerializeField] private Transform _target;
         [SerializeField] private Vector3 _targetOffset = new Vector3(0, 1.4f, 0);
-        [SerializeField] private Vector3 _shoulderOffset = Vector3.zero;
 
         [Header("Orbit Settings")]
         [SerializeField] private float _distance = 4.0f;
-        [SerializeField] private float _minDistance = 1.5f;
-        [SerializeField] private float _maxDistance = 8.0f;
         [SerializeField] private float _mouseSensitivity = 2.0f;
         [SerializeField] private float _minPitch = -25f;
         [SerializeField] private float _maxPitch = 65f;
@@ -27,7 +25,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
 
         private float _yaw = 0f;
         private float _pitch = 15f;
-        private bool _hasExplicitOrbit = false;
 
         public Transform Target
         {
@@ -35,57 +32,11 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             set => _target = value;
         }
 
-        /// <summary>
-        /// Explicitly sets the orbit angles and distance (e.g. for initial camera framing in specific scenes).
-        /// </summary>
-        public void SetOrbit(float yaw, float pitch, float distance = -1f)
-        {
-            _yaw = yaw;
-            _pitch = Mathf.Clamp(pitch, _minPitch, _maxPitch);
-            if (distance > 0f)
-            {
-                _distance = Mathf.Clamp(distance, _minDistance, _maxDistance);
-            }
-            _hasExplicitOrbit = true;
-            SnapToTarget();
-        }
-
-        /// <summary>
-        /// Instantly snaps the camera to its target framing without smoothing lag.
-        /// </summary>
-        public void SnapToTarget()
-        {
-            if (_target == null) return;
-            Quaternion rotation = Quaternion.Euler(_pitch, _yaw, 0f);
-            Vector3 pivot = _target.position + _targetOffset + (rotation * _shoulderOffset);
-            Vector3 desiredPosition = pivot - (rotation * Vector3.forward * _distance);
-            transform.position = desiredPosition;
-            if (_shoulderOffset == Vector3.zero)
-            {
-                transform.LookAt(pivot);
-            }
-            else
-            {
-                transform.rotation = rotation;
-            }
-        }
-
-        /// <summary>
-        /// Sets a lateral or vertical shoulder offset relative to the camera orbit orientation.
-        /// </summary>
-        public void SetShoulderOffset(Vector3 offset)
-        {
-            _shoulderOffset = offset;
-        }
-
         private void Start()
         {
-            if (!_hasExplicitOrbit)
-            {
-                Vector3 angles = transform.eulerAngles;
-                _yaw = angles.y;
-                _pitch = angles.x;
-            }
+            Vector3 angles = transform.eulerAngles;
+            _yaw = angles.y;
+            _pitch = angles.x;
 
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
@@ -143,7 +94,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             if (_target == null) return;
 
             Quaternion rotation = Quaternion.Euler(_pitch, _yaw, 0f);
-            Vector3 pivot = _target.position + _targetOffset + (rotation * _shoulderOffset);
+            Vector3 pivot = _target.position + _targetOffset;
             Vector3 desiredPosition = pivot - (rotation * Vector3.forward * _distance);
 
             Vector3 rayDir = desiredPosition - pivot;
@@ -162,14 +113,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
 
             transform.position = Vector3.Lerp(transform.position, desiredPosition, _smoothSpeed * Time.deltaTime);
 
-            if (_shoulderOffset == Vector3.zero)
-            {
-                transform.LookAt(pivot);
-            }
-            else
-            {
-                transform.rotation = rotation;
-            }
+            transform.LookAt(pivot);
         }
     }
 }

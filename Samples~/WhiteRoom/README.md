@@ -19,9 +19,9 @@ WhiteRoom 是 CombatAesthetic 套件的官方 3D 最小測試場範例（Sample�
      - **時間來源與動態片段綁定**：動作片段時長直接取自 `AnimationClip.length`；`HandshakeVisualFeedback` 透過動態 `AnimatorOverrideController` 將 `HandshakeSettings.asset` 中指派的 17 段動作片段映射至 Controller 內具名狀態節點；操作許可由動畫具名區間（`ActionInterval` / `ClipIntervalBinding`，源自片段檔 `intervals` 標籤）嚴格決定，徹底移除固定秒數計時器與倒數。
      - **Runtime Humanoid IK 與 Pre-IK 碰撞球擺放**：在握緊、搖手、握住期間以權重 0.85 對準雙手中點；被抓住期間以權重 0.95 對準抓人方右手表現手臂拉直。碰撞球在 `OnAnimatorIK` 開頭以純動畫手腕延伸姿態擺放，並於測試案例驗證在鄰近目標下漂移 < 0.05m，100% 不受 IK 牽引影響判定。
    - **重新按下才發起**：所有結果（成功、惡作劇、同時收手、比力氣勝負/平手/0比0、掙脫）裁定後若持續按住互動鍵，維持站姿不自動伸手；必須先放開互動鍵再重新按下才發起。
-   - **預製物件化與手工編輯 DX**：角色、AI 與鏡頭全面改為 Prefab（`WhiteRoom_Player.prefab`、`WhiteRoom_AI.prefab`、`WhiteRoom_Camera.prefab` 位於 `Samples~/WhiteRoom/Prefabs/`），場景直接引用且可在 Editor 直接調校；`HandshakeSettings` ScriptableObject 提供集中參數管理，Play Mode 調整值可即時保存。
+   - **預製物件化與手工編輯 DX**：角色與 AI 改為 Prefab（`WhiteRoom_Player.prefab`、`WhiteRoom_AI.prefab` 位於 `Samples~/WhiteRoom/Prefabs/`），場景直接引用且可在 Editor 直接調校；攝影機不是預製物件，戰鬥與握手場景都由 `WhiteRoomSceneBuilder.EnsureCamera` 在場景的 Main Camera 上掛 `WhiteRoomCamera`，設定只在該元件的欄位預設值（2026-11-03 統一）；`HandshakeSettings` ScriptableObject 提供集中參數管理，Play Mode 調整值可即時保存。
    - **Windows 獨立執行檔交付與證據**：建置輸出於 `W:\UnityProject\Yu5h1LibTest-Build\WhiteRoom_Handshake\WhiteRoom_Handshake.exe`（repo 外部），指定場景建置不修改宿主建置設定；結構化事件日誌 `Documentation/WhiteRoom_Handshake_Logs.json`（218 筆真實條目）。依指令全面廢止 agent 截圖，以執行檔與日誌為準。
-   - **重用共用 `Runtime/`**：重用 `CombatEntity`（移動、跳躍、重力與全場重設）、`WhiteRoomCharacter`（P1/P2 輸入採集與改鍵）、`WhiteRoomHUD`（IMGUI 面板與 JSON 日誌匯出）及 `WhiteRoomSceneBuilder`（場地、燈光、鏡頭）。戰鬥場景鏡頭維持原生 `LookAt` 跟拍，握手場景使用四分之三側視角構圖避免背影遮擋。
+   - **重用共用 `Runtime/`**：重用 `CombatEntity`（移動、跳躍、重力與全場重設）、`WhiteRoomCharacter`（P1/P2 輸入採集與改鍵）、`WhiteRoomHUD`（IMGUI 面板與 JSON 日誌匯出）及 `WhiteRoomSceneBuilder`（場地、燈光、鏡頭）。兩個場景用同一組 `LookAt` 跟拍鏡頭設定，握手不再有專屬構圖。
    - **Sample 場景僅含可操作內容**：`Handshake.unity` 不掛載自動測試腳本，進入 Play Mode 後即可由玩家直接操作；輔助自動化測試器位於 `Samples~/WhiteRoom/Tests/HandshakeVerificationRunner.cs` 與 `HandshakePlayModeTests.cs`。
 2. **戰鬥驗證場景 (`Combat/WhiteRoom.unity`)**（目前暫停，保留至戰鬥驗證重啟）：
    - 驗證第三人稱徒手攻防：八方向移動、跳躍落地恢復、原地/方向出招、警戒慢步、普通防禦、精準彈刀反制、受擊反應與受力因果。
@@ -57,8 +57,7 @@ Samples~/WhiteRoom/
 │  └─ Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake.asmdef
 ├─ Prefabs/                   握手預製物件（直接置於場景，支援 Editor 調整與持久化）
 │  ├─ WhiteRoom_Player.prefab 玩家角色預製物件（CharacterController、WhiteRoomCharacter、HandshakeParticipant）
-│  ├─ WhiteRoom_AI.prefab     AI 角色預製物件（CharacterController、HandshakeAiController、HandshakeParticipant）
-│  └─ WhiteRoom_Camera.prefab 第三人稱攝影機預製物件（WhiteRoomCamera）
+│  └─ WhiteRoom_AI.prefab     AI 角色預製物件（CharacterController、HandshakeAiController、HandshakeParticipant）
 ├─ Runtime/                   共用 Sample Runtime assembly（Handshake 與 Combat 共用）
 │  ├─ CombatActionIntent.cs   抽象操作意圖（含移動、跳躍、出招、防禦、InteractHold/Down/Up）
 │  ├─ CombatEntity.cs         共用角色運動學（移動、跳躍、重力、全場重設）與戰鬥狀態機
