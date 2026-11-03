@@ -157,6 +157,19 @@ MonoBehaviour:
       EndNormalizedTime: 1
       UnderControl: 0
       Cancellable: 0
+  _headLookWeight: 0.8
+  _bodyLookWeight: 0.45
+  _lookWeightSpeed: 5
+  _faceHeightOffset: 0.08
+  _handRotationWeight: 0.85
+  _elbowHintOutward: 0.3
+  _elbowHintDown: 0.35
+  _gripPositionOffset: {x: 0, y: 0, z: 0}
+  _gripEulerOffset: {x: 0, y: 0, z: 0}
+  _gripBias: 0.5
+  _gripIkWeight: 0.85
+  _caughtIkWeight: 0.95
+  _catchingIkWeight: 0.85
   _reachClip: {fileID: 1693699076924675934, guid: 2110e5b1e6b8f434284ad27fea77b4b1, type: 2}
   _waitClip: {fileID: 3064054580098287026, guid: 827bef51320c4f142a4d56390cf741b1, type: 2}
   _withdrawClip: {fileID: -3268706081431032073, guid: 00aa645ac5d8a1644a9a6c087d44bd41, type: 2}

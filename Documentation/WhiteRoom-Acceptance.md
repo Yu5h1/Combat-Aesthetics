@@ -1162,3 +1162,40 @@ tests: total 9, passed 9, failed 0, inconclusive 0, skipped 0
 - 只有「權重隨互動開關、根不被改」有自動檢查；手的角度與手肘提示沒有自動斷言。
 - 大笑、得意、痛苦等反應片段的頭部動作被減弱到什麼程度沒有量測。
 - Windows 執行檔沒有重建（Editor 開著）。
+
+## 2026-11-03 拿掉畫面除錯介面與握手手勢設定
+
+依據：[Implementation-Plan.md](../Samples~/WhiteRoom/Implementation-Plan.md)〈拿掉畫面上的除錯介面與握手手勢調整交辦〉第 1～6 項。
+
+### 做法
+
+- **畫面不再有 IMGUI**：`WhiteRoomHUD` 刪掉 `OnGUI`、各面板、按鍵重設列、血條、F1 開關與三個自訂 GUI 委派；Combat、Handshake 兩個場景共用，Editor 與建置版一樣。事件紀錄的資料（`AllHistoryLogs`、`LogAction`）、JSON 匯出與模擬網路通道保留。副作用：Combat 場景原本畫面上的情境切換按鈕、診斷面板滑桿和互動鍵改鍵介面一併消失，這次沒有為 Combat 另做 Inspector 替代（計畫只要求握手）；互動鍵仍可在 `WhiteRoomCharacter` 的 Inspector 改。
+- **狀態在 Inspector 看**：新增 `Handshake/HandshakeSceneBuilderEditor.cs`（整檔 `#if UNITY_EDITOR`，不新增 asmdef）。播放時用 HelpBox 持續更新：判定狀態與最新結果、比力氣次數、身體距離、臂長合計與掙脫門檻（沒配對寫「未配對」）、玩家與 AI 的姿態。
+- **測試按鈕**：「快速重設」與 13 個重現結果的按鈕（成功、取消、惡作劇、同時收手、比力氣四種、抓住與掙脫）。情境邏輯移到 `HandshakeSceneBuilder.StartTestScenario(HandshakeTestScenario)`，沿用原本的 AI 測試模式。原本的滑桿：連按容許時間與骨架門檻補償已是 `HandshakeSettings` 欄位；AI 伸手延遲、按住時長等本來就是 `HandshakeAiController` 的序列化欄位，在各自 Inspector 調。
+- **主控台**：`HandshakeArbitrator` 的正式結果訊息同時 `Debug.Log`；Editor 依結果上色（成功／比力氣勝綠、惡作劇橘、抓住橘紅、掙脫紅、同時收手黃、平手與 0 比 0 藍），建置版（`#else`）寫純文字。
+- **握手手勢**：`HandshakeSettings` 新增 `GripPositionOffset`、`GripEulerOffset`（以角色本地軸，z 朝對手）、`GripBias`（握點在自己手 0 到對方手 1 之間，預設 0.5）、`GripIkWeight`／`CaughtIkWeight`／`CatchingIkWeight`（預設 0.85／0.95／0.85），取代寫死的數字；預設值與之前的畫面相同。位置偏移套在右手 IK 目標、Euler 偏移套在手的旋轉；`HandshakeVisualFeedback.OnDrawGizmos` 在 Scene 視窗畫出握點（黃圈）與手的三軸（紅 x、綠 y、藍 z），雙方各畫各的。
+- 套件的 `Handshake/HandshakeSettings.asset` 已補上上一輪（頭身 IK 七個欄位）與這輪（手勢六個欄位）的序列化欄位，內容與宿主一致，只新增欄位、既有值不變。
+
+### 與計畫的差異
+
+上一輪的頭部 look-at：計畫要求片段本身的頭部動作疊加在 look-at 上，目前是以權重 0.8 減弱片段動作，這次依指示沒有改。
+
+### 測試
+
+Unity MCP 在使用者開著的 Editor 跑 Play Mode，只跑 4 項，**4 / 4 通過**（5.4 s）；編譯後主控台沒有錯誤（只有既有的 KeyCode 轉換提示）。
+
+| 測試 | 為什麼跑 |
+|---|---|
+| `VerifyGripPositionOffsetAppliesToRightHandIkTarget`（新增） | 設定的位置偏移確實套在右手 IK 目標：無偏移時目標等於握點，設偏移後等於握點加角色旋轉後的偏移 |
+| `VerifyPreIkContactSpherePosition` | 改了 `OnAnimatorIK`，確認碰撞球仍在 IK 前位置 |
+| `VerifyHeadAndBodyLookWeightsFollowInteraction` | 同一個 `OnAnimatorIK`，確認頭身權重行為沒壞 |
+| `VerifyCombatSceneJumpLandingAndAttackPermissions` | 唯一讀 `AllHistoryLogs` 的斷言，確認 HUD 改寫後紀錄仍有資料 |
+
+沒跑 `RunHandshakeBatch3VerificationSuite`：它只呼叫匯出，不斷言紀錄內容，跑下去會重寫原本就有未提交修改的 `WhiteRoom_Handshake_Logs.json`；判定規則與片段沒有改，其他已通過的測試不重跑。
+
+### 沒驗證的部分
+
+- Inspector 的 HelpBox 與按鈕沒有實際在 Editor 點過，也沒截圖；只確認編譯通過。13 個情境按鈕沒有逐一按（它們與原按鈕呼叫同樣的 AI 模式設定）。
+- 主控台上色只確認程式路徑，沒有看實際顏色；建置版純文字沒有建置驗證。
+- Gizmo 在 Scene 視窗的樣子、偏移值怎麼調才是「掌心垂直、斜斜前伸、虎口朝上」都沒驗證，預設偏移為 0，需要使用者調。
+- Combat 場景的畫面是否乾淨沒有在 Game 視窗確認；Windows 執行檔沒有重建（Editor 開著）。

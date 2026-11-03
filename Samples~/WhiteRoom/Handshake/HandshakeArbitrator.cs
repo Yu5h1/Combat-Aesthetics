@@ -839,11 +839,38 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         private void EmitArbitrationLog(string message)
         {
             OnArbitrationLog?.Invoke(message);
+            Debug.Log(FormatConsoleMessage(message));
             var hud = ObjectUtility.FindObject<WhiteRoomHUD>(false);
             if (hud != null)
             {
                 hud.LogAction(message);
             }
+        }
+
+        /// <summary>
+        /// Formats an official arbitration message for the console. The Editor console renders rich text, so the outcome colour is
+        /// applied there; a build writes plain text because Player.log does not parse colour tags.
+        /// </summary>
+        private string FormatConsoleMessage(string message)
+        {
+#if UNITY_EDITOR
+            string color;
+            switch (_lastOutcome)
+            {
+                case HandshakeOutcome.Success:
+                case HandshakeOutcome.StrengthContestWin: color = "#44cc44"; break;
+                case HandshakeOutcome.Prank: color = "#ff9933"; break;
+                case HandshakeOutcome.Escaped: color = "#ff4444"; break;
+                case HandshakeOutcome.Caught: color = "#ff8844"; break;
+                case HandshakeOutcome.BothWithdraw: color = "#cccc33"; break;
+                case HandshakeOutcome.StrengthContestTie:
+                case HandshakeOutcome.StrengthContestZeroZero: color = "#66aaff"; break;
+                default: return message;
+            }
+            return $"<color={color}>{message}</color>";
+#else
+            return message;
+#endif
         }
 
         private void HandleGlobalReset()

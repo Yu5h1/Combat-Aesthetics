@@ -17,6 +17,9 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
     /// Head and body weights are active from reach to the end of withdraw (any state other than <see cref="HandshakeState.None"/>)
     /// and ramp smoothly; all values live in <see cref="HandshakeSettings"/>. Only visuals change: the root transform, colliders,
     /// the pre-IK contact sphere and arbitration are untouched.
+    /// The grip point and hand pose are tunable through <see cref="HandshakeSettings"/> (position and Euler offsets in the character's
+    /// local frame, bias between the two hands, per-state IK weights); <c>OnDrawGizmos</c> draws the applied grip point with the hand's
+    /// three axes in the Scene view so the offsets can be tuned against the pose.
     /// Handles root motion application during Caught, Catching, and Leap states.
     /// Does not modify or participate in contact or outcome arbitration.
     /// </summary>
@@ -388,8 +391,12 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         private float _headLookWeight = 0f;
         private float _bodyLookWeight = 0f;
         private Transform _opponentHead;
+        private Vector3 _appliedIkTarget;
+        private Quaternion _appliedIkRotation = Quaternion.identity;
+        private HandshakeSettings _fallbackSettings;
 
         public float CurrentIkWeight => _currentIkWeight;
+        public Vector3 AppliedIkTarget => _appliedIkTarget;
         public float HeadLookWeight => _headLookWeight;
         public float BodyLookWeight => _bodyLookWeight;
 
@@ -417,6 +424,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
             float targetWeight = 0f;
             HandshakeState state = _participant.State;
+            var settings = _participant.Settings ?? (_fallbackSettings ??= HandshakeSettings.CreateDefault());
 
             if (_hasIkOverride)
             {
@@ -431,19 +439,19 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
                 if (myActiveGrip && oppActiveGrip)
                 {
-                    targetWeight = 0.85f;
+                    targetWeight = settings.GripIkWeight;
                     Vector3 myHand = _animator.GetIKPosition(AvatarIKGoal.RightHand);
                     Vector3 oppHand = _opponent.RightHandTransform.position;
-                    _currentIkTarget = Vector3.Lerp(myHand, oppHand, 0.5f);
+                    _currentIkTarget = Vector3.Lerp(myHand, oppHand, settings.GripBias);
                 }
                 else if (state == HandshakeState.Caught && _opponent.State == HandshakeState.Catching)
                 {
-                    targetWeight = 0.95f;
+                    targetWeight = settings.CaughtIkWeight;
                     _currentIkTarget = _opponent.RightHandTransform.position;
                 }
                 else if (state == HandshakeState.Catching && _opponent.State == HandshakeState.Caught)
                 {
-                    targetWeight = 0.85f;
+                    targetWeight = settings.CatchingIkWeight;
                     _currentIkTarget = _opponent.RightHandTransform.position;
                 }
             }
@@ -451,9 +459,10 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             _currentIkWeight = Mathf.MoveTowards(_currentIkWeight, targetWeight, 8.0f * Time.deltaTime);
 
             _animator.SetIKPositionWeight(AvatarIKGoal.RightHand, _currentIkWeight);
+            _appliedIkTarget = _currentIkTarget + _participant.transform.rotation * settings.GripPositionOffset;
             if (_currentIkWeight > 0.001f)
             {
-                _animator.SetIKPosition(AvatarIKGoal.RightHand, _currentIkTarget);
+                _animator.SetIKPosition(AvatarIKGoal.RightHand, _appliedIkTarget);
             }
 
             ApplyHandRotationAndElbowHint();
@@ -477,15 +486,18 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             Vector3 elbow = lowerArm.position;
             Vector3 animatedHand = _animator.GetIKPosition(AvatarIKGoal.RightHand);
             Vector3 toAnimatedHand = animatedHand - elbow;
-            Vector3 toTarget = _currentIkTarget - elbow;
+            Vector3 toTarget = _appliedIkTarget - elbow;
             Quaternion aim = toAnimatedHand.sqrMagnitude > 1e-6f && toTarget.sqrMagnitude > 1e-6f
                 ? Quaternion.FromToRotation(toAnimatedHand, toTarget)
                 : Quaternion.identity;
 
             _animator.SetIKRotationWeight(AvatarIKGoal.RightHand, _currentIkWeight * settings.HandRotationWeight);
-            _animator.SetIKRotation(AvatarIKGoal.RightHand, aim * _animator.GetIKRotation(AvatarIKGoal.RightHand));
+            Quaternion rootRotation = _participant.transform.rotation;
+            Quaternion gripOffset = rootRotation * Quaternion.Euler(settings.GripEulerOffset) * Quaternion.Inverse(rootRotation);
+            _appliedIkRotation = gripOffset * aim * _animator.GetIKRotation(AvatarIKGoal.RightHand);
+            _animator.SetIKRotation(AvatarIKGoal.RightHand, _appliedIkRotation);
 
-            Vector3 shoulderToTarget = (upperArm.position + _currentIkTarget) * 0.5f;
+            Vector3 shoulderToTarget = (upperArm.position + _appliedIkTarget) * 0.5f;
             Vector3 hint = shoulderToTarget
                 + _participant.transform.right * settings.ElbowHintOutward
                 + Vector3.down * settings.ElbowHintDown;
@@ -530,6 +542,19 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
             face = _opponentHead.position + Vector3.up * settings.FaceHeightOffset;
             return true;
+        }
+
+        private void OnDrawGizmos()
+        {
+            if (_currentIkWeight < 0.001f) return;
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireSphere(_appliedIkTarget, 0.05f);
+            Gizmos.color = Color.red;
+            Gizmos.DrawLine(_appliedIkTarget, _appliedIkTarget + _appliedIkRotation * Vector3.right * 0.15f);
+            Gizmos.color = Color.green;
+            Gizmos.DrawLine(_appliedIkTarget, _appliedIkTarget + _appliedIkRotation * Vector3.up * 0.15f);
+            Gizmos.color = Color.blue;
+            Gizmos.DrawLine(_appliedIkTarget, _appliedIkTarget + _appliedIkRotation * Vector3.forward * 0.15f);
         }
 
         private Color GetCurrentColor()

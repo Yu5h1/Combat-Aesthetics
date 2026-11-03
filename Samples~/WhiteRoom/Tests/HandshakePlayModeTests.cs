@@ -307,6 +307,40 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
         }
 
         [UnityTest]
+        public IEnumerator VerifyGripPositionOffsetAppliesToRightHandIkTarget()
+        {
+            var loadOp = EditorSceneManager.LoadSceneAsyncInPlayMode(
+                HandshakeScenePath,
+                new UnityEngine.SceneManagement.LoadSceneParameters(UnityEngine.SceneManagement.LoadSceneMode.Single));
+            while (!loadOp.isDone) yield return null;
+            yield return new WaitForSeconds(0.4f);
+
+            var player = ObjectUtility.FindObject<WhiteRoomCharacter>(false);
+            var feedback = player.GetComponentInChildren<HandshakeVisualFeedback>();
+            var settings = HandshakeArbitrator.Instance.Settings;
+            Assert.IsNotNull(feedback, "Feedback component must exist.");
+
+            Vector3 originalOffset = settings.GripPositionOffset;
+            Vector3 target = player.transform.position + new Vector3(0f, 1.2f, 0.5f);
+
+            settings.GripPositionOffset = Vector3.zero;
+            feedback.SetIkOverride(target, 1.0f);
+            yield return null;
+            yield return null;
+            Assert.AreEqual(0f, Vector3.Distance(feedback.AppliedIkTarget, target), 1e-4f, "Without an offset the IK target is the grip point.");
+
+            Vector3 offset = new Vector3(0.1f, 0.05f, 0.2f);
+            settings.GripPositionOffset = offset;
+            yield return null;
+            yield return null;
+            Vector3 expected = target + player.transform.rotation * offset;
+            Assert.AreEqual(0f, Vector3.Distance(feedback.AppliedIkTarget, expected), 1e-4f, "The configured offset must be applied to the right hand IK target.");
+
+            feedback.ClearIkOverride();
+            settings.GripPositionOffset = originalOffset;
+        }
+
+        [UnityTest]
         public IEnumerator VerifyItem1_ControlIntervalsGovernRePress()
         {
             var loadOp = EditorSceneManager.LoadSceneAsyncInPlayMode(

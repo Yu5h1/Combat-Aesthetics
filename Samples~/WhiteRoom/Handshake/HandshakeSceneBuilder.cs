@@ -7,6 +7,26 @@ using Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom;
 namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 {
     /// <summary>
+    /// Test scenarios the Inspector buttons can start by switching the AI test mode and resetting the arena.
+    /// </summary>
+    public enum HandshakeTestScenario
+    {
+        AiInitiatorSuccess,
+        AiResponderSuccess,
+        AiCancel,
+        PlayerPrank,
+        ReleaseAfterGrip,
+        AiPrank,
+        BothWithdraw,
+        ContestAiWin,
+        ContestPlayerWin,
+        ContestTie,
+        ContestZeroZero,
+        PlayerCatchesAiEscape,
+        AiCatchesPlayer
+    }
+
+    /// <summary>
     /// Builder component for the Stage 2b handshake test scene across Batches 1, 2, and 3.
     /// Sets up the facing player and AI entities, right-hand contact colliders, arbitrator, and shared HUD.
     /// </summary>
@@ -298,223 +318,91 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             hud.IsInteractionMode = true;
             hud.ActiveInteractionLabel = "握手 (Handshake)";
             hud.CustomScenarioName = "Handshake_Stage2b_Batch3";
-            hud.CustomStatusGUI = DrawHandshakeStatusGUI;
-            hud.CustomScenarioGUI = DrawHandshakeScenarioGUI;
-            hud.CustomHelpGUI = DrawHandshakeHelpGUI;
             hud.RefreshBindings();
 
             hud.LogAction("【WhiteRoom 握手互動系統就緒 (第 3 批：比力氣與拉扯)】單一 HUD 運作，可使用 WASD 與互動鍵操作。");
         }
 
-        private void DrawHandshakeStatusGUI()
+        /// <summary>
+        /// Resets every arena entity, the same action as the R key.
+        /// </summary>
+        public void QuickReset()
         {
-            var arb = HandshakeArbitrator.Instance;
-            if (arb != null)
-            {
-                string outcomeColor = "cyan";
-                string outcomeText = arb.LastOutcome.ToString();
-                if (arb.LastOutcome == HandshakeOutcome.Success)
-                {
-                    outcomeColor = "#44ff44";
-                    outcomeText = "握手成功 (Success)";
-                }
-                else if (arb.LastOutcome == HandshakeOutcome.Prank)
-                {
-                    outcomeColor = "#ff5555";
-                    string prankerName = arb.LastPranker != null ? arb.LastPranker.EntityId : "未知";
-                    outcomeText = $"惡作劇 (Prank) - 放開者: {prankerName}";
-                }
-                else if (arb.LastOutcome == HandshakeOutcome.BothWithdraw)
-                {
-                    outcomeColor = "#ffff44";
-                    outcomeText = "同時收手 (BothWithdraw) - 雙方皆放開";
-                }
-                else if (arb.LastOutcome == HandshakeOutcome.StrengthContestWin)
-                {
-                    outcomeColor = "#44ff44";
-                    string winner = arb.LastContestWinner != null ? arb.LastContestWinner.EntityId : "平手";
-                    outcomeText = $"比力氣勝負 (Win) - 勝方: {winner} (P1:{arb.LastPlayerTaps} vs AI:{arb.LastAiTaps})";
-                }
-                else if (arb.LastOutcome == HandshakeOutcome.StrengthContestTie)
-                {
-                    outcomeColor = "#88ccff";
-                    outcomeText = $"比力氣門檻內 (Tie) (P1:{arb.LastPlayerTaps} vs AI:{arb.LastAiTaps})";
-                }
-                else if (arb.LastOutcome == HandshakeOutcome.StrengthContestZeroZero)
-                {
-                    outcomeColor = "#ffff88";
-                    outcomeText = "比力氣 0 比 0 (搖手收手)";
-                }
-                else if (arb.LastOutcome == HandshakeOutcome.Caught)
-                {
-                    outcomeColor = "#ff8844";
-                    string catcher = arb.LastCatcher != null ? arb.LastCatcher.EntityId : "無";
-                    outcomeText = $"抓住 (Caught) - 抓人者: {catcher}";
-                }
-                else if (arb.LastOutcome == HandshakeOutcome.Escaped)
-                {
-                    outcomeColor = "#44ffff";
-                    string escaper = arb.LastEscaper != null ? arb.LastEscaper.EntityId : "無";
-                    outcomeText = $"掙脫 (Escaped) - 掙脫者: {escaper}";
-                }
-                else if (arb.LastOutcome == HandshakeOutcome.Cancelled)
-                {
-                    outcomeColor = "#ffaa44";
-                    outcomeText = "取消 (Cancelled)";
-                }
-
-                GUILayout.Label($"<b>判定狀態:</b> <color=yellow>[{arb.SessionState}]</color> | <b>最新結果:</b> <color={outcomeColor}>[{outcomeText}]</color>");
-                GUILayout.Label($"<b>比力氣次數:</b> P1: {arb.PlayerTaps} 次 | AI: {arb.AiTaps} 次 | <b>身體相距:</b> {arb.BodyDistance:F2} m");
-                GUILayout.Label($"<b>片段時長:</b> 握緊 {arb.GripDuration:F2}s | 搖手 {arb.ShakeDuration:F2}s | 伸手 {arb.ReachDuration:F2}s | 收手 {arb.WithdrawDuration:F2}s");
-
-                GUILayout.BeginHorizontal();
-                GUILayout.Label($"連按容許時間: {arb.ReleaseGraceTime:F2}s", GUILayout.Width(135));
-                arb.ReleaseGraceTime = GUILayout.HorizontalSlider(arb.ReleaseGraceTime, 0.1f, 1.0f);
-                GUILayout.EndHorizontal();
-
-                string reachText = arb.HasPair
-                    ? $"量測 {arb.MeasureTotalArmReach():F2}m, 合計 {arb.GetEffectiveEscapeThreshold():F2}m"
-                    : "未配對";
-                GUILayout.BeginHorizontal();
-                GUILayout.Label($"骨架門檻補償: {arb.Settings.EscapeDistanceCompensation:+0.00;-0.00;0.00}m ({reachText})", GUILayout.Width(280));
-                arb.Settings.EscapeDistanceCompensation = GUILayout.HorizontalSlider(arb.Settings.EscapeDistanceCompensation, -0.5f, 1.0f);
-                GUILayout.EndHorizontal();
-
-                GUILayout.Label("<color=#aaccff><b>[動作驅動位移 - 暫代標示]</b> 根位移片段未到，暫以角色走路/慢步/起跳暫代。</color>");
-            }
-
-            if (_playerParticipant != null)
-            {
-                bool hold = _playerParticipant.CurrentIntent.InteractHold;
-                string latch = _playerParticipant.RequiresInteractRelease ? " <color=orange>(需先放開再按)</color>" : "";
-                GUILayout.Label($"<b>Player 1:</b> 姿態 [{_playerParticipant.State}] | 按住互動: {(hold ? "<color=green>YES</color>" : "NO")}{latch} | 按下次數: {_playerParticipant.InteractPressCount}");
-            }
-
-            if (_ai != null && _aiParticipant != null)
-            {
-                bool hold = _aiParticipant.CurrentIntent.InteractHold;
-                string latch = _aiParticipant.RequiresInteractRelease ? " <color=orange>(需先放開再按)</color>" : "";
-                GUILayout.Label($"<b>AI 對手:</b> 模式 [{_ai.Mode}] | 姿態 [{_aiParticipant.State}] | 按住互動: {(hold ? "<color=green>YES</color>" : "NO")}{latch} | 按下次數: {_aiParticipant.InteractPressCount}");
-            }
+            CombatEntity.ResetAllArenaEntities();
         }
 
-        private void DrawHandshakeScenarioGUI()
+        /// <summary>
+        /// Switches the AI test mode for the scenario, resets the arena and logs the player steps that reproduce the outcome.
+        /// Called by the Inspector buttons of <c>HandshakeSceneBuilderEditor</c>.
+        /// </summary>
+        public void StartTestScenario(HandshakeTestScenario scenario)
         {
+            if (_ai == null) return;
             var hud = ObjectUtility.FindObject<WhiteRoomHUD>(false);
-            GUILayout.Label("<b>情境與 AI 可配置測試設定：</b>");
+            string guide;
 
-            if (_ai != null)
+            switch (scenario)
             {
-                GUILayout.BeginHorizontal();
-                GUILayout.Label($"AI 伸手延遲: {_ai.ReachDelay:F2}s", GUILayout.Width(135));
-                _ai.ReachDelay = GUILayout.HorizontalSlider(_ai.ReachDelay, 0f, 3.0f);
-                GUILayout.EndHorizontal();
-
-                GUILayout.BeginHorizontal();
-                string holdLabel = _ai.HoldDuration <= 0f ? "AI 按住時長: 持續按住" : $"AI 按住時長: {_ai.HoldDuration:F2}s";
-                GUILayout.Label(holdLabel, GUILayout.Width(135));
-                _ai.HoldDuration = GUILayout.HorizontalSlider(_ai.HoldDuration, -1f, 3.0f);
-                GUILayout.EndHorizontal();
-
-                GUILayout.BeginHorizontal();
-                GUILayout.Label($"AI 握緊放開: {_ai.EarlyReleaseGripTime:F2}s", GUILayout.Width(135));
-                _ai.EarlyReleaseGripTime = GUILayout.HorizontalSlider(_ai.EarlyReleaseGripTime, 0.05f, 0.45f);
-                GUILayout.EndHorizontal();
-
-                _ai.WalkIn = GUILayout.Toggle(_ai.WalkIn, $"AI 主動走近玩家 (停止距離 {_ai.StopDistance:F2}m)");
+                case HandshakeTestScenario.AiInitiatorSuccess:
+                    _ai.Mode = HandshakeAiMode.AiInitiator;
+                    guide = "【情境 1】AI 主動伸手等待，請按住 E 並以 WASD 走近使右手接觸至握手成功。";
+                    break;
+                case HandshakeTestScenario.AiResponderSuccess:
+                    _ai.Mode = HandshakeAiMode.AiResponder;
+                    _ai.WalkIn = true;
+                    guide = "【情境 1b】請原地按住 E 伸手；AI 將主動走近並伸手回應，接觸後握手成功。";
+                    break;
+                case HandshakeTestScenario.AiCancel:
+                    _ai.Mode = HandshakeAiMode.AiCancel;
+                    guide = "【情境 1c】AI 伸手等待 1.2s 未碰到後主動放開收手取消。";
+                    break;
+                case HandshakeTestScenario.PlayerPrank:
+                    _ai.Mode = HandshakeAiMode.AiInitiator;
+                    guide = "【情境 2】走近接觸握緊後，請在 0.50s 內放開 E；判定為玩家惡作劇 AI。";
+                    break;
+                case HandshakeTestScenario.ReleaseAfterGrip:
+                    _ai.Mode = HandshakeAiMode.AiReleaseAfterGrip;
+                    guide = "【情境 2b】握緊成功進入握住後放開，記錄實際放開時間戳記。";
+                    break;
+                case HandshakeTestScenario.AiPrank:
+                    _ai.Mode = HandshakeAiMode.AiEarlyRelease;
+                    guide = "【情境 3】走近接觸握緊後，請持續按住 E；AI 將於握緊期間提前抽手，判定為 AI 惡作劇玩家。";
+                    break;
+                case HandshakeTestScenario.BothWithdraw:
+                    _ai.Mode = HandshakeAiMode.AiEarlyRelease;
+                    _ai.EarlyReleaseGripTime = 0.25f;
+                    guide = "【情境 4】走近接觸握緊後，玩家與 AI 均在 0.50s 握緊結束前放開；判定為雙方同時收手。";
+                    break;
+                case HandshakeTestScenario.ContestAiWin:
+                    _ai.Mode = HandshakeAiMode.ContestWin;
+                    guide = "【情境 5】握住期間 AI 快速連按 5 次並放開；玩家不按或少按，判定 AI 比力氣獲勝。";
+                    break;
+                case HandshakeTestScenario.ContestPlayerWin:
+                    _ai.Mode = HandshakeAiMode.ContestLose;
+                    guide = "【情境 6】握住期間請快速連按 E 多次後放開；AI 不按，判定玩家比力氣獲勝。";
+                    break;
+                case HandshakeTestScenario.ContestTie:
+                    _ai.Mode = HandshakeAiMode.ContestTie;
+                    guide = "【情境 7】握住期間玩家與 AI 各按 2 次後放開；差距在門檻內，判定為平手慢退。";
+                    break;
+                case HandshakeTestScenario.ContestZeroZero:
+                    _ai.Mode = HandshakeAiMode.ContestZeroZero;
+                    guide = "【情境 8】握緊成功進入握住後，雙方皆不連按並直接放開；判定為 0 比 0 搖手收手。";
+                    break;
+                case HandshakeTestScenario.PlayerCatchesAiEscape:
+                    _ai.Mode = HandshakeAiMode.AiEscape;
+                    guide = "【情境 9】握住後 AI 放開 E，玩家持續按住 E 形成抓住；AI 往後彈跳拉開距離超過骨架門檻判定掙脫。";
+                    break;
+                case HandshakeTestScenario.AiCatchesPlayer:
+                    _ai.Mode = HandshakeAiMode.AiCatchPlayer;
+                    guide = "【情境 10】握住後玩家放開 E 超過 0.3s 被 AI 抓住；玩家再次按住 E 即回歸雙方握住（連按次數保留）。";
+                    break;
+                default:
+                    return;
             }
 
-            GUILayout.Space(4);
-            if (GUILayout.Button("1. [AI 發起 ➔ 玩家走近 ➔ 握手成功]") && _ai != null)
-            {
-                _ai.Mode = HandshakeAiMode.AiInitiator;
-                CombatEntity.ResetAllArenaEntities();
-                hud?.LogAction("【情境 1】AI 主動伸手等待，請按住 E 並以 WASD 走近使右手接觸至握手成功。");
-            }
-            if (GUILayout.Button("1b. [回歸: 玩家發起 ➔ AI 走近回應 ➔ 握手成功]") && _ai != null)
-            {
-                _ai.Mode = HandshakeAiMode.AiResponder;
-                _ai.WalkIn = true;
-                CombatEntity.ResetAllArenaEntities();
-                hud?.LogAction("【情境 1b】請原地按住 E 伸手；AI 將主動走近並伸手回應，接觸後握手成功。");
-            }
-            if (GUILayout.Button("1c. [AI 發起後取消 (伸手未碰到即放開)]") && _ai != null)
-            {
-                _ai.Mode = HandshakeAiMode.AiCancel;
-                CombatEntity.ResetAllArenaEntities();
-                hud?.LogAction("【情境 1c】AI 伸手等待 1.2s 未碰到後主動放開收手取消。");
-            }
-            if (GUILayout.Button("2. [玩家惡作劇 AI (玩家於握緊中途放開 E)]") && _ai != null)
-            {
-                _ai.Mode = HandshakeAiMode.AiInitiator;
-                CombatEntity.ResetAllArenaEntities();
-                hud?.LogAction("【情境 2】走近接觸握緊後，請在 0.50s 內放開 E；判定為玩家惡作劇 AI。");
-            }
-            if (GUILayout.Button("2b. [握緊結束後才放開 (握緊成功進入握住後放開)]") && _ai != null)
-            {
-                _ai.Mode = HandshakeAiMode.AiReleaseAfterGrip;
-                CombatEntity.ResetAllArenaEntities();
-                hud?.LogAction("【情境 2b】握緊成功進入握住後放開，記錄實際放開時間戳記。");
-            }
-            if (GUILayout.Button("3. [AI 惡作劇玩家 (AI 於握緊中途放開)]") && _ai != null)
-            {
-                _ai.Mode = HandshakeAiMode.AiEarlyRelease;
-                CombatEntity.ResetAllArenaEntities();
-                hud?.LogAction("【情境 3】走近接觸握緊後，請持續按住 E；AI 將於握緊期間提前抽手，判定為 AI 惡作劇玩家。");
-            }
-            if (GUILayout.Button("4. [雙方同時收手 (雙方均在握緊結束前放開)]") && _ai != null)
-            {
-                _ai.Mode = HandshakeAiMode.AiEarlyRelease;
-                _ai.EarlyReleaseGripTime = 0.25f;
-                CombatEntity.ResetAllArenaEntities();
-                hud?.LogAction("【情境 4】走近接觸握緊後，玩家與 AI 均在 0.50s 握緊結束前放開；判定為雙方同時收手。");
-            }
-            if (GUILayout.Button("5. [比力氣: AI 連按獲勝 (AI 勝)]") && _ai != null)
-            {
-                _ai.Mode = HandshakeAiMode.ContestWin;
-                CombatEntity.ResetAllArenaEntities();
-                hud?.LogAction("【情境 5】握住期間 AI 快速連按 5 次並放開；玩家不按或少按，判定 AI 比力氣獲勝。");
-            }
-            if (GUILayout.Button("6. [比力氣: 玩家連按獲勝 (玩家勝)]") && _ai != null)
-            {
-                _ai.Mode = HandshakeAiMode.ContestLose;
-                CombatEntity.ResetAllArenaEntities();
-                hud?.LogAction("【情境 6】握住期間請快速連按 E 多次後放開；AI 不按，判定玩家比力氣獲勝。");
-            }
-            if (GUILayout.Button("7. [比力氣: 差距在門檻內 (平手/慢退)]") && _ai != null)
-            {
-                _ai.Mode = HandshakeAiMode.ContestTie;
-                CombatEntity.ResetAllArenaEntities();
-                hud?.LogAction("【情境 7】握住期間玩家與 AI 各按 2 次後放開；差距在門檻內，判定為平手慢退。");
-            }
-            if (GUILayout.Button("8. [比力氣: 0 比 0 (雙方皆未連按)]") && _ai != null)
-            {
-                _ai.Mode = HandshakeAiMode.ContestZeroZero;
-                CombatEntity.ResetAllArenaEntities();
-                hud?.LogAction("【情境 8】握緊成功進入握住後，雙方皆不連按並直接放開；判定為 0 比 0 搖手收手。");
-            }
-            if (GUILayout.Button("9. [抓住與掙脫: 玩家抓 AI ➔ AI 彈跳掙脫]") && _ai != null)
-            {
-                _ai.Mode = HandshakeAiMode.AiEscape;
-                CombatEntity.ResetAllArenaEntities();
-                hud?.LogAction("【情境 9】握住後 AI 放開 E，玩家持續按住 E 形成抓住；AI 往後彈跳拉開距離超過骨架門檻判定掙脫。");
-            }
-            if (GUILayout.Button("10. [抓住與掙脫: AI 抓玩家 ➔ 玩家再按住回握住]") && _ai != null)
-            {
-                _ai.Mode = HandshakeAiMode.AiCatchPlayer;
-                CombatEntity.ResetAllArenaEntities();
-                hud?.LogAction("【情境 10】握住後玩家放開 E 超過 0.3s 被 AI 抓住；玩家再次按住 E 即回歸雙方握住（連按次數保留）。");
-            }
-        }
-
-        private void DrawHandshakeHelpGUI()
-        {
-            GUILayout.Label("<b>操作與互動指南 (Stage 2b 第 3 批：比力氣與拉扯)：</b>");
-            GUILayout.Label("• <b>[互動鍵 (預設 E，可改鍵)]</b>：站立按住伸手 ➔ 等待循環；接觸進入握緊（0.50s）");
-            GUILayout.Label("• <b>[握住與比力氣]</b>：握緊後進入握住，維持緊握姿勢；連按 E 計數；放開容許時間 0.30s，雙方放開時裁決勝負/門檻內/0比0");
-            GUILayout.Label("• <b>[抓住與掙脫]</b>：一方放開逾時、另一方按住 ➔ 形成抓住；被抓方正常步速退/可跳躍彈退，抓方慢步跟；身體距離 > 骨架門檻判定掙脫；被抓方再按住回握住（次數累計）；抓方亦放開直接裁決比力氣");
-            GUILayout.Label("• <b>[重新按下才發起]</b>：所有正式結果裁決後若持續按住 E，須先放開再按下才再次伸手");
-            GUILayout.Label("• <b>[WASD / Space / R]</b>：移動、跳躍與全場快速重設（共用 CombatEntity）");
+            CombatEntity.ResetAllArenaEntities();
+            hud?.LogAction(guide);
         }
 
         private static void SafeDestroy(GameObject go)

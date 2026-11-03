@@ -88,6 +88,25 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         [Tooltip("Distance the right elbow hint sits below the shoulder-to-hand line (metres).")]
         [SerializeField] private float _elbowHintDown = 0.35f;
 
+        [Header("Handshake Grip Pose (presentation only)")]
+        [Tooltip("Offset of the grip point in the character's local space (x right, y up, z toward the opponent), metres.")]
+        [SerializeField] private Vector3 _gripPositionOffset = Vector3.zero;
+
+        [Tooltip("Euler offset of the hand rotation about the character's local axes, degrees.")]
+        [SerializeField] private Vector3 _gripEulerOffset = Vector3.zero;
+
+        [Tooltip("Where the grip point sits between own animated hand (0) and the opponent's hand (1) during grip, shaking and holding.")]
+        [Range(0f, 1f)] [SerializeField] private float _gripBias = 0.5f;
+
+        [Tooltip("Right hand IK weight during grip, shaking and holding.")]
+        [Range(0f, 1f)] [SerializeField] private float _gripIkWeight = 0.85f;
+
+        [Tooltip("Right hand IK weight for the caught participant.")]
+        [Range(0f, 1f)] [SerializeField] private float _caughtIkWeight = 0.95f;
+
+        [Tooltip("Right hand IK weight for the catching participant.")]
+        [Range(0f, 1f)] [SerializeField] private float _catchingIkWeight = 0.85f;
+
         [Header("Batch 1 Animation Clips")]
         [SerializeField] private AnimationClip _reachClip;
         [SerializeField] private AnimationClip _waitClip;
@@ -166,6 +185,13 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         public float HandRotationWeight { get => _handRotationWeight; set { _handRotationWeight = Mathf.Clamp01(value); MarkDirty(); } }
         public float ElbowHintOutward { get => _elbowHintOutward; set { _elbowHintOutward = value; MarkDirty(); } }
         public float ElbowHintDown { get => _elbowHintDown; set { _elbowHintDown = value; MarkDirty(); } }
+
+        public Vector3 GripPositionOffset { get => _gripPositionOffset; set { _gripPositionOffset = value; MarkDirty(); } }
+        public Vector3 GripEulerOffset { get => _gripEulerOffset; set { _gripEulerOffset = value; MarkDirty(); } }
+        public float GripBias { get => _gripBias; set { _gripBias = Mathf.Clamp01(value); MarkDirty(); } }
+        public float GripIkWeight { get => _gripIkWeight; set { _gripIkWeight = Mathf.Clamp01(value); MarkDirty(); } }
+        public float CaughtIkWeight { get => _caughtIkWeight; set { _caughtIkWeight = Mathf.Clamp01(value); MarkDirty(); } }
+        public float CatchingIkWeight { get => _catchingIkWeight; set { _catchingIkWeight = Mathf.Clamp01(value); MarkDirty(); } }
 
         public ClipIntervalBinding[] ClipIntervalBindings
         {
