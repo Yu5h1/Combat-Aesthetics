@@ -1,6 +1,6 @@
 # Combat Aesthetics 對 Animation 的需求
 
-目標：動畫編輯器線（`W:\Yu5h1Lib\AnimationEditor`，格式規範在 data-driven/animation；[握手動作片段](file:///W:/Yu5h1Lib/AnimationEditor/Documentation/Handshake-Clips.md)）。提出端：Combat-Aesthetics 的 WhiteRoom Sample。接用方式：動畫線以動畫編輯器製作握手片段，經角色建造器匯出動作 GLB，再由 UnityExtension 的人形匯入器（LIMB-ANIM-1）轉成人形片段給 WhiteRoom 播放；互動規則由 [WhiteRoom 計畫〈第一個交付的目標〉](../Samples~/WhiteRoom/Implementation-Plan.md#第一個交付的目標) 擁有。提出日期：2026-10-31。未結需求：1。
+目標：動畫編輯器線（`W:\Yu5h1Lib\AnimationEditor`，格式規範在 data-driven/animation；[握手動作片段](file:///W:/Yu5h1Lib/AnimationEditor/Documentation/Handshake-Clips.md)）。提出端：Combat-Aesthetics 的 WhiteRoom Sample。接用方式：動畫線以動畫編輯器製作握手片段，經角色建造器匯出動作 GLB，再由 UnityExtension 的人形匯入器（LIMB-ANIM-1）轉成人形片段給 WhiteRoom 播放；互動規則由 [WhiteRoom 計畫〈第一個交付的目標〉](../Samples~/WhiteRoom/Implementation-Plan.md#第一個交付的目標) 擁有。提出日期：2026-10-31。未結需求：2。
 
 ## 比力氣的拚力後慢退（COMBAT-ANIMATION-1）
 
@@ -45,3 +45,15 @@
 | Acceptance | 1. 片段格式能標出具名區間，在動畫編輯器裡可以看到並修改。2. 區間標記隨動作 GLB 交付，人形匯入後 WhiteRoom 讀得到。3. 至少收手、大笑、握拳生氣、拍手大笑標好區間。 |
 | Impact | WhiteRoom 依區間決定放開的一方何時能再伸手；之後的出招、受擊也用同一套區間。 |
 | Workaround | 標記到之前，WhiteRoom 在 Unity 端為片段設定區間，片段帶標記後改讀片段的資料。 |
+
+## 移動用的走路、後退、側走片段（COMBAT-ANIMATION-5）
+
+| 欄位 | 內容 |
+|---|---|
+| Status | Open，提出 2026-11-03。 |
+| Requirement | 提供一組人形移動片段：往前走、往後退、往左側走、往右側走（循環），給 WhiteRoom 在 Unity 組成方向混合（blend tree），讓角色依移動方向播放對應的步伐。 |
+| Evidence | 使用者 2026-11-03 試玩握手 demo：角色移動時沒有步伐動作，WhiteRoom 計畫〈第一個交付的目標〉的「動作驅動位移」要求移動由專屬動畫的根位移決定，片段沒到之前只能暫代。握手時會邊伸手邊走近、被抓時往後拉、抓的一方跟上，都需要前進、後退與側移。 |
+| Acceptance | 1. 片段清單列出四段循環：往前走、往後退、往左側走、往右側走，用有手指的成人角色製作，和握手片段同一個角色。2. 四段可以互相混合：循環長度相同、起步的腳與步伐相位一致，混合時腳不打架；每段帶根位移（前進、後退、側移的方向正確），速度由根位移決定，不另訂數值。3. 起點和終點姿勢能接站姿（握手片段 Idle 用的收手最後一格）。4. 經角色建造器匯出動作 GLB、人形匯入後可給 WhiteRoom 使用。 |
+| Impact | WhiteRoom 用這四段在 Unity 組 2D 方向混合（blend tree 由 WhiteRoom 組裝，不是動畫線的交付物），取代目前移動時的暫代；之後戰鬥場景沿用。 |
+| Workaround | 片段到之前，角色移動時維持站姿平移，事件紀錄標明暫代。 |
+
