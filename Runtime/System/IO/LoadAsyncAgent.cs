@@ -30,7 +30,7 @@ namespace Yu5h1Lib
         /// SetActive(true);
         /// SetAsLastSibling();
         /// </summary>
-        protected internal virtual IEnumerator BeginLoad()
+        public virtual IEnumerator BeginLoad()
         {
             gameObject.SetActive(true);
             transform.SetAsLastSibling();
@@ -47,7 +47,7 @@ namespace Yu5h1Lib
         {
             yield return null;
         }
-        protected internal virtual IEnumerator EndLoad()
+        public virtual IEnumerator EndLoad()
         {
             endTransitionEnter?.Invoke();
             yield return EndTransition();
