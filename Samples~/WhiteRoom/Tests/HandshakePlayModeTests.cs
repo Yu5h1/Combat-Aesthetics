@@ -90,18 +90,17 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
                     "Player must remain within camera viewport frustum after movement.");
             }
 
-            // Verify camera occlusion avoidance raycast
+            yield return new WaitForSeconds(1f);
             float initialCamDist = Vector3.Distance(cam.transform.position, playerTransform.position);
             GameObject obstacle = GameObject.CreatePrimitive(PrimitiveType.Cube);
             obstacle.name = "TestOcclusionObstacle";
             obstacle.transform.position = Vector3.Lerp(playerTransform.position + new Vector3(0f, 1.4f, 0f), cam.transform.position, 0.5f);
             obstacle.transform.localScale = new Vector3(2f, 2f, 0.5f);
 
-            yield return null;
-            yield return null;
+            yield return new WaitForSeconds(0.5f);
 
             float occludedDist = Vector3.Distance(cam.transform.position, playerTransform.position);
-            Assert.Less(occludedDist, initialCamDist, "Camera must pull forward when an obstacle occludes line of sight to player.");
+            Assert.AreEqual(initialCamDist, occludedDist, 0.05f, "Camera must keep its orbit distance when an obstacle blocks line of sight to player.");
             Object.Destroy(obstacle);
         }
 

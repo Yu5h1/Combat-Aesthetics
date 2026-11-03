@@ -1104,7 +1104,7 @@ tests: total 9, passed 9, failed 0, inconclusive 0, skipped 0
 | 項目 | 結果 |
 |---|---|
 | 編譯 | 通過；移除 `_minDistance`／`_maxDistance` 前有 2 個未使用警告，移除後主控台沒有錯誤、沒有警告。 |
-| PlayMode 組件 `Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests` | **9 / 9 通過**（46 s）。`VerifyCombatCameraLookAtTracking` 通過（0.44 s）：戰鬥鏡頭在目標移動後仍朝向目標、目標在視錐內、遮擋時拉近。握手批次驗證 21 / 21 通過。 |
+| PlayMode 組件 `Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests` | **9 / 9 通過**（46 s）。`VerifyCombatCameraLookAtTracking` 通過（0.44 s）：戰鬥鏡頭在目標移動後仍朝向目標、目標在視錐內；其中遮擋那一段在下面〈追加〉改成「不避障」。握手批次驗證 21 / 21 通過。 |
 | 依賴握手舊攝影機數值的測試 | 沒有。測試裡的攝影機判斷只有戰鬥場景那一項，其他只用 `Camera.main` 的朝向換算移動方向，不需要修改。 |
 | 編輯模式比對兩個場景的 `Main Camera` | tag、near 0.3、視野 60、depth −1、清除旗標、位置 (0, 1, −10)、URP 資料、AudioListener 全部相同，兩邊都沒有預先掛 `WhiteRoomCamera`。 |
 | Play Mode 執行握手場景 | 場景裡只有 1 個攝影機、1 個 `WhiteRoomCamera`，且是 `Camera.main`；欄位值就是程式預設（目標偏移 (0, 1.4, 0)、距離 4、靈敏度 2、仰角 −25°～65°、平滑 15）。攝影機位置 (0, 1.4, −5.2)，在玩家（z = −1.2）正後方 4 m，朝向與玩家頭部的夾角為 0。 |
@@ -1114,6 +1114,17 @@ tests: total 9, passed 9, failed 0, inconclusive 0, skipped 0
 
 - 使用者親手試玩握手的視角感受：新的起始俯角是 0°（和戰鬥相同），舊的是 12°，視角會比以前平。要調整只能改 `WhiteRoomCamera` 的預設，且會同時影響兩個 demo。
 - 戰鬥場景修改前後的畫面逐幀比對沒有做，只用程式路徑相同和 `VerifyCombatCameraLookAtTracking` 證明行為沒變。
-- 握手場景裡的遮擋（牆或 AI 擋在鏡頭與玩家之間）沒有專門測試，遮擋測試只在戰鬥場景跑。
 - Windows 執行檔**沒有重建**（Editor 開著）。`W:\UnityProject\Yu5h1LibTest-Build\WhiteRoom_Handshake\` 還是 16:34 的版本，攝影機仍是舊的偏肩構圖，也仍有站姿問題；Editor 關掉後要重建。
 - 宿主複本已同步這次改的檔（`Handshake.unity`、`HandshakeSceneBuilder.cs`、`README.md`、`WhiteRoomCamera.cs`，並刪除攝影機預製物件）。宿主的 `Implementation-Plan.md` 本來就和套件不同，不是這次改的，沒有動。
+
+### 追加：關閉避障與測試範圍
+
+同日追加的兩項指示（來自 Demo 進度 session 轉達的使用者指示）。
+
+**關閉避障。** 鏡頭和人物之間有障礙物時，舊的 `WhiteRoomCamera.LateUpdate` 會從目標朝鏡頭方向打射線，把鏡頭推到障礙物前方，看起來像鏡頭被推到人物前面。現在整段射線檢查已刪除：鏡頭永遠保持軌道距離（預設 4 m），可以位在牆或物件的內側或後方。做法寫在 `WhiteRoomCamera` 類別的 XML summary。因為兩個場景共用同一個元件，戰鬥和握手都不避障。這是刻意改變戰鬥場景的鏡頭行為，上面「戰鬥行為不變」只指統一本身（肩部偏移分支），不含這一項。
+
+測試 `VerifyCombatCameraLookAtTracking` 原本斷言「有障礙物時鏡頭距離變短」，現在改成斷言「有障礙物時距離維持不變」（誤差 0.05 m）。量測前先等 1 s 讓跟拍的平滑追上，障礙物放下後等 0.5 s 再量，否則平滑造成的落後會和斷言混在一起。
+
+**測試範圍。** 這一輪只跑 `VerifyCombatCameraLookAtTracking`（Play Mode，通過，2.1 s；主控台沒有錯誤）。理由：這一輪只刪掉鏡頭的遮擋檢查並改這個測試的斷言；其他 8 項不看鏡頭位置，只有 `HandshakeVerificationRunner` 用 `Camera.main` 的朝向把走向對手的方向換成輸入，朝向由 `LookAt` 決定，不受遮擋檢查影響，而這 8 項在上一輪統一後已經全數通過、之後沒有再調整它們走到的程式。因此上一節的「9 / 9」是統一那一輪的結果，這一輪只有攝影機這 1 項有重跑，沒有重跑全部。
+
+這一輪的修改：`Runtime/WhiteRoomCamera.cs`、`Tests/HandshakePlayModeTests.cs`；已同步到宿主。Windows 執行檔仍未重建。

@@ -8,7 +8,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
 {
     /// <summary>
     /// Third-person orbit camera that tracks a target transform and yields cursor focus when the HUD is hovered.
-    /// Every WhiteRoom scene gets it through <see cref="WhiteRoomSceneBuilder.EnsureCamera"/> and these field defaults are the only framing configuration; no scene or demo overrides them.
+    /// Every WhiteRoom scene gets it through <see cref="WhiteRoomSceneBuilder.EnsureCamera"/> and these field defaults are the only framing configuration; no scene or demo overrides them. The camera never avoids obstacles: it keeps its orbit distance and may sit inside or behind geometry.
     /// </summary>
     public class WhiteRoomCamera : MonoBehaviour
     {
@@ -96,20 +96,6 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             Quaternion rotation = Quaternion.Euler(_pitch, _yaw, 0f);
             Vector3 pivot = _target.position + _targetOffset;
             Vector3 desiredPosition = pivot - (rotation * Vector3.forward * _distance);
-
-            Vector3 rayDir = desiredPosition - pivot;
-            float rayDist = rayDir.magnitude;
-            if (rayDist > 0.01f)
-            {
-                rayDir /= rayDist;
-                if (Physics.Raycast(pivot, rayDir, out RaycastHit hit, rayDist, ~0, QueryTriggerInteraction.Ignore))
-                {
-                    if (hit.transform != _target && !hit.transform.IsChildOf(_target))
-                    {
-                        desiredPosition = hit.point + hit.normal * 0.2f;
-                    }
-                }
-            }
 
             transform.position = Vector3.Lerp(transform.position, desiredPosition, _smoothSpeed * Time.deltaTime);
 
