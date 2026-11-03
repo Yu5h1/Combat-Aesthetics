@@ -1128,3 +1128,37 @@ tests: total 9, passed 9, failed 0, inconclusive 0, skipped 0
 **測試範圍。** 這一輪只跑 `VerifyCombatCameraLookAtTracking`（Play Mode，通過，2.1 s；主控台沒有錯誤）。理由：這一輪只刪掉鏡頭的遮擋檢查並改這個測試的斷言；其他 8 項不看鏡頭位置，只有 `HandshakeVerificationRunner` 用 `Camera.main` 的朝向把走向對手的方向換成輸入，朝向由 `LookAt` 決定，不受遮擋檢查影響，而這 8 項在上一輪統一後已經全數通過、之後沒有再調整它們走到的程式。因此上一節的「9 / 9」是統一那一輪的結果，這一輪只有攝影機這 1 項有重跑，沒有重跑全部。
 
 這一輪的修改：`Runtime/WhiteRoomCamera.cs`、`Tests/HandshakePlayModeTests.cs`；已同步到宿主。Windows 執行檔仍未重建。
+
+## 2026-11-03 頭部與身體程序動畫
+
+依據：[Implementation-Plan.md](../Samples~/WhiteRoom/Implementation-Plan.md)〈頭部與身體的程序動畫交辦〉第 1～5 項。使用者試玩後回報只有手做 IK，兩人角度稍偏表演就不對。
+
+### 做法
+
+全部寫在 `HandshakeVisualFeedback.OnAnimatorIK`，數值在 `HandshakeSettings`（Inspector 可調）。只影響畫面：不改根物件、碰撞與判定；右手碰撞球仍在 IK 前先取動畫手位置。
+
+- **頭看對方的臉、身體轉向對方**：用 Humanoid 的 `SetLookAtWeight`／`SetLookAtPosition`，目標是對方頭骨加 `FaceHeightOffset`；`HeadLookWeight`（預設 0.8）管頭，`BodyLookWeight`（預設 0.45）管脊椎與胸，讓偏移由軀幹分擔、不是只拉長手臂。選它而不是手動轉骨頭，是因為它疊在片段姿勢之上並遵守 Avatar 的肌肉限制；權重小於 1，片段本身的頭部動作（大笑、得意、痛苦）被減弱而不是被取代。除 `None` 以外的所有狀態（伸手到收手結束）開啟，進出用 `LookWeightSpeed`（預設每秒 5）平滑變化。身體轉向只靠脊椎權重，根物件朝向不動。
+- **手的角度**：`SetIKRotation` 取「前臂到動畫手位置」轉向「前臂到目標」的旋轉，疊在片段原本的手腕朝向上（不依賴骨骼軸向、保留片段的翻轉）；權重 = 手 IK 權重 × `HandRotationWeight`（預設 0.85）。開啟時機與手位置權重照舊。
+- **手肘方向**：`SetIKHintPosition(RightElbow)` 放在肩到目標中點，向身體右側 `ElbowHintOutward`（0.30 m）、向下 `ElbowHintDown`（0.35 m）；權重等於手 IK 權重。
+- 新增唯讀屬性 `HeadLookWeight`、`BodyLookWeight` 供測試。
+
+修改的檔：`Handshake/HandshakeVisualFeedback.cs`、`Handshake/HandshakeSettings.cs`、`Tests/HandshakePlayModeTests.cs`（已同步到宿主複本）。
+
+### 測試
+
+在使用者開著的 Editor 用 Unity MCP 跑 Play Mode，只跑 3 項，**3 / 3 通過**（4.5 s），主控台沒有錯誤：
+
+| 測試 | 結果 | 為什麼跑 |
+|---|---|---|
+| `VerifyPreIkContactSpherePosition` | 通過 | 改了 `OnAnimatorIK`，確認碰撞球仍跟 IK 前的動畫手位置 |
+| `VerifyItem4_StandardDistanceWalkingAndNaturalHandSphere` | 通過 | 走到標準距離後仍能接觸握住，確認畫面改動沒影響物理接觸 |
+| `VerifyHeadAndBodyLookWeightsFollowInteraction`（新增） | 通過 | 站立時頭與脊椎權重為 0；伸手期間大於 0 且不超過設定值；根旋轉變化 < 0.01°、根位置偏移 < 0.05 m；回到站立後權重回 0 |
+
+只跑這些的原因：這次只動了 `OnAnimatorIK` 與設定欄位，不碰握手規則、片段與判定；其他已通過且這次沒動到的測試不重跑（使用者 2026-11-03 的指示）。
+
+### 沒驗證的部分
+
+- 使用者本人看的畫面觀感：頭看臉的幅度、脊椎前傾或側轉量、手肘有沒有折向奇怪方向、手腕翻轉是否貼合，都只靠數值推導，沒有逐幀看畫面或截圖；預設值（0.8／0.45／0.85／0.30／0.35）是起始值，需要使用者試玩後調。
+- 只有「權重隨互動開關、根不被改」有自動檢查；手的角度與手肘提示沒有自動斷言。
+- 大笑、得意、痛苦等反應片段的頭部動作被減弱到什麼程度沒有量測。
+- Windows 執行檔沒有重建（Editor 開著）。

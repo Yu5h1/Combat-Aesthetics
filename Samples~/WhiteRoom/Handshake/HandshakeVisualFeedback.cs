@@ -6,6 +6,17 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
     /// <summary>
     /// Presentation-only component that plays the humanoid handshake clips on a humanoid <see cref="Animator"/>
     /// and applies runtime humanoid IK (<c>OnAnimatorIK</c>) to align the right hand visually toward the opponent's hand.
+    /// Beyond the hand position, the same callback drives the rest of the pose so a slightly off angle between the two
+    /// characters still reads correctly. The humanoid look-at (<c>SetLookAtWeight</c>/<c>SetLookAtPosition</c>) turns the head to the
+    /// opponent's face and distributes the turn over spine and chest through the body weight, so the offset is shared by the torso
+    /// instead of only stretching the arm; it is used instead of rotating bones by hand because it is solved on top of the clip pose
+    /// and honours the avatar's muscle limits, and the weights stay below 1 so the clip's own head motion (laughing, triumph, pain)
+    /// is reduced rather than replaced. The hand gets a rotation that continues the forearm line toward the contact point
+    /// (axis-independent, so it does not depend on the rig's wrist axes) with the clip's roll kept, and the right elbow gets a hint
+    /// position outward and below the shoulder-to-target line so it does not fold inward.
+    /// Head and body weights are active from reach to the end of withdraw (any state other than <see cref="HandshakeState.None"/>)
+    /// and ramp smoothly; all values live in <see cref="HandshakeSettings"/>. Only visuals change: the root transform, colliders,
+    /// the pre-IK contact sphere and arbitration are untouched.
     /// Handles root motion application during Caught, Catching, and Leap states.
     /// Does not modify or participate in contact or outcome arbitration.
     /// </summary>
@@ -30,7 +41,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         private static readonly int s_BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int s_ColorId = Shader.PropertyToID("_Color");
 
-        public HandshakeParticipant Opponent { get => _opponent; set => _opponent = value; }
+        public HandshakeParticipant Opponent { get => _opponent; set { _opponent = value; _opponentHead = null; } }
 
         /// <summary>
         /// Binds the participant, opponent, animator, and pre-IK contact proxy references.
@@ -374,7 +385,13 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         private float _overrideIkWeight = 0f;
         private Vector3 _overrideIkTarget = Vector3.zero;
 
+        private float _headLookWeight = 0f;
+        private float _bodyLookWeight = 0f;
+        private Transform _opponentHead;
+
         public float CurrentIkWeight => _currentIkWeight;
+        public float HeadLookWeight => _headLookWeight;
+        public float BodyLookWeight => _bodyLookWeight;
 
         public void SetIkOverride(Vector3 target, float weight)
         {
@@ -438,6 +455,81 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             {
                 _animator.SetIKPosition(AvatarIKGoal.RightHand, _currentIkTarget);
             }
+
+            ApplyHandRotationAndElbowHint();
+            ApplyHeadAndBodyLook(state);
+        }
+
+        private void ApplyHandRotationAndElbowHint()
+        {
+            var settings = _participant.Settings;
+            Transform upperArm = _animator.GetBoneTransform(HumanBodyBones.RightUpperArm);
+            Transform lowerArm = _animator.GetBoneTransform(HumanBodyBones.RightLowerArm);
+            bool active = settings != null && upperArm != null && lowerArm != null && _currentIkWeight > 0.001f;
+
+            if (!active)
+            {
+                _animator.SetIKRotationWeight(AvatarIKGoal.RightHand, 0f);
+                _animator.SetIKHintPositionWeight(AvatarIKHint.RightElbow, 0f);
+                return;
+            }
+
+            Vector3 elbow = lowerArm.position;
+            Vector3 animatedHand = _animator.GetIKPosition(AvatarIKGoal.RightHand);
+            Vector3 toAnimatedHand = animatedHand - elbow;
+            Vector3 toTarget = _currentIkTarget - elbow;
+            Quaternion aim = toAnimatedHand.sqrMagnitude > 1e-6f && toTarget.sqrMagnitude > 1e-6f
+                ? Quaternion.FromToRotation(toAnimatedHand, toTarget)
+                : Quaternion.identity;
+
+            _animator.SetIKRotationWeight(AvatarIKGoal.RightHand, _currentIkWeight * settings.HandRotationWeight);
+            _animator.SetIKRotation(AvatarIKGoal.RightHand, aim * _animator.GetIKRotation(AvatarIKGoal.RightHand));
+
+            Vector3 shoulderToTarget = (upperArm.position + _currentIkTarget) * 0.5f;
+            Vector3 hint = shoulderToTarget
+                + _participant.transform.right * settings.ElbowHintOutward
+                + Vector3.down * settings.ElbowHintDown;
+            _animator.SetIKHintPositionWeight(AvatarIKHint.RightElbow, _currentIkWeight);
+            _animator.SetIKHintPosition(AvatarIKHint.RightElbow, hint);
+        }
+
+        private void ApplyHeadAndBodyLook(HandshakeState state)
+        {
+            var settings = _participant.Settings;
+            bool hasFace = TryGetOpponentFace(settings, out Vector3 face);
+            bool interacting = settings != null && hasFace && state != HandshakeState.None;
+
+            float step = (settings != null ? settings.LookWeightSpeed : 0f) * Time.deltaTime;
+            _headLookWeight = Mathf.MoveTowards(_headLookWeight, interacting ? settings.HeadLookWeight : 0f, step);
+            _bodyLookWeight = Mathf.MoveTowards(_bodyLookWeight, interacting ? settings.BodyLookWeight : 0f, step);
+
+            if (settings == null && (_headLookWeight > 0f || _bodyLookWeight > 0f))
+            {
+                _headLookWeight = 0f;
+                _bodyLookWeight = 0f;
+            }
+
+            _animator.SetLookAtWeight(1f, _bodyLookWeight, _headLookWeight, 0f, 0.5f);
+            if (hasFace)
+            {
+                _animator.SetLookAtPosition(face);
+            }
+        }
+
+        private bool TryGetOpponentFace(HandshakeSettings settings, out Vector3 face)
+        {
+            face = default;
+            if (settings == null || _opponent == null) return false;
+
+            if (_opponentHead == null)
+            {
+                var opponentAnimator = _opponent.GetComponentInChildren<Animator>();
+                if (opponentAnimator != null) _opponentHead = opponentAnimator.GetBoneTransform(HumanBodyBones.Head);
+            }
+            if (_opponentHead == null) return false;
+
+            face = _opponentHead.position + Vector3.up * settings.FaceHeightOffset;
+            return true;
         }
 
         private Color GetCurrentColor()

@@ -249,6 +249,64 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
         }
 
         [UnityTest]
+        public IEnumerator VerifyHeadAndBodyLookWeightsFollowInteraction()
+        {
+            var loadOp = EditorSceneManager.LoadSceneAsyncInPlayMode(
+                HandshakeScenePath,
+                new UnityEngine.SceneManagement.LoadSceneParameters(UnityEngine.SceneManagement.LoadSceneMode.Single));
+            while (!loadOp.isDone) yield return null;
+            yield return new WaitForSeconds(0.4f);
+
+            var player = ObjectUtility.FindObject<WhiteRoomCharacter>(false);
+            var participant = player.GetComponent<HandshakeParticipant>();
+            var ai = ObjectUtility.FindObject<HandshakeAiController>(false);
+            if (ai != null) ai.Mode = HandshakeAiMode.Idle;
+
+            var feedback = player.GetComponentInChildren<HandshakeVisualFeedback>();
+            Assert.IsNotNull(feedback, "Feedback component must exist.");
+            var settings = HandshakeArbitrator.Instance.Settings;
+            Assert.Greater(settings.HeadLookWeight, 0f, "Settings must define a positive head look weight.");
+            Assert.Greater(settings.BodyLookWeight, 0f, "Settings must define a positive body look weight.");
+
+            Assert.AreEqual(HandshakeState.None, participant.State, "Participant must start standing.");
+            Assert.AreEqual(0f, feedback.HeadLookWeight, 1e-4f, "Head weight must be 0 while standing.");
+            Assert.AreEqual(0f, feedback.BodyLookWeight, 1e-4f, "Body weight must be 0 while standing.");
+
+            Quaternion rootRotationBefore = player.transform.rotation;
+            Vector3 rootPositionBefore = player.transform.position;
+
+            player.OverrideIntent = true;
+            var reachIntent = CombatActionIntent.Empty;
+            reachIntent.InteractHold = true;
+            player.CustomIntent = reachIntent;
+            yield return new WaitForSeconds(0.6f);
+
+            Assert.AreNotEqual(HandshakeState.None, participant.State, "Participant must be interacting.");
+            Assert.Greater(feedback.HeadLookWeight, 0.1f, "Head weight must be above 0 during the interaction.");
+            Assert.Greater(feedback.BodyLookWeight, 0.1f, "Spine weight must be above 0 during the interaction.");
+            Assert.LessOrEqual(feedback.HeadLookWeight, settings.HeadLookWeight + 1e-4f);
+            Assert.LessOrEqual(feedback.BodyLookWeight, settings.BodyLookWeight + 1e-4f);
+            Assert.AreEqual(0f, Quaternion.Angle(rootRotationBefore, player.transform.rotation), 0.01f,
+                "Procedural head and body animation must not change the root rotation.");
+            Assert.AreEqual(0f, Vector3.Distance(rootPositionBefore, player.transform.position), 0.05f,
+                "Reaching must not move the root through the procedural animation.");
+
+            player.CustomIntent = CombatActionIntent.Empty;
+            float wait = 0f;
+            while (participant.State != HandshakeState.None && wait < 3f)
+            {
+                wait += Time.deltaTime;
+                yield return null;
+            }
+            Assert.AreEqual(HandshakeState.None, participant.State, "Participant must return to standing.");
+            yield return new WaitForSeconds(0.6f);
+
+            Assert.AreEqual(0f, feedback.HeadLookWeight, 1e-4f, "Head weight must return to 0 after the interaction.");
+            Assert.AreEqual(0f, feedback.BodyLookWeight, 1e-4f, "Body weight must return to 0 after the interaction.");
+            player.OverrideIntent = false;
+        }
+
+        [UnityTest]
         public IEnumerator VerifyItem1_ControlIntervalsGovernRePress()
         {
             var loadOp = EditorSceneManager.LoadSceneAsyncInPlayMode(

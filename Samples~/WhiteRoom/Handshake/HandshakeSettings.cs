@@ -66,6 +66,28 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         [Tooltip("Custom action intervals bound to animation clips. Adjusting boundaries tunes control feel without arbitrary fixed timers.")]
         [SerializeField] private ClipIntervalBinding[] _clipIntervalBindings;
 
+        [Header("Procedural Head, Body and Arm IK (presentation only)")]
+        [Tooltip("How strongly the head turns toward the opponent's face during an interaction (0 keeps the clip's head motion).")]
+        [Range(0f, 1f)] [SerializeField] private float _headLookWeight = 0.8f;
+
+        [Tooltip("How strongly the spine turns or leans toward the opponent during an interaction, sharing the offset with the arm.")]
+        [Range(0f, 1f)] [SerializeField] private float _bodyLookWeight = 0.45f;
+
+        [Tooltip("Weight change per second when the head and body turn start or end.")]
+        [SerializeField] private float _lookWeightSpeed = 5f;
+
+        [Tooltip("Height above the opponent's head bone that the head looks at (face centre).")]
+        [SerializeField] private float _faceHeightOffset = 0.08f;
+
+        [Tooltip("How strongly the right hand is rotated to continue the forearm line toward the contact point.")]
+        [Range(0f, 1f)] [SerializeField] private float _handRotationWeight = 0.85f;
+
+        [Tooltip("Distance the right elbow hint sits outward from the body (metres).")]
+        [SerializeField] private float _elbowHintOutward = 0.30f;
+
+        [Tooltip("Distance the right elbow hint sits below the shoulder-to-hand line (metres).")]
+        [SerializeField] private float _elbowHintDown = 0.35f;
+
         [Header("Batch 1 Animation Clips")]
         [SerializeField] private AnimationClip _reachClip;
         [SerializeField] private AnimationClip _waitClip;
@@ -136,6 +158,14 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 }
             }
         }
+
+        public float HeadLookWeight { get => _headLookWeight; set { _headLookWeight = Mathf.Clamp01(value); MarkDirty(); } }
+        public float BodyLookWeight { get => _bodyLookWeight; set { _bodyLookWeight = Mathf.Clamp01(value); MarkDirty(); } }
+        public float LookWeightSpeed { get => _lookWeightSpeed; set { _lookWeightSpeed = value; MarkDirty(); } }
+        public float FaceHeightOffset { get => _faceHeightOffset; set { _faceHeightOffset = value; MarkDirty(); } }
+        public float HandRotationWeight { get => _handRotationWeight; set { _handRotationWeight = Mathf.Clamp01(value); MarkDirty(); } }
+        public float ElbowHintOutward { get => _elbowHintOutward; set { _elbowHintOutward = value; MarkDirty(); } }
+        public float ElbowHintDown { get => _elbowHintDown; set { _elbowHintDown = value; MarkDirty(); } }
 
         public ClipIntervalBinding[] ClipIntervalBindings
         {
