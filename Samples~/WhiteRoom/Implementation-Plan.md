@@ -355,7 +355,19 @@ Sample 輔助程式不得靠宿主的 Assembly-CSharp 或特定機器絕對路�
 
 提交時指定路徑，不推送；新一節紀錄寫在驗收紀錄最後，不改寫舊回合。執行檔有改到執行期程式才需要重建，重建後寫明路徑。
 
-狀態：2026-10-31 由 `8895d9c` 完成，第 2 項剩下的部分由主 session 接手修改（[握手第 3 批收尾小修驗收](../../Documentation/WhiteRoom-Acceptance.md#握手第-3-批收尾小修驗收)）。修改尚未在 Unity 編譯與測試，等 Unity 空出後同步到宿主、跑 PlayMode 測試、重建執行檔。
+狀態：2026-10-31 由 `8895d9c` 完成，第 2 項剩下的部分由主 session 接手修改（[握手第 3 批收尾小修驗收](../../Documentation/WhiteRoom-Acceptance.md#握手第-3-批收尾小修驗收)）。2026-11-03 在 Unity 驗證：PlayMode 9 / 9 通過、執行檔已重建；過程中補修判定器沒有人形 avatar 時丟例外的漏洞（[接手修改與區間匯入器的 Unity 驗證](../../Documentation/WhiteRoom-Acceptance.md#接手修改與區間匯入器的-unity-驗證)）。
+
+### 區間改由匯入讀取交辦
+
+依據：[COMBAT-ANIMATION-4](../../Documentation/Requirements.Animation.md) 第 2 項。角色建造器輸出動作 GLB 時已寫入區間（ANIMATION-LIMB-8，CharacterBuilder `1567fcf`，位置 `animations[i].extras.yu5h1.intervals`），人形匯入器已能讀成 `Yu5h1Lib.MotionIntervals`（ANIMATION-UNITYEXTENSION-1，UnityExtension `27aa383`，Unity 測試通過）。但套件 `Art/Handshake/` 的 17 段握手 GLB 是在這之前匯出的，沒有區間，WhiteRoom 仍用設定資產裡手動填的區間。
+
+1. **重新匯出 17 段握手動作 GLB**：用 CharacterBuilder 的 `skin/export-glb.mjs`，從 AnimationEditor `samples/handshake/` 的 17 個 `.anim.json` 匯出，角色與骨架和現在的 `punch-character.glb` 相同。其中 13 段標了區間（收手、大笑、握拳生氣、拍手大笑、痛苦、得意、拚力後慢退、掙脫、抓空、跳開、想抽手、被拖著跟上、用力握）；逐檔確認 `animations[0].extras.yu5h1.intervals` 存在，區間名稱與影格和 `.anim.json` 一致。伸手、等待、握住、搖手 4 段沒有區間，匯出後也不該有。
+2. **替換套件與宿主的 GLB**：保留既有 `.meta`，GUID 與匯入設定不變；在宿主重新匯入後，人形匯入設定的 `intervals` 清單列出 13 個 `MotionIntervals`。
+3. **WhiteRoom 改讀匯入結果**：`HandshakeSettings` 的區間來源改成匯入產生的 `MotionIntervals`（依片段對應），刪掉手動填寫的區間資料；`IsActionUnderControl` 判斷的結果不變。沒有區間的 4 段維持現在的判斷（播完才可再操作）；13 段之中缺了匯入區間的記一次錯誤，不改用寫死的分界。
+4. **測試**：既有 9 項 PlayMode 測試全數通過；新增一項：設定資產的區間來自匯入資產，且某段片段的「不可控制」區間與 `.anim.json` 的影格換算一致。
+5. **重建 Windows 執行檔**，寫明路徑與時間。
+
+範圍：不改握手規則、不重做動畫、不改 CharacterBuilder 與 UnityExtension 的程式；匯出若需要改它們，停下回報。提交時指定路徑，不推送；紀錄寫在驗收紀錄最後。
 
 ### 並行交辦
 

@@ -686,6 +686,16 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 return -1f;
             }
 
+            if (anim.avatar == null || !anim.isHuman)
+            {
+                if (!_hasLoggedArmReachError)
+                {
+                    _hasLoggedArmReachError = true;
+                    Debug.LogError($"[HandshakeArbitrator] Cannot measure arm reach on '{p.name}': Animator has no humanoid avatar!");
+                }
+                return -1f;
+            }
+
             Transform shoulder = anim.GetBoneTransform(HumanBodyBones.RightUpperArm);
             Transform elbow = anim.GetBoneTransform(HumanBodyBones.RightLowerArm);
             Transform hand = anim.GetBoneTransform(HumanBodyBones.RightHand);

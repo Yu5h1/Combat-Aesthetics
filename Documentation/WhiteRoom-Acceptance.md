@@ -1039,3 +1039,24 @@ tests: total 9, passed 9, failed 0, inconclusive 0, skipped 0
 - 測試 `VerifyEscape_DoesNotResolve_WhenArmReachCannotBeMeasured`：用反射設定判定器的雙方參與者，再呼叫 `EnterCaughtState`，讓判定器真的進入被抓流程。先確認 `SessionState` 是 `Catching`，等 0.2 s 後確認仍在被抓、結果不是掙脫。預期中的錯誤改用 `LogAssert.Expect` 宣告，還原動作放在 `finally`。
 
 未驗證：上面的修改還沒在 Unity 編譯，9 項測試也沒重跑；宿主複本與 Windows 執行檔（19:56 重建）還是 `8895d9c` 的版本。Unity 空出後，要把套件的 `Handshake/` 與 `Tests/` 同步到宿主，跑 PlayMode 測試，再重建執行檔。
+
+## 接手修改與區間匯入器的 Unity 驗證
+
+日期：2026-11-03。對象：上一節〈接手修改〉（`c7c82c3`）與 UnityExtension `27aa383`（人形匯入器讀取區間，ANIMATION-UNITYEXTENSION-1）。宿主：`W:/UnityProject/Yu5h1LibTest`，Unity `6000.6.0f1`，batchmode。
+
+做法：先確認宿主的 `Handshake/`、`Tests/`、`Runtime/` 和 `8895d9c` 相同，只差接手修改的三個檔，再把這三個檔複製到宿主。
+
+| 項目 | 結果 |
+|---|---|
+| 匯入器 EditMode 測試（`Yu5h1Lib.Animation.Editor.Tests`） | 101 / 101 通過，其中區間 7 項（讀出帶區間的動畫、沒有區間的 GLB 不產生資料、壞檔不丟例外、純 glTF JSON、歸一化時間與旗標、邊界屬於後一段、設定沒有來源時清單為空）。 |
+| 握手 PlayMode 測試，第一次 | 8 / 9。`VerifyEscape_DoesNotResolve_WhenArmReachCannotBeMeasured` 失敗：預期的「Cannot measure arm reach」錯誤沒有出現。 |
+| 原因 | 測試把 AI 的 `Animator.avatar` 設成 null；這時 `GetBoneTransform` 直接丟 `InvalidOperationException: Avatar is null`，判定器還沒走到記錯誤那一步。角色沒有人形 avatar 時判定器會丟例外，是判定器的漏洞，不是測試寫錯。 |
+| 修正 | `HandshakeArbitrator.MeasureArmReach`：取骨骼前先檢查 `anim.avatar == null || !anim.isHuman`，成立就記一次錯誤並回傳 −1，維持被抓、不判定掙脫。 |
+| 握手 PlayMode 測試，修正後 | 9 / 9 通過（批次驗證 37.9 s，量不到臂長不掙脫 0.94 s）。輸出寫回 `Documentation/WhiteRoom_Handshake_Logs.json`。 |
+| Windows 執行檔 | 重建成功，0 錯誤，28.8 s。`W:\UnityProject\Yu5h1LibTest-Build\WhiteRoom_Handshake\WhiteRoom_Handshake.exe`；握手與 Runtime 兩個 dll 為 2026-11-03 16:34。建置用的暫時腳本已從宿主移除。 |
+
+結論：接手修改**通過**；宿主複本、測試與執行檔都已是目前的程式。
+
+區間匯入器（ANIMATION-UNITYEXTENSION-1）：在 Unity 編譯與單元測試**通過**，驗收條件第 1～3 項以合成的 GLB 測過。還沒有端到端：WhiteRoom 的 17 段握手 GLB 是在角色建造器輸出區間（ANIMATION-LIMB-8，CharacterBuilder `1567fcf`）之前匯出的，檔案裡沒有 `intervals`，匯入後不會產生 `MotionIntervals`。WhiteRoom 仍用設定資產裡手動填的區間。下一步見 [區間改由匯入讀取交辦](../Samples~/WhiteRoom/Implementation-Plan.md#區間改由匯入讀取交辦)。
+
+仍待使用者：用上面的執行檔做第 1、3 批的鍵盤操作驗收。
