@@ -391,10 +391,11 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                 arb.ReleaseGraceTime = GUILayout.HorizontalSlider(arb.ReleaseGraceTime, 0.1f, 1.0f);
                 GUILayout.EndHorizontal();
 
-                float currentThreshold = arb.GetEffectiveEscapeThreshold();
-                float measuredReach = arb.MeasureTotalArmReach();
+                string reachText = arb.HasPair
+                    ? $"量測 {arb.MeasureTotalArmReach():F2}m, 合計 {arb.GetEffectiveEscapeThreshold():F2}m"
+                    : "未配對";
                 GUILayout.BeginHorizontal();
-                GUILayout.Label($"骨架門檻補償: {arb.Settings.EscapeDistanceCompensation:+0.00;-0.00;0.00}m (量測 {measuredReach:F2}m, 合計 {currentThreshold:F2}m)", GUILayout.Width(280));
+                GUILayout.Label($"骨架門檻補償: {arb.Settings.EscapeDistanceCompensation:+0.00;-0.00;0.00}m ({reachText})", GUILayout.Width(280));
                 arb.Settings.EscapeDistanceCompensation = GUILayout.HorizontalSlider(arb.Settings.EscapeDistanceCompensation, -0.5f, 1.0f);
                 GUILayout.EndHorizontal();
 

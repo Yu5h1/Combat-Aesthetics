@@ -638,6 +638,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         /// </summary>
         public float GetEffectiveEscapeThreshold()
         {
+            if (!HasPair) return -1f;
             float totalReach = MeasureTotalArmReach();
             if (totalReach <= 0f)
             {
@@ -653,24 +654,22 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         }
 
         /// <summary>
+        /// True while a handshake session has registered both participants; arm reach is only defined for a pair.
+        /// </summary>
+        public bool HasPair => _participantA != null && _participantB != null;
+
+        /// <summary>
         /// Measures the combined physical arm reach from both participants' humanoid skeletons.
+        /// Returns -1 without logging when no pair is registered yet.
         /// </summary>
         public float MeasureTotalArmReach()
         {
-            float totalReach = 0f;
-            if (_participantA != null)
-            {
-                float reachA = MeasureArmReach(_participantA);
-                if (reachA <= 0f) return -1f;
-                totalReach += reachA;
-            }
-            if (_participantB != null)
-            {
-                float reachB = MeasureArmReach(_participantB);
-                if (reachB <= 0f) return -1f;
-                totalReach += reachB;
-            }
-            return totalReach;
+            if (!HasPair) return -1f;
+            float reachA = MeasureArmReach(_participantA);
+            if (reachA <= 0f) return -1f;
+            float reachB = MeasureArmReach(_participantB);
+            if (reachB <= 0f) return -1f;
+            return reachA + reachB;
         }
 
         private float MeasureArmReach(HandshakeParticipant p)

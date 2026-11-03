@@ -1060,3 +1060,14 @@ tests: total 9, passed 9, failed 0, inconclusive 0, skipped 0
 區間匯入器（ANIMATION-UNITYEXTENSION-1）：在 Unity 編譯與單元測試**通過**，驗收條件第 1～3 項以合成的 GLB 測過。還沒有端到端：WhiteRoom 的 17 段握手 GLB 是在角色建造器輸出區間（ANIMATION-LIMB-8，CharacterBuilder `1567fcf`）之前匯出的，檔案裡沒有 `intervals`，匯入後不會產生 `MotionIntervals`。WhiteRoom 仍用設定資產裡手動填的區間。下一步見 [區間改由匯入讀取交辦](../Samples~/WhiteRoom/Implementation-Plan.md#區間改由匯入讀取交辦)。
 
 仍待使用者：用上面的執行檔做第 1、3 批的鍵盤操作驗收。
+
+## 使用者在 Editor 試玩：站姿變成人形預設姿勢
+
+日期：2026-11-03。使用者在 Yu5h1LibTest 的 Editor 播放 `Handshake.unity`：角色呈現人形的預設姿勢，主控台出現紅字「Cannot calculate escape threshold」。
+
+| 問題 | 原因 | 修正 |
+|---|---|---|
+| 站立與走路時是人形預設姿勢 | `HandshakeAnimator.controller` 的 Idle 狀態用「收手」片段的最後一格當站姿，但仍指向舊的子資產 fileID（`-6327883441209141040`）。`c9b215c` 換成有手指的片段後，收手片段的 fileID 變成 `-3268706081431032073`；Withdraw 狀態改到了，Idle 漏改，所以 Idle 沒有動作。自動測試沒有檢查站姿，所以沒抓到。 | Idle 指回目前的收手片段。 |
+| 紅字「Cannot calculate escape threshold」 | HUD 每次重繪都會算掙脫門檻。從開始到第一次握緊之前，以及每次重設之後，判定器還沒有配對中的兩人，量出的臂長是 0，就記錯誤。判定本身不受影響，是誤報。batchmode 測試不畫 HUD，所以沒抓到。 | 判定器新增 `HasPair`；沒有配對時，臂長與門檻回傳 −1，不記錯誤。HUD 在沒有配對時顯示「未配對」。 |
+
+驗證：使用者在 Editor 確認恢復正常；主控台沒有錯誤。修正後的 PlayMode 測試在使用者的 Editor 啟動了，但沒有等結果（使用者表示不需要）。Windows 執行檔**沒有重建**，因為專案正在 Editor 開著，還是 16:34 那一版（站姿問題仍在）。
