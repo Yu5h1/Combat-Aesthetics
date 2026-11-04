@@ -4,7 +4,7 @@
   "scope_id": "combat-aesthetic",
   "title": "CombatAesthetic 任務進度",
   "summary": "以戰鬥美學為目標釐清共用介面、遊戲資料、輸入、動畫及網路邊界；WhiteRoom 負責 Unity 戰鬥接用與驗證，形體與動作系統由 [Data-driven Report](/?scope=data-driven) 追蹤，包含 limb 與 animation 模組。Web 共用能力沿 Yu5h1Lib.Web 發展。",
-  "updated_at": "2026-10-29T13:49:03.739297+00:00",
+  "updated_at": "2026-11-04T18:20:56.028248+00:00",
   "tasks": [
     {
       "id": "white-room-stage1",
@@ -1032,10 +1032,63 @@
           ]
         }
       ]
+    },
+    {
+      "pending_items": [
+        {
+          "title": "依 WhiteRoom 計畫〈移動片段與方向混合交辦〉，匯入四向走路、待機與警戒片段；在握手場景驗證過渡、面向與根位移。",
+          "priority": 1,
+          "status": "planned",
+          "id": "import-directional-locomotion",
+          "activity": [
+            {
+              "event": "created",
+              "actor": "codex",
+              "at": "2026-11-04T18:20:54.588785+00:00",
+              "session": "Combat-Aesthetics 推進規劃",
+              "session_id": "01a1a7c5-00d1-7051-b849-07a53be937d4"
+            },
+            {
+              "event": "updated",
+              "actor": "codex",
+              "at": "2026-11-04T18:20:56.028248+00:00",
+              "session": "Combat-Aesthetics 推進規劃",
+              "session_id": "01a1a7c5-00d1-7051-b849-07a53be937d4"
+            }
+          ]
+        },
+        {
+          "title": "依 WhiteRoom 計畫〈區間改由匯入讀取交辦〉，重新匯出並匯入握手 GLB，由匯入的具名區間控制重按時機。",
+          "priority": 1,
+          "status": "planned",
+          "id": "import-authored-control-intervals",
+          "activity": [
+            {
+              "event": "created",
+              "actor": "codex",
+              "at": "2026-11-04T18:20:54.588785+00:00",
+              "session": "Combat-Aesthetics 推進規劃",
+              "session_id": "01a1a7c5-00d1-7051-b849-07a53be937d4"
+            }
+          ]
+        }
+      ],
+      "summary": "對應 WhiteRoom 計畫〈第一個交付的目標〉的「動作合理性約束操控」與「動作驅動位移」。完成握手場景的方向移動、根位移與動畫控制區間匯入，讓使用者可以用鍵盤試玩走近、握手、拉扯與收手。",
+      "status": "in_progress",
+      "id": "white-room-handshake-delivery",
+      "title": "WhiteRoom：移動與握手交付",
+      "priority": 1
+    },
+    {
+      "title": "WhiteRoom：本機徒手 PvE 攻防",
+      "priority": 1,
+      "status": "blocked",
+      "summary": "對應 WhiteRoom 計畫〈第二個交付：徒手 PvE 攻防〉與〈戰鬥驗證交辦範圍（暫停）〉，等使用者恢復戰鬥驗證。沿用既有場景和共同戰鬥流程，先讓一名玩家與一名 AI 能反覆完成出招、普通／精準防禦、受擊恢復與重設，再評估連線。",
+      "id": "white-room-local-pve"
     }
   ],
   "next": {
-    "task_id": "viewer-view-decision",
-    "item_id": "answer-decision-list"
+    "task_id": "white-room-handshake-delivery",
+    "item_id": "import-directional-locomotion"
   }
 }
