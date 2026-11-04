@@ -395,6 +395,19 @@ Sample 輔助程式不得靠宿主的 Assembly-CSharp 或特定機器絕對路�
 
 範圍：不改握手規則與片段；不重建 Windows 執行檔（Editor 開著）。提交時指定路徑，不推送；紀錄寫在驗收紀錄最後。
 
+### 移動片段與方向混合交辦
+
+依據：[COMBAT-ANIMATION-5](../../Documentation/Requirements.Animation.md)；〈第一個交付的目標〉的「動作驅動位移」（移動由專屬動畫的根位移決定，不另訂速度）。動畫線已交付 6 段動作 GLB（AnimationEditor `c422d2a`，`W:\Yu5h1Lib\AnimationEditor\samples\motion\`）：往前走 `walk`、往後退 `walk-back`、往左 `strafe-left`、往右 `strafe-right`（各 33 取樣、1.067 秒，根位移 +Z 1.12 m、−Z 0.8 m、+X 0.56 m、−X 0.56 m），待機 `idle` 與警戒 `alert`（沒有根位移）。片段沒有控制區間。
+
+1. **匯入**：6 段 GLB 複製到套件 `Art/Locomotion/`，同步到宿主，用 UnityExtension 的人形匯入器（LIMB-ANIM-1）匯入，角色與 Avatar 沿用 `punch-character`。`.meta` 與 `.humanoid.asset` 一併提交，之後重新匯入不要刪除或重建 `.humanoid.asset`，片段的 fileID 才不會變。
+2. **待機**：`HandshakeAnimator.controller` 的 Idle 狀態改播 `idle` 循環，取代收手最後一格的靜止站姿。`idle` 第 0 影格等於收手最後一格，所以收手接待機不會跳。
+3. **方向混合**：新增 Move 狀態，用 2D 方向混合（四段移動片段加上 `idle` 作為中心），參數是移動意圖換算到角色自身座標的方向。Idle 與 Move 之間用過渡接上，過渡時間放在 controller 上，可在 Unity 調整。
+4. **朝向規則**（依現有計畫推得，見下方理由）：沒有互動時，角色轉向輸入方向，只用往前走。互動期間（從伸手到收手結束，包含握住、被抓、抓人），身體保持面向對方，移動依相對方向播放往前、往後與側走，例如被抓時往後拉、抓的一方跟上、回應方伸手走近。理由：〈第一個交付的目標〉的「回應」「抓住與掙脫」列要求互動中邊面對對方邊走近或後退；不轉身才看得出是在拉扯，而不是轉身走開。
+5. **根位移**：Move 狀態用根位移移動角色，拿掉現在用速度平移的暫代做法，以及事件紀錄裡的「暫代」標示。被抓、抓人、跳開這三個既有的根位移狀態不變。
+6. **測試**：只跑受影響的測試：`VerifyItem3_RootMotionDisplacementInCaughtCatchingLeap`（根位移）、`VerifyItem4_StandardDistanceWalkingAndNaturalHandSphere`（走近到標準距離）、`VerifyItem2_ClipsActuallyPlayInAnimator`（片段播放），再新增一項：移動時 Animator 在 Move 狀態，位移來自根位移，往後輸入時往後退，且互動期間面向不變。
+
+範圍：只改握手場景；戰鬥場景的 controller 等戰鬥驗證恢復時再改（使用者要求所有 demo 用同一種做法，屆時沿用這套）。`alert` 先匯入，不接到任何狀態。不改握手規則；不重建 Windows 執行檔。提交時指定路徑，不推送；紀錄寫在驗收紀錄最後，並更新 [COMBAT-ANIMATION-5](../../Documentation/Requirements.Animation.md) 的 Status（第 3、4 項）。
+
 ### 並行交辦
 
 使用者 2026-10-31 要求把能並行的工作分給其他 agent，各自完成後提交，主 session 只負責驗收。下列兩項只寫新文件，不改程式、不啟動 Unity，可以和第 3 批實作、動畫線製作片段（[Requirements.Animation.md](../../Documentation/Requirements.Animation.md)）同時進行。共同限制：不安裝或下載套件；不改本計畫、`handoff.md`、驗收紀錄與其他 agent 的檔案；只提交自己新增的檔案（連同 Unity 的 `.meta`），提交時指定路徑，不推送。
