@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Yu5h1Lib;
+using Yu5h1Lib.CameraControl;
 using Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom;
 
 namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
@@ -50,7 +51,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         [Header("Scene Object References (Direct Scene Authoring)")]
         [SerializeField] private WhiteRoomCharacter _player;
         [SerializeField] private HandshakeAiController _ai;
-        private WhiteRoomCamera _camera;
+        private CameraController _camera;
 
         private readonly List<GameObject> _spawnedEntities = new List<GameObject>();
         private HandshakeParticipant _playerParticipant;
@@ -60,7 +61,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         public HandshakeParticipant PlayerParticipant => _playerParticipant;
         public HandshakeAiController AI => _ai;
         public HandshakeParticipant AiParticipant => _aiParticipant;
-        public WhiteRoomCamera Camera => _camera;
+        public CameraController Camera => _camera;
         public HandshakeSettings Settings => _settings;
 
         private void Awake()

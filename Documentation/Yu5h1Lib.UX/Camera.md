@@ -48,3 +48,8 @@ Yu5h1Lib.UX Camera 0.1.0-draft（案例 0.1.0）
 | 規範版本 | 來源 commit | DX | 實作 commit | checklist | 結論 |
 |---|---|---|---|---|---|
 | 0.1.0-draft | UX `25f5b13` | 不適用 | Combat-Aesthetics `e7acdb1` | 無（結果在本頁） | 未執行：沒有可送入角度的公開入口；讀程式沒有看到與規範衝突的地方 |
+
+## 2026-11-05：改用共用 CameraController
+
+`WhiteRoomCamera.cs` 已刪除。`WhiteRoomSceneBuilder.EnsureCamera` 改在 Main Camera 上掛 `Yu5h1Lib.CameraControl.CameraController` 與 `MouseKeyboardCameraInput`（com.yu5h1.common）：目標偏移 (0, 1.4, 0)、距離 4、仰角 −25°～65°、每像素 0.2°（等於原本 Input System 位移 ×0.1×2）、樞軸平滑 15。游標鎖定、Alt／Esc 切換與 UI 焦點讓出由 `MouseKeyboardCameraInput` 負責，`WhiteRoomCharacter.IsUIFocused` 當作 blocker。上面的對照是舊實作的紀錄，不再對應程式。
+手感差異：原本平滑相機位置、旋轉每影格 `LookAt`；現在平滑樞軸、相機剛性接在樞軸後方，轉動沒有拖尾，平滑與幀率無關。

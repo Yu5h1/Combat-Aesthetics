@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Yu5h1Lib;
+using Yu5h1Lib.CameraControl;
+using MinMax = Yu5h1Lib.Runtime.MinMax;
 
 namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
 {
@@ -97,14 +99,19 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
         }
 
         /// <summary>
-        /// Static helper that attaches or updates the shared <see cref="WhiteRoomCamera"/> to follow the target transform.
+        /// Static helper that attaches or updates the shared <see cref="CameraController"/> and its
+        /// <see cref="MouseKeyboardCameraInput"/> on the main camera and makes it follow the target transform.
+        /// These values are the only framing configuration; no scene or demo overrides them. The camera never avoids
+        /// obstacles: it keeps its orbit distance and may sit inside or behind geometry. A new controller starts from the
+        /// camera's current rotation and snaps to the target; an existing one eases to the new target.
         /// </summary>
-        public static WhiteRoomCamera EnsureCamera(Transform targetTransform)
+        public static CameraController EnsureCamera(Transform targetTransform)
         {
             if (targetTransform == null) return null;
 
-            WhiteRoomCamera cam = ObjectUtility.FindObject<WhiteRoomCamera>(false);
-            if (cam == null)
+            CameraController cam = ObjectUtility.FindObject<CameraController>(false);
+            var created = cam == null;
+            if (created)
             {
                 Camera mainCam = Camera.main;
                 GameObject camGo = mainCam != null ? mainCam.gameObject : new GameObject("Main Camera", typeof(Camera));
@@ -113,9 +120,17 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                     camGo.tag = "MainCamera";
                     camGo.AddComponent<AudioListener>();
                 }
-                cam = camGo.AddComponent<WhiteRoomCamera>();
+                var input = camGo.AddComponent<MouseKeyboardCameraInput>();
+                input.blocker = () => WhiteRoomCharacter.IsUIFocused;
+                cam = camGo.AddComponent<CameraController>();
+                cam.look.pitchRange = new MinMax(-25f, 65f);
+                cam.look.Set(camGo.transform.rotation);
+                cam.distance = 4f;
+                cam.follow.offset = new Vector3(0f, 1.4f, 0f);
+                cam.follow.smoothing = 15f;
+                cam.SetHome();
             }
-            cam.Target = targetTransform;
+            cam.SetTarget(targetTransform, created);
             return cam;
         }
 

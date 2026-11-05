@@ -19,7 +19,7 @@ WhiteRoom 是 CombatAesthetic 套件的官方 3D 最小測試場範例（Sample�
      - **時間來源與動態片段綁定**：動作片段時長直接取自 `AnimationClip.length`；`HandshakeVisualFeedback` 透過動態 `AnimatorOverrideController` 將 `HandshakeSettings.asset` 中指派的 17 段動作片段映射至 Controller 內具名狀態節點；操作許可由動畫具名區間（`ActionInterval` / `ClipIntervalBinding`，源自片段檔 `intervals` 標籤）嚴格決定，徹底移除固定秒數計時器與倒數。
      - **Runtime Humanoid IK 與 Pre-IK 碰撞球擺放**：在握緊、搖手、握住期間以權重 0.85 對準雙手中點；被抓住期間以權重 0.95 對準抓人方右手表現手臂拉直。碰撞球在 `OnAnimatorIK` 開頭以純動畫手腕延伸姿態擺放，並於測試案例驗證在鄰近目標下漂移 < 0.05m，100% 不受 IK 牽引影響判定。
    - **重新按下才發起**：所有結果（成功、惡作劇、同時收手、比力氣勝負/平手/0比0、掙脫）裁定後若持續按住互動鍵，維持站姿不自動伸手；必須先放開互動鍵再重新按下才發起。
-   - **預製物件化與手工編輯 DX**：角色與 AI 改為 Prefab（`WhiteRoom_Player.prefab`、`WhiteRoom_AI.prefab` 位於 `Samples~/WhiteRoom/Prefabs/`），場景直接引用且可在 Editor 直接調校；攝影機不是預製物件，戰鬥與握手場景都由 `WhiteRoomSceneBuilder.EnsureCamera` 在場景的 Main Camera 上掛 `WhiteRoomCamera`，設定只在該元件的欄位預設值（2026-11-03 統一）；`HandshakeSettings` ScriptableObject 提供集中參數管理，Play Mode 調整值可即時保存。
+   - **預製物件化與手工編輯 DX**：角色與 AI 改為 Prefab（`WhiteRoom_Player.prefab`、`WhiteRoom_AI.prefab` 位於 `Samples~/WhiteRoom/Prefabs/`），場景直接引用且可在 Editor 直接調校；攝影機不是預製物件，戰鬥與握手場景都由 `WhiteRoomSceneBuilder.EnsureCamera` 在場景的 Main Camera 上掛共用套件的 `CameraController` 與 `MouseKeyboardCameraInput`，設定只在 `EnsureCamera`（2026-11-03 統一；2026-11-05 改用共用元件）；`HandshakeSettings` ScriptableObject 提供集中參數管理，Play Mode 調整值可即時保存。
    - **Windows 獨立執行檔交付與證據**：建置輸出於 `W:\UnityProject\Yu5h1LibTest-Build\WhiteRoom_Handshake\WhiteRoom_Handshake.exe`（repo 外部），指定場景建置不修改宿主建置設定；結構化事件日誌 `Documentation/WhiteRoom_Handshake_Logs.json`（218 筆真實條目）。依指令全面廢止 agent 截圖，以執行檔與日誌為準。
    - **重用共用 `Runtime/`**：重用 `CombatEntity`（移動、跳躍、重力與全場重設）、`WhiteRoomCharacter`（P1/P2 輸入採集與改鍵）、`WhiteRoomHUD`（IMGUI 面板與 JSON 日誌匯出）及 `WhiteRoomSceneBuilder`（場地、燈光、鏡頭）。兩個場景用同一組 `LookAt` 跟拍鏡頭設定，握手不再有專屬構圖。
    - **Sample 場景僅含可操作內容**：`Handshake.unity` 不掛載自動測試腳本，進入 Play Mode 後即可由玩家直接操作；輔助自動化測試器位於 `Samples~/WhiteRoom/Tests/HandshakeVerificationRunner.cs` 與 `HandshakePlayModeTests.cs`。
@@ -64,7 +64,7 @@ Samples~/WhiteRoom/
 │  ├─ WhiteRoomCharacter.cs   本機玩家輸入控制器（支援 P1/P2 可改鍵互動命令與意圖覆寫）
 │  ├─ WhiteRoomDummy.cs       自主 AI 戰鬥傀儡
 │  ├─ WhiteRoomVisuals.cs     程序化機械人形與姿態/時機顏色反饋
-│  ├─ WhiteRoomCamera.cs      第三人稱軌道鏡頭（支援 UI 焦點隔離）
+│  ├─ （第三人稱鏡頭由 com.yu5h1.common 的 CameraController 提供，見 WhiteRoomSceneBuilder.EnsureCamera）
 │  ├─ WhiteRoomHUD.cs         共用 IMGUI 狀態、P1/P2 互動改鍵、AI 參數設定、診斷與 JSON 匯出
 │  ├─ WhiteRoomNetwork.cs     模擬不良網路通道（延遲/抖動/丟包佇列）
 │  └─ WhiteRoomSceneBuilder.cs 共用場地環境、燈光、鏡頭與戰鬥情境生成器

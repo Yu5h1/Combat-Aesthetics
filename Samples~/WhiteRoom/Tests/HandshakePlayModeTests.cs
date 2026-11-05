@@ -4,6 +4,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Yu5h1Lib;
+using Yu5h1Lib.CameraControl;
 using Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom;
 using Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake;
 
@@ -69,11 +70,11 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
 
             yield return new WaitForSeconds(0.3f);
 
-            var cam = ObjectUtility.FindObject<WhiteRoomCamera>(false);
-            Assert.IsNotNull(cam, "WhiteRoomCamera must exist in combat scene.");
-            Assert.IsNotNull(cam.Target, "Combat camera target must be bound to the player.");
+            var cam = ObjectUtility.FindObject<CameraController>(false);
+            Assert.IsNotNull(cam, "CameraController must exist in combat scene.");
+            Assert.IsNotNull(cam.follow.target, "Combat camera target must be bound to the player.");
 
-            Transform playerTransform = cam.Target;
+            Transform playerTransform = cam.follow.target;
             playerTransform.position += new Vector3(3f, 0f, 2f);
             yield return null;
             yield return null;
