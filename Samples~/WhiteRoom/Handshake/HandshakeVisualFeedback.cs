@@ -34,6 +34,13 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         [SerializeField] private Vector3 _fistLocalOffsetInWrist = new Vector3(0.08f, 0f, 0f);
         [SerializeField] private Renderer _skinnedRenderer;
         [SerializeField] private Color _defaultBodyColor = new Color(0.88f, 0.92f, 0.96f);
+        [SerializeField] private float _moveParameterDampTime = 0.1f;
+
+        private const int GestureLayer = 1;
+        private static readonly int s_MoveXId = Animator.StringToHash("MoveX");
+        private static readonly int s_MoveYId = Animator.StringToHash("MoveY");
+        private static readonly int s_MoveSpeedId = Animator.StringToHash("MoveSpeed");
+        private bool _baseIsLocomotion;
 
         private HandshakeState _lastPlayedState = (HandshakeState)(-1);
         private float _currentIkWeight = 0f;
@@ -203,8 +210,21 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             if (_animator == null || _lastPlayedState == state) return;
             _lastPlayedState = state;
 
-            bool isRootMotionState = (state == HandshakeState.Caught || state == HandshakeState.Catching || state == HandshakeState.Leap);
-            _animator.applyRootMotion = isRootMotionState;
+            _animator.applyRootMotion = true;
+            bool gesture = IsGestureState(state) && _animator.layerCount > GestureLayer;
+            if (_animator.layerCount > GestureLayer)
+            {
+                _animator.SetLayerWeight(GestureLayer, gesture ? 1f : 0f);
+            }
+            if ((gesture || state == HandshakeState.None) && !_baseIsLocomotion)
+            {
+                _animator.Play("Idle", 0, 0f);
+                _baseIsLocomotion = true;
+            }
+            else if (!gesture && state != HandshakeState.None)
+            {
+                _baseIsLocomotion = false;
+            }
             if (_participant != null && _participant.Entity != null)
             {
                 _participant.Entity.PauseGravity = (state == HandshakeState.Leap);
@@ -213,13 +233,12 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             switch (state)
             {
                 case HandshakeState.None:
-                    _animator.Play("Idle", 0, 1.0f);
                     break;
                 case HandshakeState.Reaching:
-                    _animator.Play("Reach", 0, 0f);
+                    PlayGesture("Reach");
                     break;
                 case HandshakeState.Waiting:
-                    _animator.Play("Wait", 0, 0f);
+                    PlayGesture("Wait");
                     break;
                 case HandshakeState.Grip:
                     _animator.Play("Grip", 0, 0f);
@@ -228,7 +247,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
                     _animator.Play("Shake", 0, 0f);
                     break;
                 case HandshakeState.Withdrawing:
-                    _animator.Play("Withdraw", 0, 0f);
+                    PlayGesture("Withdraw");
                     break;
                 case HandshakeState.Laugh:
                     _animator.Play("Laugh", 0, 0f);
@@ -269,6 +288,24 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
             }
         }
 
+        private static bool IsGestureState(HandshakeState state)
+        {
+            return state == HandshakeState.Reaching || state == HandshakeState.Waiting || state == HandshakeState.Withdrawing;
+        }
+
+        private void PlayGesture(string stateName)
+        {
+            if (_animator.layerCount > GestureLayer)
+            {
+                _animator.Play(stateName, GestureLayer, 0f);
+            }
+            else
+            {
+                _animator.Play(stateName, 0, 0f);
+                _baseIsLocomotion = false;
+            }
+        }
+
         private void OnAnimatorMove()
         {
             if (_animator != null && _animator.applyRootMotion && _participant != null && _participant.Entity != null)
@@ -287,12 +324,27 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         public AnimationClip GetCurrentPlayingClip()
         {
             if (_animator == null) return null;
-            var infos = _animator.GetCurrentAnimatorClipInfo(0);
+            int layer = _animator.layerCount > GestureLayer && _animator.GetLayerWeight(GestureLayer) > 0.5f ? GestureLayer : 0;
+            var infos = _animator.GetCurrentAnimatorClipInfo(layer);
             if (infos != null && infos.Length > 0)
             {
                 return infos[0].clip;
             }
             return null;
+        }
+
+        private void DriveLocomotion(HandshakeState state)
+        {
+            CombatEntity entity = _participant.Entity;
+            if (entity == null || _animator == null) return;
+
+            entity.RootMotionDriven = true;
+            entity.FaceTarget = state != HandshakeState.None && _opponent != null ? _opponent.transform : null;
+
+            Vector2 intent = entity.LocalMoveIntent;
+            _animator.SetFloat(s_MoveXId, intent.x, _moveParameterDampTime, Time.deltaTime);
+            _animator.SetFloat(s_MoveYId, intent.y, _moveParameterDampTime, Time.deltaTime);
+            _animator.SetFloat(s_MoveSpeedId, intent.magnitude);
         }
 
         private void Update()
@@ -301,6 +353,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 
             HandshakeState state = _participant.State;
             PlayClipForState(state);
+            DriveLocomotion(state);
 
             Color targetColor = _defaultBodyColor;
             switch (state)

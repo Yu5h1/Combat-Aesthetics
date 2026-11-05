@@ -85,6 +85,23 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
         public Transform FistTransform { get; set; }
         public bool LocomotionLocked { get; set; }
         public float SpeedOverride { get; set; } = -1f;
+
+        /// <summary>
+        /// When true the planar displacement comes from animation root motion applied by the presentation layer,
+        /// so locomotion no longer adds its own planar velocity; vertical motion and residual impulses still apply.
+        /// </summary>
+        public bool RootMotionDriven { get; set; }
+
+        /// <summary>
+        /// When set, an unlocked entity keeps its body turned toward this transform instead of turning toward its movement input.
+        /// </summary>
+        public Transform FaceTarget { get; set; }
+
+        /// <summary>
+        /// Movement intent expressed in the character's own frame (x right, y forward), magnitude equal to the input strength.
+        /// Without a <see cref="FaceTarget"/> the character turns toward the input, so only forward is reported.
+        /// </summary>
+        public Vector2 LocalMoveIntent { get; private set; }
         public CombatActionIntent CurrentIntent => _currentIntent;
         public bool IsGrounded => _controller != null ? _controller.isGrounded : _wasGrounded;
 
@@ -458,11 +475,35 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                     moveDir = new Vector3(input.x, 0, input.y).normalized;
                 }
 
-                if (moveDir.sqrMagnitude > 0.001f)
+                if (moveDir.sqrMagnitude > 0.001f && FaceTarget == null)
                 {
                     Quaternion targetRot = Quaternion.LookRotation(moveDir, Vector3.up);
                     transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRot, _turnSpeed * Time.deltaTime);
                 }
+            }
+
+            if (FaceTarget != null && !LocomotionLocked)
+            {
+                Vector3 toTarget = Vector3.ProjectOnPlane(FaceTarget.position - transform.position, Vector3.up);
+                if (toTarget.sqrMagnitude > 0.0001f)
+                {
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(toTarget.normalized, Vector3.up), _turnSpeed * Time.deltaTime);
+                }
+            }
+
+            float intentStrength = canMove ? Mathf.Clamp01(input.magnitude) : 0f;
+            if (intentStrength <= 0f || moveDir.sqrMagnitude <= 0.001f)
+            {
+                LocalMoveIntent = Vector2.zero;
+            }
+            else if (FaceTarget == null)
+            {
+                LocalMoveIntent = new Vector2(0f, intentStrength);
+            }
+            else
+            {
+                Vector3 local = transform.InverseTransformDirection(moveDir);
+                LocalMoveIntent = new Vector2(local.x, local.z).normalized * intentStrength;
             }
 
             float currentSpeed = _isCrouching ? _crouchSpeed : _walkSpeed;
@@ -488,7 +529,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
                 currentSpeed = 0f;
             }
 
-            Vector3 driveVelocity = moveDir * (currentSpeed * Mathf.Clamp01(input.magnitude));
+            Vector3 driveVelocity = RootMotionDriven ? Vector3.zero : moveDir * (currentSpeed * Mathf.Clamp01(input.magnitude));
 
             if (PauseGravity)
             {
@@ -606,6 +647,7 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom
             _currentIntent = CombatActionIntent.Empty;
             LocomotionLocked = false;
             SpeedOverride = -1f;
+            LocalMoveIntent = Vector2.zero;
 
             if (_controller != null)
             {

@@ -613,6 +613,69 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
         }
 
         [UnityTest]
+        public IEnumerator VerifyLocomotion_MoveStateRootMotionAndInteractionFacing()
+        {
+            var loadOp = EditorSceneManager.LoadSceneAsyncInPlayMode(
+                HandshakeScenePath,
+                new UnityEngine.SceneManagement.LoadSceneParameters(UnityEngine.SceneManagement.LoadSceneMode.Single));
+            while (!loadOp.isDone) yield return null;
+            yield return new WaitForSeconds(0.4f);
+
+            var player = ObjectUtility.FindObject<WhiteRoomCharacter>(false);
+            var participant = player.GetComponent<HandshakeParticipant>();
+            var entity = participant.Entity;
+            var animator = player.GetComponentInChildren<Animator>();
+            var ai = ObjectUtility.FindObject<HandshakeAiController>(false);
+            ai.Mode = HandshakeAiMode.Idle;
+
+            Assert.IsTrue(animator.GetCurrentAnimatorStateInfo(0).IsName("Idle"), "A standing character must be in the Idle state.");
+
+            Vector3 toAi = Vector3.ProjectOnPlane(ai.transform.position - player.transform.position, Vector3.up).normalized;
+
+            player.OverrideIntent = true;
+            var forwardIntent = CombatActionIntent.Empty;
+            forwardIntent.MoveInput = new Vector2(toAi.x, toAi.z);
+            player.CustomIntent = forwardIntent;
+
+            Vector3 start = player.transform.position;
+            yield return new WaitForSeconds(0.8f);
+            float walked = Vector3.Distance(start, player.transform.position);
+
+            Assert.IsTrue(entity.RootMotionDriven, "Movement must be driven by root motion.");
+            Assert.IsTrue(animator.GetCurrentAnimatorStateInfo(0).IsName("Move"), "Moving must put the Animator in the Move state.");
+            Assert.Greater(walked, 0.3f, "Walking must displace the character through root motion.");
+            Assert.Less(walked, 1.5f, "Displacement must follow the walk clip (about 1.05 m/s), not the former 5 m/s velocity.");
+
+            player.CustomIntent = CombatActionIntent.Empty;
+            yield return new WaitForSeconds(0.6f);
+            Assert.IsTrue(animator.GetCurrentAnimatorStateInfo(0).IsName("Idle"), "Releasing the input must return to Idle.");
+
+            HandshakeArbitrator.Instance.ResetAll();
+            yield return new WaitForSeconds(0.2f);
+
+            toAi = Vector3.ProjectOnPlane(ai.transform.position - player.transform.position, Vector3.up).normalized;
+            var holdBack = CombatActionIntent.Empty;
+            holdBack.InteractHold = true;
+            holdBack.MoveInput = new Vector2(-toAi.x, -toAi.z);
+            player.CustomIntent = holdBack;
+
+            Vector3 forwardBefore = player.transform.forward;
+            Vector3 backStart = player.transform.position;
+            yield return new WaitForSeconds(0.9f);
+
+            Assert.AreNotEqual(HandshakeState.None, participant.State, "Holding the interact key must start the interaction.");
+            Assert.IsTrue(animator.GetCurrentAnimatorStateInfo(0).IsName("Move"), "Backing away during the interaction must play the Move state.");
+            Assert.Less(animator.GetFloat("MoveY"), -0.5f, "Backward input must drive the blend tree toward walk-back.");
+            Vector3 moved = Vector3.ProjectOnPlane(player.transform.position - backStart, Vector3.up);
+            Assert.Greater(moved.magnitude, 0.15f, "Backing away must displace the character through root motion.");
+            Assert.Greater(Vector3.Dot(moved.normalized, -toAi), 0.9f, "The character must move away from the opponent.");
+            Assert.Greater(Vector3.Dot(player.transform.forward, forwardBefore), 0.99f, "The body must keep facing the opponent during the interaction.");
+
+            player.CustomIntent = CombatActionIntent.Empty;
+            player.OverrideIntent = false;
+        }
+
+        [UnityTest]
         public IEnumerator VerifyEscape_DoesNotResolve_WhenArmReachCannotBeMeasured()
         {
             var loadOp = EditorSceneManager.LoadSceneAsyncInPlayMode(

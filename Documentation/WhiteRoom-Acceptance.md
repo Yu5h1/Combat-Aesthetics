@@ -1199,3 +1199,28 @@ Unity MCP 在使用者開著的 Editor 跑 Play Mode，只跑 4 項，**4 / 4 �
 - 主控台上色只確認程式路徑，沒有看實際顏色；建置版純文字沒有建置驗證。
 - Gizmo 在 Scene 視窗的樣子、偏移值怎麼調才是「掌心垂直、斜斜前伸、虎口朝上」都沒驗證，預設偏移為 0，需要使用者調。
 - Combat 場景的畫面是否乾淨沒有在 Game 視窗確認；Windows 執行檔沒有重建（Editor 開著）。
+
+## 2026-11-05 移動片段與方向混合
+
+日期：2026-11-05。依據：[移動片段與方向混合交辦](../Samples~/WhiteRoom/Implementation-Plan.md#移動片段與方向混合交辦)第 1～6 項；片段來源 AnimationEditor `c422d2a`。宿主 `W:/UnityProject/Yu5h1LibTest`（Unity `6000.6.0f1`）。匯入用 batchmode（當時 Editor 沒開），測試改在使用者後來開啟的 Editor 內用 Unity MCP 跑。
+
+### 做了什麼
+
+- **匯入（第 1 項）**：6 段 GLB（`walk`、`walk-back`、`strafe-left`、`strafe-right`、`idle`、`alert`）複製到 `Art/Locomotion/`，每段一個 `.humanoid.asset`，用 `HumanoidImporter.Generate` 匯入，`.meta` 一併放進套件。四段移動片段的動作節點是 `root`，水平位移不烘進姿勢（成為根位移），旋轉與高度烘進姿勢；`idle`、`alert` 沿用握手片段的設定（`pelvis`，全烘進姿勢）。全部循環。匯入器回報根位移終點：`walk` +Z 1.12 m、`walk-back` −Z 0.80 m、`strafe-left` −X 0.56 m、`strafe-right` +X 0.56 m、`idle`／`alert` 無位移，長度 1.067 s／2.000 s，49 根骨頭對應成功，方向都正確，不需要補救。`alert` 只匯入，沒接到任何狀態。
+- **待機（第 2 項）**：`HandshakeAnimator.controller` 的 Idle 狀態改播 `idle` 循環；原本凍結在收手最後一格用的 `IdleNormalizedTime` 參數移除。
+- **方向混合（第 3 項）**：新增 Move 狀態，2D Freeform Directional 混合樹，參數 `MoveX`／`MoveY`：中心 `idle`（0,0），`walk`（0,1）、`walk-back`（0,−1）、`strafe-left`（−1,0）、`strafe-right`（1,0）。Idle↔Move 用 `MoveSpeed`（輸入強度）大於／小於 0.1 的過渡，過渡時間 0.15 s 放在 controller 上。
+- **朝向規則（第 4 項）**：`CombatEntity` 新增 `FaceTarget` 與 `LocalMoveIntent`。沒有互動時，角色轉向輸入方向，混合只用往前（`MoveX = 0`、`MoveY` = 輸入強度）。互動期間（握手狀態不是 `None` 且有對手）`HandshakeVisualFeedback` 把對手設成 `FaceTarget`，身體保持面向對方，輸入換算成角色自身座標餵給混合樹。被抓、抓人等鎖定狀態不轉向（和原本一致）。
+- **根位移（第 5 項）**：`CombatEntity.RootMotionDriven` 為真時不再加平面速度（只保留垂直與殘餘衝量）；`HandshakeVisualFeedback` 恆開 `applyRootMotion`，在 `OnAnimatorMove` 把 `deltaPosition` 交給 CharacterController。戰鬥場景沒有這個元件，維持原本的速度平移。計畫提到事件紀錄裡的「暫代」標示：程式與紀錄裡找不到這個字串（標示只寫在文件裡），所以沒有程式可拿。
+- **新增一層 Gesture（計畫沒有明寫的設計決定）**：伸手、等待、收手三個狀態在原本的設計下允許邊走邊做（原本站姿平移），但它們是全身片段，若放在底層就沒有腳步，拿掉平移後就走不動。所以把 `Reach`、`Wait`、`Withdraw` 搬到第二層 `Gesture`（`HandshakeGesture.mask`：雙臂、手指、手 IK），底層持續跑 Idle／Move；其他全身狀態仍在底層，進入時 Gesture 權重為 0。`GetCurrentPlayingClip` 在 Gesture 權重大於 0.5 時讀第二層。這是我的選擇，使用者若不要，可改回把這三個狀態鎖住不能走。
+- 副作用：互動中的速度現在由片段決定（`walk` 約 1.05 m/s），不再有 `SpeedOverride` 的護衛速度（2.2 m/s）；原本 5 m/s 的一般走動也變成約 1.05 m/s，這是「動作驅動位移」的直接結果，要更快得由動畫線提供更快的片段。
+
+### 測試
+
+只跑受影響的 4 項，**4 / 4 通過**（Unity MCP，使用者的 Editor）：`VerifyItem2_ClipsActuallyPlayInAnimator`（改了片段播放的層）、`VerifyItem3_RootMotionDisplacementInCaughtCatchingLeap`（根位移改成恆開）、`VerifyItem4_StandardDistanceWalkingAndNaturalHandSphere`（走近到標準距離，速度變了）、新增 `VerifyLocomotion_MoveStateRootMotionAndInteractionFacing`（走路時 Animator 在 Move、位移 0.3～1.5 m 而不是舊的 5 m/s、放開回 Idle；互動中往後輸入時 Move 狀態、`MoveY` < −0.5、遠離對手、面向不變）。沒跑其他測試，原因：握手規則與其他片段沒改。
+
+### 沒驗證的部分與注意
+
+- 沒有看畫面：腳步是否打架、Idle↔Move 過渡的視覺、Gesture 層的手臂疊在走路上是否自然、IK 在新層結構下的手感，都需要使用者試玩。
+- 測試工具：Unity MCP 的 `run_tests` 在 Editor 跑過一次後，下一次會回報 0 個測試（通過但空），要先 `RequestScriptReload` 再跑才有結果。新測試第一次跑（編譯前一輪）有一次失敗（`MoveY` 為正值 0.83），加診斷訊息重跑後連續兩次通過，原因沒有查清楚，列為可能不穩定。
+- Windows 執行檔沒有重建；戰鬥場景的 controller 沒改。
+
