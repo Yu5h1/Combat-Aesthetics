@@ -28,6 +28,7 @@ MonoBehaviour:
   avatar: {fileID: 0}
   clips:
   - {fileID: 1693699076924675934}
+  intervals: []
 --- !u!74 &1693699076924675934
 AnimationClip:
   m_ObjectHideFlags: 0

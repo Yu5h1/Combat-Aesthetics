@@ -7,45 +7,6 @@ using UnityEditor;
 namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
 {
     /// <summary>
-    /// Named action interval marked along an animation clip timeline.
-    /// Controls whether player inputs are accepted according to the action rationality constraint.
-    /// </summary>
-    [Serializable]
-    public struct ActionInterval
-    {
-        public string Name;
-        [Range(0f, 1f)] public float StartNormalizedTime;
-        [Range(0f, 1f)] public float EndNormalizedTime;
-        public bool UnderControl;
-        public bool Cancellable;
-
-        public ActionInterval(string name, float start, float end, bool underControl, bool cancellable)
-        {
-            Name = name;
-            StartNormalizedTime = start;
-            EndNormalizedTime = end;
-            UnderControl = underControl;
-            Cancellable = cancellable;
-        }
-    }
-
-    /// <summary>
-    /// Binding associating an animation clip with its timeline action intervals.
-    /// </summary>
-    [Serializable]
-    public class ClipIntervalBinding
-    {
-        public AnimationClip Clip;
-        public ActionInterval[] Intervals;
-
-        public ClipIntervalBinding(AnimationClip clip, params ActionInterval[] intervals)
-        {
-            Clip = clip;
-            Intervals = intervals;
-        }
-    }
-
-    /// <summary>
     /// Configurable ScriptableObject settings asset for the Stage 2b handshake interaction across Batches 1, 2, and 3.
     /// Values adjusted during Play Mode persist on the asset on disk to satisfy manual scene authoring requirements.
     /// Sole authoritative source for animation clips and interaction tuning.
@@ -63,8 +24,10 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         [SerializeField] private float _escapeDistanceCompensation = 0.0f;
 
         [Header("Action Rationality Constraints & Intervals")]
-        [Tooltip("Custom action intervals bound to animation clips. Adjusting boundaries tunes control feel without arbitrary fixed timers.")]
-        [SerializeField] private ClipIntervalBinding[] _clipIntervalBindings;
+        [Tooltip("Control intervals produced by the humanoid import of each clip's motion file. Each asset names its clip.")]
+        [SerializeField] private MotionIntervals[] _motionIntervals;
+
+        private readonly System.Collections.Generic.HashSet<AnimationClip> _reportedMissingIntervals = new System.Collections.Generic.HashSet<AnimationClip>();
 
         [Header("Procedural Head, Body and Arm IK (presentation only)")]
         [Tooltip("How strongly the head turns toward the opponent's face during an interaction (0 keeps the clip's head motion).")]
@@ -193,14 +156,36 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         public float CaughtIkWeight { get => _caughtIkWeight; set { _caughtIkWeight = Mathf.Clamp01(value); MarkDirty(); } }
         public float CatchingIkWeight { get => _catchingIkWeight; set { _catchingIkWeight = Mathf.Clamp01(value); MarkDirty(); } }
 
-        public ClipIntervalBinding[] ClipIntervalBindings
+        public MotionIntervals[] MotionIntervalAssets
         {
-            get => _clipIntervalBindings;
+            get => _motionIntervals;
             set
             {
-                _clipIntervalBindings = value;
+                _motionIntervals = value;
                 MarkDirty();
             }
+        }
+
+        /// <summary>
+        /// Finds the imported control intervals of a clip. Reach, wait, grip and shake have none by design;
+        /// any other clip without them is reported once.
+        /// </summary>
+        public MotionIntervals FindIntervals(AnimationClip clip)
+        {
+            if (clip == null) return null;
+            if (_motionIntervals != null)
+            {
+                foreach (var intervals in _motionIntervals)
+                {
+                    if (intervals != null && intervals.clip == clip) return intervals;
+                }
+            }
+            bool hasNoneByDesign = clip == _reachClip || clip == _waitClip || clip == _gripClip || clip == _shakeClip;
+            if (!hasNoneByDesign && _reportedMissingIntervals.Add(clip))
+            {
+                Debug.LogError($"[HandshakeSettings] Clip '{clip.name}' has no imported MotionIntervals; re-import its motion file with intervals.");
+            }
+            return null;
         }
 
         /// <summary>
@@ -239,20 +224,12 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         {
             if (clip == null) return true;
 
-            if (_clipIntervalBindings != null)
+            var intervals = FindIntervals(clip);
+            if (intervals != null)
             {
-                foreach (var binding in _clipIntervalBindings)
+                foreach (var interval in intervals.AtNormalized(normalizedTime))
                 {
-                    if (binding != null && binding.Clip == clip && binding.Intervals != null)
-                    {
-                        foreach (var interval in binding.Intervals)
-                        {
-                            if (normalizedTime >= interval.StartNormalizedTime && normalizedTime <= interval.EndNormalizedTime)
-                            {
-                                return interval.UnderControl;
-                            }
-                        }
-                    }
+                    return interval.underControl;
                 }
             }
 
@@ -266,20 +243,12 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Handshake
         {
             if (clip == null) return false;
 
-            if (_clipIntervalBindings != null)
+            var intervals = FindIntervals(clip);
+            if (intervals != null)
             {
-                foreach (var binding in _clipIntervalBindings)
+                foreach (var interval in intervals.AtNormalized(normalizedTime))
                 {
-                    if (binding != null && binding.Clip == clip && binding.Intervals != null)
-                    {
-                        foreach (var interval in binding.Intervals)
-                        {
-                            if (normalizedTime >= interval.StartNormalizedTime && normalizedTime <= interval.EndNormalizedTime)
-                            {
-                                return interval.Cancellable;
-                            }
-                        }
-                    }
+                    return interval.cancellable;
                 }
             }
 

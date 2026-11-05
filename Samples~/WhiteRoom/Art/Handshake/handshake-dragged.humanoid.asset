@@ -28,6 +28,8 @@ MonoBehaviour:
   avatar: {fileID: 0}
   clips:
   - {fileID: 2039728425148347780}
+  intervals:
+  - {fileID: 3394363378128400388}
 --- !u!74 &2039728425148347780
 AnimationClip:
   m_ObjectHideFlags: 0
@@ -122377,3 +122379,27 @@ AnimationClip:
   m_HasGenericRootTransform: 0
   m_HasMotionFloatCurves: 1
   m_Events: []
+--- !u!114 &3394363378128400388
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0ccffec9a343b728f382c005350eb64, type: 3}
+  m_Name: handshake-draggedIntervals
+  m_EditorClassIdentifier: Yu5h1Lib.Animation::Yu5h1Lib.MotionIntervals
+  _clip: {fileID: 2039728425148347780}
+  _frameRate: 30
+  _length: 30
+  _duration: 1
+  _intervals:
+  - name: "\u4E0D\u53EF\u63A7\u5236"
+    startFrame: 0
+    endFrame: 30
+    startTime: 0
+    endTime: 1
+    underControl: 0
+    cancellable: 0

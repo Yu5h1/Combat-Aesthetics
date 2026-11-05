@@ -63517,3 +63517,4 @@ MonoBehaviour:
   avatar: {fileID: 0}
   clips:
   - {fileID: -7260123513403633888}
+  intervals: []

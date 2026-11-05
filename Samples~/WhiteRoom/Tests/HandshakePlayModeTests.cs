@@ -676,6 +676,38 @@ namespace Yu5h1Lib.CombatAesthetic.Samples.WhiteRoom.Tests
         }
 
         [UnityTest]
+        public IEnumerator VerifyIntervalsComeFromImportedMotionIntervals()
+        {
+            var loadOp = EditorSceneManager.LoadSceneAsyncInPlayMode(
+                HandshakeScenePath,
+                new UnityEngine.SceneManagement.LoadSceneParameters(UnityEngine.SceneManagement.LoadSceneMode.Single));
+            while (!loadOp.isDone) yield return null;
+            yield return new WaitForSeconds(0.2f);
+
+            var settings = HandshakeArbitrator.Instance.Settings;
+            Assert.AreEqual(13, settings.MotionIntervalAssets.Length, "Thirteen clips carry imported control intervals.");
+
+            var withdraw = settings.WithdrawClip;
+            var intervals = settings.FindIntervals(withdraw);
+            Assert.IsNotNull(intervals, "The withdraw clip must have imported intervals.");
+            Assert.AreSame(withdraw, intervals.clip, "The intervals asset must belong to the settings' withdraw clip.");
+            Assert.AreEqual(15, intervals.length, "withdraw.anim.json has 15 frames.");
+            Assert.AreEqual(2, intervals.intervals.Count, "withdraw.anim.json marks two intervals.");
+
+            var locked = intervals.intervals[0];
+            Assert.IsFalse(locked.underControl);
+            Assert.AreEqual(0, locked.startFrame);
+            Assert.AreEqual(10, locked.endFrame);
+            Assert.AreEqual(10f / 15f, intervals.NormalizedEnd(locked), 1e-4f, "Frame 10 of 15 is normalized 0.6667.");
+
+            Assert.IsFalse(settings.IsActionUnderControl(withdraw, 0.5f), "Frame 7.5 is inside the locked interval.");
+            Assert.IsTrue(settings.IsActionUnderControl(withdraw, 0.8f), "Frame 12 is inside the controllable interval.");
+
+            Assert.IsNull(settings.FindIntervals(settings.ReachClip), "Reach has no intervals by design.");
+            Assert.IsNull(settings.FindIntervals(settings.GripClip), "Grip has no intervals by design.");
+        }
+
+        [UnityTest]
         public IEnumerator VerifyEscape_DoesNotResolve_WhenArmReachCannotBeMeasured()
         {
             var loadOp = EditorSceneManager.LoadSceneAsyncInPlayMode(

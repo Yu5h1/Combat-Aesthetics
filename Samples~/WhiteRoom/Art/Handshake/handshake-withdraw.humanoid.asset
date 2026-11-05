@@ -63517,3 +63517,36 @@ MonoBehaviour:
   avatar: {fileID: 0}
   clips:
   - {fileID: -3268706081431032073}
+  intervals:
+  - {fileID: 4954996292100627137}
+--- !u!114 &4954996292100627137
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0ccffec9a343b728f382c005350eb64, type: 3}
+  m_Name: handshake-withdrawIntervals
+  m_EditorClassIdentifier: Yu5h1Lib.Animation::Yu5h1Lib.MotionIntervals
+  _clip: {fileID: -3268706081431032073}
+  _frameRate: 30
+  _length: 15
+  _duration: 0.5
+  _intervals:
+  - name: "\u4E0D\u53EF\u63A7\u5236"
+    startFrame: 0
+    endFrame: 10
+    startTime: 0
+    endTime: 0.33333334
+    underControl: 0
+    cancellable: 0
+  - name: "\u53EF\u53D6\u6D88"
+    startFrame: 10
+    endFrame: 15
+    startTime: 0.33333334
+    endTime: 0.5
+    underControl: 1
+    cancellable: 1

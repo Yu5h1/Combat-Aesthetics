@@ -15,148 +15,20 @@ MonoBehaviour:
   _releaseGraceTime: 0.3
   _contestThreshold: 1
   _escapeDistanceCompensation: 0
-  _clipIntervalBindings:
-  - Clip: {fileID: -3268706081431032073, guid: 00aa645ac5d8a1644a9a6c087d44bd41, type: 2}
-    Intervals:
-    - Name: "\u4E0D\u53EF\u63A7\u5236"
-      StartNormalizedTime: 0
-      EndNormalizedTime: 0.6666667
-      UnderControl: 0
-      Cancellable: 0
-    - Name: "\u53EF\u53D6\u6D88"
-      StartNormalizedTime: 0.6666667
-      EndNormalizedTime: 1
-      UnderControl: 1
-      Cancellable: 1
-  - Clip: {fileID: 1369308150813348740, guid: 242594f64e39f19409f3d348dfdca7e6, type: 2}
-    Intervals:
-    - Name: "\u4E0D\u53EF\u63A7\u5236"
-      StartNormalizedTime: 0
-      EndNormalizedTime: 0.6666667
-      UnderControl: 0
-      Cancellable: 0
-    - Name: "\u53EF\u53D6\u6D88"
-      StartNormalizedTime: 0.6666667
-      EndNormalizedTime: 1
-      UnderControl: 1
-      Cancellable: 1
-  - Clip: {fileID: -6971983843558127791, guid: 2aa42192dcbc3c24696bdcc7e75ffcfd, type: 2}
-    Intervals:
-    - Name: "\u4E0D\u53EF\u63A7\u5236"
-      StartNormalizedTime: 0
-      EndNormalizedTime: 0.6666667
-      UnderControl: 0
-      Cancellable: 0
-    - Name: "\u53EF\u53D6\u6D88"
-      StartNormalizedTime: 0.6666667
-      EndNormalizedTime: 1
-      UnderControl: 1
-      Cancellable: 1
-  - Clip: {fileID: 4227788665874067849, guid: c2e1bafa60010c048a6766be96744816, type: 2}
-    Intervals:
-    - Name: "\u4E0D\u53EF\u63A7\u5236"
-      StartNormalizedTime: 0
-      EndNormalizedTime: 0.6666667
-      UnderControl: 0
-      Cancellable: 0
-    - Name: "\u53EF\u53D6\u6D88"
-      StartNormalizedTime: 0.6666667
-      EndNormalizedTime: 1
-      UnderControl: 1
-      Cancellable: 1
-  - Clip: {fileID: 5655038342129460656, guid: 7e58450b9e265824f83fa408983a3633, type: 2}
-    Intervals:
-    - Name: "\u4E0D\u53EF\u63A7\u5236"
-      StartNormalizedTime: 0
-      EndNormalizedTime: 0.6666667
-      UnderControl: 0
-      Cancellable: 0
-    - Name: "\u53EF\u53D6\u6D88"
-      StartNormalizedTime: 0.6666667
-      EndNormalizedTime: 1
-      UnderControl: 1
-      Cancellable: 1
-  - Clip: {fileID: 2301135392786961089, guid: f7852d2f874a5d2409902f4f2a0fcb2e, type: 2}
-    Intervals:
-    - Name: "\u4E0D\u53EF\u63A7\u5236"
-      StartNormalizedTime: 0
-      EndNormalizedTime: 0.6666667
-      UnderControl: 0
-      Cancellable: 0
-    - Name: "\u53EF\u53D6\u6D88"
-      StartNormalizedTime: 0.6666667
-      EndNormalizedTime: 1
-      UnderControl: 1
-      Cancellable: 1
-  - Clip: {fileID: -7786522887091022014, guid: 4984c64e71b6393458ed85fa925d65e1, type: 2}
-    Intervals:
-    - Name: "\u4E0D\u53EF\u63A7\u5236"
-      StartNormalizedTime: 0
-      EndNormalizedTime: 0.6666667
-      UnderControl: 0
-      Cancellable: 0
-    - Name: "\u53EF\u63A7\u5236"
-      StartNormalizedTime: 0.6666667
-      EndNormalizedTime: 1
-      UnderControl: 1
-      Cancellable: 1
-  - Clip: {fileID: -5249330317568928905, guid: b657ef6a0c3dfaf45a27e7d623407f50, type: 2}
-    Intervals:
-    - Name: "\u4E0D\u53EF\u63A7\u5236"
-      StartNormalizedTime: 0
-      EndNormalizedTime: 0.6666667
-      UnderControl: 0
-      Cancellable: 0
-    - Name: "\u53EF\u53D6\u6D88"
-      StartNormalizedTime: 0.6666667
-      EndNormalizedTime: 1
-      UnderControl: 1
-      Cancellable: 1
-  - Clip: {fileID: -3576746429700014343, guid: 940ad43615feb8b4f9d0c7e1c253c8fa, type: 2}
-    Intervals:
-    - Name: "\u4E0D\u53EF\u63A7\u5236"
-      StartNormalizedTime: 0
-      EndNormalizedTime: 0.5
-      UnderControl: 0
-      Cancellable: 0
-    - Name: "\u53EF\u53D6\u6D88"
-      StartNormalizedTime: 0.5
-      EndNormalizedTime: 1
-      UnderControl: 1
-      Cancellable: 1
-  - Clip: {fileID: 1280686858345700287, guid: e83f17d2ce29f744ea98c8aa3e48330a, type: 2}
-    Intervals:
-    - Name: "\u4E0D\u53EF\u63A7\u5236"
-      StartNormalizedTime: 0
-      EndNormalizedTime: 0.6666667
-      UnderControl: 0
-      Cancellable: 0
-    - Name: "\u53EF\u63A7\u5236"
-      StartNormalizedTime: 0.6666667
-      EndNormalizedTime: 1
-      UnderControl: 1
-      Cancellable: 1
-  - Clip: {fileID: 1736892266671072834, guid: f6d60943428734646b911f2d00b17706, type: 2}
-    Intervals:
-    - Name: "\u4E0D\u53EF\u63A7\u5236"
-      StartNormalizedTime: 0
-      EndNormalizedTime: 1
-      UnderControl: 0
-      Cancellable: 0
-  - Clip: {fileID: 2039728425148347780, guid: 3a65bad8d50632240baf06358f92d177, type: 2}
-    Intervals:
-    - Name: "\u4E0D\u53EF\u63A7\u5236"
-      StartNormalizedTime: 0
-      EndNormalizedTime: 1
-      UnderControl: 0
-      Cancellable: 0
-  - Clip: {fileID: 7195859749997444655, guid: 24ddb99986f5cdf4ca00bb3cc9e352a8, type: 2}
-    Intervals:
-    - Name: "\u4E0D\u53EF\u63A7\u5236"
-      StartNormalizedTime: 0
-      EndNormalizedTime: 1
-      UnderControl: 0
-      Cancellable: 0
+  _motionIntervals:
+  - {fileID: -558100970943158970, guid: 2aa42192dcbc3c24696bdcc7e75ffcfd, type: 2}
+  - {fileID: 3800067992835888742, guid: f6d60943428734646b911f2d00b17706, type: 2}
+  - {fileID: 1664747187358148497, guid: c2e1bafa60010c048a6766be96744816, type: 2}
+  - {fileID: 3394363378128400388, guid: 3a65bad8d50632240baf06358f92d177, type: 2}
+  - {fileID: 1101505063499123945, guid: 940ad43615feb8b4f9d0c7e1c253c8fa, type: 2}
+  - {fileID: 1600036334891652793, guid: 24ddb99986f5cdf4ca00bb3cc9e352a8, type: 2}
+  - {fileID: 217196999099392793, guid: 242594f64e39f19409f3d348dfdca7e6, type: 2}
+  - {fileID: -1578443990920146784, guid: e83f17d2ce29f744ea98c8aa3e48330a, type: 2}
+  - {fileID: 1183452644101884023, guid: 7e58450b9e265824f83fa408983a3633, type: 2}
+  - {fileID: -7975771899439065728, guid: 4984c64e71b6393458ed85fa925d65e1, type: 2}
+  - {fileID: -5878111766707915030, guid: b657ef6a0c3dfaf45a27e7d623407f50, type: 2}
+  - {fileID: 5271082783194710688, guid: f7852d2f874a5d2409902f4f2a0fcb2e, type: 2}
+  - {fileID: 4954996292100627137, guid: 00aa645ac5d8a1644a9a6c087d44bd41, type: 2}
   _headLookWeight: 0.8
   _bodyLookWeight: 0.45
   _lookWeightSpeed: 5

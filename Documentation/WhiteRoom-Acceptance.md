@@ -1224,3 +1224,23 @@ Unity MCP 在使用者開著的 Editor 跑 Play Mode，只跑 4 項，**4 / 4 �
 - 測試工具：Unity MCP 的 `run_tests` 在 Editor 跑過一次後，下一次會回報 0 個測試（通過但空），要先 `RequestScriptReload` 再跑才有結果。新測試第一次跑（編譯前一輪）有一次失敗（`MoveY` 為正值 0.83），加診斷訊息重跑後連續兩次通過，原因沒有查清楚，列為可能不穩定。
 - Windows 執行檔沒有重建；戰鬥場景的 controller 沒改。
 
+## 2026-11-05 區間改由匯入讀取
+
+日期：2026-11-05。依據：[區間改由匯入讀取交辦](../Samples~/WhiteRoom/Implementation-Plan.md#區間改由匯入讀取交辦)第 1～5 項。宿主 `W:/UnityProject/Yu5h1LibTest`，測試在使用者開著的 Editor 用 Unity MCP 跑。
+
+### 做了什麼
+
+- **重新匯出（第 1 項）**：在 `W:\Yu5h1Lib\CharacterBuilder` 執行 `node skin/export-glb.mjs --motion samples/punch-puppet.limb.json <handshake/*.anim.json> <輸出>`，17 段全部成功（62 個關節）。逐檔核對 `animations[0].extras.yu5h1.intervals.items`：13 段有區間，名稱與起訖影格、是否可控制、可取消都和 `.anim.json` 一致；伸手、等待、握住、搖手 4 段沒有，也一致。動畫名稱與舊 GLB 相同。沒有改 CharacterBuilder 或 UnityExtension。
+- **替換（第 2 項）**：新 GLB 覆蓋套件與宿主 `Art/Handshake/` 的檔案（4 段無區間的與舊檔位元組相同），`.glb.meta` 沒動。沒有刪除或重建 `.humanoid.asset`：在宿主對 17 個設定逐一呼叫 `HumanoidImporter.Generate`，全部成功，片段的 fileID 全都沒變（逐一比對前後）；每個設定的 `intervals` 清單：13 個各列 1 個 `MotionIntervals`，4 個為空。controller 每個狀態都有動作（底層 Idle=`idle`、Move 混合樹、各握手狀態；Gesture 層的 Reach／Wait／Withdraw）；`HandshakeSettings` 的 17 個片段欄位都不是空。
+- **改讀匯入結果（第 3 項）**：`HandshakeSettings` 刪掉 `ActionInterval`、`ClipIntervalBinding` 與手填的 `_clipIntervalBindings`，改成 `MotionIntervals[]`（13 個匯入資產，依 `clip` 對應）；`IsActionUnderControl`／`IsActionCancellable` 取歸一化時間落在的第一段，沒有區間時的判斷不變（播完才可操作；伸手與等待可取消）。13 段之中缺匯入區間的記一次錯誤，不用寫死的分界；伸手、等待、握住、搖手本來就沒有，不報錯。Handshake 與 Tests 的 asmdef 加了對 `Yu5h1Lib.Animation` 的參照。宿主專用的 `Assets/Editor/ConfigureHandshakeAssets.cs`（不在套件）原本會把手填區間寫回設定，我把那一段刪掉，否則重跑會編譯失敗或蓋掉匯入區間。
+- **提醒**：`.anim.json` 與新 GLB 裡區間的 `name` 欄位是亂碼（`不可控制` 變成 `?`），來自 AnimationEditor 的樣本檔本身；邏輯只看影格與旗標，不受影響，但 Inspector 看到的區間名稱會是亂碼，要請動畫線修。
+
+### 測試
+
+3 項 **3 / 3 通過**：`VerifyItem1_ControlIntervalsGovernRePress`（區間決定能否再按）、`VerifyItem2_ClipsActuallyPlayInAnimator`（換 GLB 後片段仍播放）、新增 `VerifyIntervalsComeFromImportedMotionIntervals`（設定有 13 個匯入區間資產；收手片段的區間資產屬於設定的收手片段，15 影格、第一段 0～10 影格不可控制，歸一化終點 10/15；歸一化 0.5 不可控制、0.8 可控制；伸手、握住沒有區間）。其他已通過且沒動到的不重跑。
+
+### 沒做
+
+- **沒有重建 Windows 執行檔**：使用者的 Editor 開著這個專案；執行檔仍是舊的，要在 Editor 關閉後重建。
+- 沒有逐段比較新舊區間數值對手感的影響（舊的手填區間與 `.anim.json` 不一定一樣，例如抓住、被拖、握住原本手填整段不可控制）；實際手感要使用者試玩。
+
